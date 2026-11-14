@@ -13,7 +13,7 @@ from app import __version__
 from app.models import AnalysisRequest, AnalysisResponse
 from app.services.horizons import HorizonsError, TIMEOUT
 from app.services.visibility import analyze_visibility
-
+from app.comparison_router import router as comparison_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -68,6 +68,7 @@ def create_app() -> FastAPI:
         body: AnalysisRequest, client: httpx.AsyncClient = Depends(get_http_client)
     ) -> AnalysisResponse:
         return await analyze_visibility(body, client)
+    app.include_router(comparison_router)
 
     return app
 
