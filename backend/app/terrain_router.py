@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from rasterio.errors import RasterioIOError
 from .terrain_models import TerrainRequest, TerrainResponse
 from .terrain_service import DatasetMismatchError, DatasetUnavailableError, TerrainService
 
@@ -15,3 +16,7 @@ def analyze_terrain(request: TerrainRequest) -> TerrainResponse:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except DatasetUnavailableError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except RasterioIOError as exc:
+        raise HTTPException(
+            status_code=503, detail="Terrain dataset could not be read; check the configured GeoTIFF files"
+        ) from exc

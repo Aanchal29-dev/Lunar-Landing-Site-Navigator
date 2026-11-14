@@ -1,7 +1,3 @@
-"""Standalone FastAPI application for lunar terrain analysis."""
-from fastapi import FastAPI
+"""Compatibility entry point; use app.main:app for the shared backend."""
 
-from .terrain_router import router
-
-app = FastAPI(title="Lunar Terrain Analysis API")
-app.include_router(router)
+from .main import app  # Reuse the same routes, CORS, lifespan and safe validation.

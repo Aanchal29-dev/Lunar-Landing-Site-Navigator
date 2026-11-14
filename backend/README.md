@@ -1,9 +1,14 @@
-# Lunar Compass visibility engine
+# Lunar Compass visibility and terrain backend
 
 Python 3.11+ / FastAPI / Pydantic / HTTPX backend for Sun and direct Earth
 visibility at arbitrary lunar coordinates. It makes two NASA JPL Horizons
 observer requests per successful analysis, then calculates four metrics and an
 hourly timeline locally. There is no fallback or generated scientific data.
+
+The same FastAPI application also exposes Yuthika's local NASA LOLA terrain
+service at `POST /api/terrain/analyze`. Use `app.main:app` for both services.
+The former `app.terrain_app:app` entry point is an alias of this shared app.
+Terrain measurements do not change the visibility engine's zero-degree horizon.
 
 ## Run
 
@@ -16,10 +21,8 @@ $env:LUNAR_COMPASS_CONTACT = Read-Host "Real team email or public contact URL"
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
-A working `.venv` was created during implementation. On this machine Python
-was not on PATH; that environment uses the installed bundled Python 3.12.14.
-The last command above works directly here. For a fresh checkout, use your
-Python installation to create a new environment; virtual environments are not portable.
+Create a separate virtual environment for each checkout; virtual environments
+are not portable and are excluded from Git.
 
 Before sending NASA requests, set `LUNAR_COMPASS_CONTACT` to a real, monitored
 team email or public contact URL. It must be printable ASCII, at most 256
@@ -49,6 +52,7 @@ development, with no second running instance.
 
 Open [interactive API docs](http://127.0.0.1:8000/docs).
 `GET /health` returns `{"status":"ok"}` without contacting NASA.
+This is a liveness check, not a guarantee that NASA or terrain data are available.
 
 Default CORS origins are `http://localhost:3000` and `http://localhost:5173`.
 Set an explicit comma-separated list before startup:
@@ -109,7 +113,40 @@ There are no retries; connect timeout is 10 seconds and HTTP read/write/pool
 timeouts are 45 seconds per request. Missing, malformed, reordered or mismatched
 samples fail the whole analysis. They never count as invisible.
 
-## Scientific model
+## Terrain API
+
+`POST /api/terrain/analyze`, `Content-Type: application/json`:
+
+```json
+{
+  "latitude_deg": -89.463158,
+  "longitude_deg": -137.501985,
+  "analysis_radius_m": 500
+}
+```
+
+Use north-positive latitude and east-positive longitude. Terrain also accepts
+legacy `0..360` and full-turn-wrapped longitudes, but returns a signed longitude
+in `[-180, 180]`, ready to pass to `/api/analyze`. For example, `222.498015`
+returns `-137.501985`. Visibility input rules remain unchanged.
+
+The radius defaults to 500 metres and must be greater than 0 and at most
+5,000 metres. Regional measurements use a rasterized circle around the selected
+pixel. The response retains the existing pixel, region, raster and warnings
+fields. Invalid requests return 422; missing/unreadable files return 503;
+incompatible raster grids return 500 with an explicit dataset-configuration error.
+Outside-coverage or unprojectable points return 200 with `terrain_available: false`,
+null measurements, and `outside_raster` or `outside_projection` coverage status.
+
+Install both official Site01 GeoTIFFs in `app/local_data/lola/site01`, or set
+`LUNAR_COMPASS_TERRAIN_DATA_DIR` to their directory before startup. Downloads and
+setup are documented in [TERRAIN_INTEGRATION.md](TERRAIN_INTEGRATION.md).
+The files are deliberately excluded from Git; each deployment must provision them.
+Site01 is regional data, not global Moon coverage. Missing data are never replaced
+by demonstration values. Roughness is an elevation-standard-deviation proxy,
+not a rock detector or landing-safety assessment.
+
+## Visibility scientific model
 
 Source: [NASA Horizons API](https://ssd-api.jpl.nasa.gov/doc/horizons.html) and
 [official manual](https://ssd.jpl.nasa.gov/horizons/manual.html).
@@ -146,7 +183,7 @@ selected longitude.
 Altitude 0 km on NASA's reference ellipsoid is an approximation. This is
 body-center visibility above a local zero-degree horizon using apparent,
 airless angles. Hourly midpoint estimates do not resolve exact rise/set times
-or short events. No terrain, finite-disc, eclipse/occultation, panel, radio,
+or short events. No terrain obstruction, finite-disc, eclipse/occultation, panel, radio,
 relay or landing-safety models are included. Visibility does not guarantee
 power, communication or safe landing. Python interval arithmetic does not
 model leap seconds; future UTC predictions also depend on NASA's current
@@ -169,7 +206,9 @@ result = await analyze_visibility(AnalysisRequest(
 `app/services/horizons.py` handles NASA requests and verified CSV parsing;
 `visibility.py` assembles intervals and `metrics.py` computes the four metrics.
 `tests/` holds offline checks, captured NASA fixtures and optional live tests.
-No other Lunar Compass modules or frontend components are implemented.
+`app/terrain_router.py`, `terrain_models.py` and `terrain_service.py` expose
+the local raster analysis separately from the astronomy calculations. Historical
+missions and comparison are not part of this backend integration.
 
 ## Tests and verified results
 
@@ -183,28 +222,21 @@ November 13, 2026 at -85.2°, 32.5° east for one epoch and 144 epochs; malforme
 variants and simple synthetic booleans are used only in tests. Production never
 reads fixtures. Live tests are skipped unless explicitly enabled.
 
-After the request-coordination, identification and validation-error repairs:
-**151 offline tests passed; 9 live NASA tests passed on November 14, 2026**. New checks cover overlapping
-analyses (maximum one upstream request, including body reads), supplied and
-engine-created clients, cancellation, failure recovery, outgoing identification,
-and malformed strings/bytes in validation data. The real six-day request through
-the running FastAPI server also passed with 144 entries from `2026-11-20T00:30:00Z`
-through `2026-11-25T23:30:00Z`, ending at `2026-11-26T00:00:00Z`. Set a real
-contact before running the live command above; contact values are intentionally
-not stored in this repository.
+The suite checks shared-app startup and routing, terrain CORS, malformed input,
+radius limits, projection failures, interchangeable coordinates, and clear data
+availability errors. It retains the visibility tests for exact sampling, NASA
+request serialization, body reads, cancellation, identification and parsing.
+The real-raster check skips when the Site01 files are absent. GitHub Actions runs
+the offline suite on backend pull requests without contacting NASA.
 
-Original implementation verification on November 13, 2026: **126 offline tests
-passed; 9 live tests passed**. The scientific calculations and fixtures have not
-changed in the repairs.
 Live checks cover six-day and maximum-duration series, a single epoch, near/far
 sides, both poles, longitude normalization, nonzero seconds and milliseconds.
 They inspect actual report metadata and independently recalculate metrics from
-CSV columns. The offline suite emits one upstream Starlette TestClient HTTPX
-deprecation warning; tests still pass. `pip check` found no broken requirements.
+CSV columns. Dependency deprecation warnings may appear during tests.
 This is API/report verification, not an independent astronomical-model validation
 or a separate comparison against the graphical Horizons interface.
 
-During that original verification, NASA returned 100% sunlight and 100% Earth
+During earlier live verification, NASA returned 100% sunlight and 100% Earth
 visibility, with both longest gaps 0 hours. Sun elevations were 4.494109° to
 6.337622° and Earth elevations 6.884094° to 10.142114°. A separate 336-hour
 analysis at 0°, 0° from the same start returned 84.52380952380952% sunlight,
