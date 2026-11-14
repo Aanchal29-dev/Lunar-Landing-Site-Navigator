@@ -13,6 +13,7 @@ from app import __version__
 from app.models import AnalysisRequest, AnalysisResponse
 from app.services.horizons import HorizonsError, TIMEOUT
 from app.services.visibility import analyze_visibility
+from app.terrain_router import router as terrain_router
 
 
 @asynccontextmanager
@@ -31,7 +32,7 @@ def _safe_error_text(value: object) -> str:
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="Lunar Compass Visibility Engine", version=__version__, lifespan=lifespan)
+    app = FastAPI(title="Lunar Compass Backend", version=__version__, lifespan=lifespan)
     origins = [origin.strip() for origin in os.getenv(
         "ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173"
     ).split(",") if origin.strip()]
@@ -44,6 +45,7 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST"],
         allow_headers=["Content-Type"],
     )
+    app.include_router(terrain_router)
 
     @app.exception_handler(HorizonsError)
     async def horizons_error(request: Request, exc: HorizonsError) -> JSONResponse:

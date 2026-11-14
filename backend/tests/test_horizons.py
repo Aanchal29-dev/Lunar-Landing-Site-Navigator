@@ -163,6 +163,11 @@ def test_application_header_overrides_supplied_client(mission, reports, monkeypa
 def test_missing_or_unsafe_contact_never_sends(mission, monkeypatch, contact):
     if contact is None:
         monkeypatch.delenv("LUNAR_COMPASS_CONTACT", raising=False)
+    elif contact == "\ud800":
+        # A lone surrogate cannot be placed in a POSIX process environment.
+        # Inject it at the configuration boundary so this safety case is
+        # exercised consistently on Windows and GitHub's Linux runners.
+        monkeypatch.setattr("app.services.horizons.os.getenv", lambda *_args, **_kwargs: contact)
     else:
         monkeypatch.setenv("LUNAR_COMPASS_CONTACT", contact)
 

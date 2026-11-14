@@ -7,9 +7,12 @@ from typing import Any
 
 import numpy as np
 import rasterio
+from rasterio._err import CPLE_AppDefinedError
 from rasterio.crs import CRS
 from rasterio.warp import transform
 from rasterio.windows import Window
+
+from .terrain_models import TerrainRequest
 
 MOON_RADIUS_M = 1_737_400.0
 LUNAR_GEOGRAPHIC_CRS = CRS.from_proj4(
@@ -52,12 +55,20 @@ class TerrainService:
         self.slope_path = self.data_dir / SLOPE_FILENAME
 
     def _ensure_files(self) -> None:
-        missing = [str(p) for p in (self.elevation_path, self.slope_path) if not p.is_file()]
+        missing = [p.name for p in (self.elevation_path, self.slope_path) if not p.is_file()]
         if missing:
             raise DatasetUnavailableError("Required terrain dataset file(s) missing: " + ", ".join(missing))
 
     @staticmethod
     def _check_grid_match(dem: rasterio.DatasetReader, slope: rasterio.DatasetReader) -> None:
+        if dem.crs is None or slope.crs is None:
+            raise DatasetMismatchError("Terrain rasters must declare their coordinate reference system")
+        if not dem.crs.is_projected or dem.crs.linear_units != "metre":
+            raise DatasetMismatchError("Terrain rasters must use a projected grid measured in metres")
+        if dem.count != 1 or slope.count != 1:
+            raise DatasetMismatchError("Terrain rasters must each contain one measurement band")
+        if dem.transform.b != 0 or dem.transform.d != 0 or dem.transform.a <= 0 or dem.transform.e >= 0:
+            raise DatasetMismatchError("Terrain rasters must use an unrotated north-up grid")
         mismatch = []
         if dem.crs != slope.crs: mismatch.append("CRS")
         if dem.transform != slope.transform: mismatch.append("transform")
@@ -67,29 +78,23 @@ class TerrainService:
             raise DatasetMismatchError("Elevation and slope rasters have mismatched " + ", ".join(mismatch))
 
     def analyze(self, latitude_deg: float, longitude_deg: float, analysis_radius_m: float = 500) -> dict[str, Any]:
-        if not np.isfinite(latitude_deg) or not -90 <= latitude_deg <= 90:
-            raise ValueError("latitude_deg must be finite and between -90 and 90 degrees")
-        if not np.isfinite(longitude_deg):
-            raise ValueError("longitude_deg must be finite")
-        if not np.isfinite(analysis_radius_m) or analysis_radius_m <= 0:
-            raise ValueError("analysis_radius_m must be finite and greater than 0 metres")
+        # Direct service callers get exactly the same limits and normalization as HTTP callers.
+        request = TerrainRequest(
+            latitude_deg=latitude_deg, longitude_deg=longitude_deg, analysis_radius_m=analysis_radius_m
+        )
+        latitude_deg = request.latitude_deg
+        longitude_deg = request.longitude_deg
+        analysis_radius_m = request.analysis_radius_m
         self._ensure_files()
 
         longitude = float(longitude_deg) % 360.0
         with rasterio.open(self.elevation_path) as dem, rasterio.open(self.slope_path) as slope_ds:
             self._check_grid_match(dem, slope_ds)
-            # The caller supplies east-positive lunar longitude. The source products document
-            # stereographic X/Y in MOON_ME/DE421; see README for the remaining convention caveat.
-            xs, ys = transform(LUNAR_GEOGRAPHIC_CRS, dem.crs, [longitude], [float(latitude_deg)])
-            x, y = xs[0], ys[0]
-            row, col = dem.index(x, y)
             resolution_x, resolution_y = map(abs, dem.res)
-            in_raster = 0 <= row < dem.height and 0 <= col < dem.width
-            output_row, output_col = (row, col) if in_raster else (None, None)
             result: dict[str, Any] = {
                 "terrain_available": False,
-                "location": {"latitude_deg": float(latitude_deg), "longitude_deg": longitude},
-                "pixel": {"row": output_row, "column": output_col, "elevation_m": None, "slope_deg": None},
+                "location": {"latitude_deg": latitude_deg, "longitude_deg": longitude_deg},
+                "pixel": {"row": None, "column": None, "elevation_m": None, "slope_deg": None},
                 "region": {
                     "analysis_radius_m": float(analysis_radius_m), "mean_elevation_m": None,
                     "elevation_range_m": None, "mean_slope_deg": None, "maximum_slope_deg": None,
@@ -106,9 +111,30 @@ class TerrainService:
                 },
                 "warnings": [ROUGHNESS_WARNING],
             }
+            # NASA documents this grid as south-polar stereographic in MOON_ME/DE421.
+            # GDAL exposes this domain failure via its C extension, not RasterioError.
+            try:
+                xs, ys = transform(LUNAR_GEOGRAPHIC_CRS, dem.crs, [longitude], [latitude_deg])
+                x, y = xs[0], ys[0]
+            except CPLE_AppDefinedError as exc:
+                if "outside of projection domain" not in str(exc).lower():
+                    raise DatasetMismatchError("Terrain coordinate transformation failed; check the raster CRS") from exc
+                x = y = float("nan")
+            if not np.isfinite(x) or not np.isfinite(y):
+                result["region"]["coverage_status"] = "outside_projection"
+                result["warnings"].insert(0, "Coordinate is outside the available raster's projection domain.")
+                return result
+            # Check bounds before converting distant coordinates into integer pixel indices.
+            bounds = dem.bounds
+            if not (bounds.left <= x < bounds.right and bounds.bottom < y <= bounds.top):
+                result["warnings"].insert(0, "Coordinate lies outside the available raster coverage.")
+                return result
+            row, col = dem.index(x, y)
+            in_raster = 0 <= row < dem.height and 0 <= col < dem.width
             if not in_raster:
                 result["warnings"].insert(0, "Coordinate lies outside the available raster coverage.")
                 return result
+            result["pixel"].update(row=row, column=col)
 
             e = dem.read(1, window=Window(col, row, 1, 1), masked=True)[0, 0]
             s = slope_ds.read(1, window=Window(col, row, 1, 1), masked=True)[0, 0]
