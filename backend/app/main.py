@@ -14,8 +14,9 @@ from app.comparison_router import router as comparison_router
 from app.historical_router import router as historical_router
 from app.models import AnalysisRequest, AnalysisResponse
 from app.services.historical_missions import validate_historical_dataset
-from app.services.horizons import HorizonsError, TIMEOUT
+from app.services.horizons import HorizonsError, TIMEOUT, _user_agent
 from app.services.visibility import analyze_visibility
+from app.terrain_service import terrain_dataset_is_ready
 from app.terrain_router import router as terrain_router
 
 @asynccontextmanager
@@ -32,6 +33,18 @@ def _safe_error_text(value: object) -> str:
     if isinstance(value, str):
         return value.encode("utf-8", errors="backslashreplace").decode("utf-8")
     return "Invalid request"
+
+
+def _nasa_contact_is_configured() -> bool:
+    try:
+        _user_agent()
+    except HorizonsError:
+        return False
+    return True
+
+
+def _terrain_dataset_is_ready() -> bool:
+    return terrain_dataset_is_ready()
 
 
 def create_app() -> FastAPI:
@@ -65,6 +78,22 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health() -> dict[str, str]:
         return {"status": "ok"}
+
+    @app.get("/health/ready")
+    async def readiness() -> JSONResponse:
+        """Report local deployment prerequisites without contacting NASA."""
+        nasa_contact = _nasa_contact_is_configured()
+        terrain_dataset = _terrain_dataset_is_ready()
+        ready = nasa_contact and terrain_dataset
+        return JSONResponse(
+            status_code=200 if ready else 503,
+            content={
+                "status": "ready" if ready else "not_ready",
+                "nasa_contact_configured": nasa_contact,
+                "terrain_dataset_ready": terrain_dataset,
+                "nasa_live_check_performed": False,
+            },
+        )
 
     @app.post("/api/analyze", response_model=AnalysisResponse)
     async def analyze(

@@ -43,6 +43,18 @@ class DatasetMismatchError(RuntimeError):
     """Raised when elevation and slope rasters do not describe the same grid."""
 
 
+def terrain_dataset_is_ready() -> bool:
+    """Check local terrain prerequisites without deriving or fabricating measurements."""
+    service = TerrainService()
+    try:
+        service._ensure_files()
+        with rasterio.open(service.elevation_path) as dem, rasterio.open(service.slope_path) as slope:
+            service._check_grid_match(dem, slope)
+    except (DatasetUnavailableError, DatasetMismatchError, rasterio.errors.RasterioIOError):
+        return False
+    return True
+
+
 class TerrainService:
     def __init__(self, data_dir: str | Path | None = None):
         # Relative configured paths are anchored to this module, never the process CWD.

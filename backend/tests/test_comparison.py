@@ -156,3 +156,20 @@ def test_comparison_requests_reject_invalid_or_unbounded_windows():
         })
 
     assert no_timezone.status_code == duplicate_offsets.status_code == oversized_offset.status_code == 422
+
+
+@patch("app.comparison_service._lookup_terrain_safe", return_value={"terrain_available": False, "warnings": ["No terrain"]})
+@patch("app.comparison_service.analyze_visibility", side_effect=fake_analyze_visibility)
+def test_compare_accepts_a_documented_zero_to_360_historical_longitude(mock_visibility, _terrain_lookup):
+    with TestClient(create_app()) as client:
+        response = client.post("/api/compare", json={
+            "locations": [
+                {"label": "Historical", "latitude_deg": -89.4, "longitude_deg": 222.498015},
+                {"label": "Clicked", "latitude_deg": -85.2, "longitude_deg": 32.5},
+            ],
+            "start_utc": "2027-01-15T00:00:00Z", "duration_hours": 24,
+        })
+
+    assert response.status_code == 200
+    assert response.json()["results"][0]["longitude_deg"] == -137.501985
+    assert mock_visibility.call_args_list[0].args[0].longitude_deg == -137.501985

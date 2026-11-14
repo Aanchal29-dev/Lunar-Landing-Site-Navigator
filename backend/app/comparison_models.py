@@ -16,6 +16,9 @@ from app.terrain_models import TerrainResponse
 
 
 OffsetDays = Annotated[int, Field(strict=True, ge=-365, le=365)]
+HistoricalCompatibleLongitude = Annotated[
+    float, Field(strict=True, ge=-180, le=360, allow_inf_nan=False)
+]
 
 
 def _validate_analysis_window(start_utc: datetime, duration_hours: int) -> None:
@@ -33,7 +36,13 @@ class CoordinateCandidate(BaseModel):
 
     label: str | None = Field(default=None, max_length=80)
     latitude_deg: Latitude
-    longitude_deg: Longitude
+    # Historical records use east-positive 0..360; the visibility engine uses -180..180.
+    longitude_deg: HistoricalCompatibleLongitude
+
+    @field_validator("longitude_deg")
+    @classmethod
+    def normalize_historical_longitude(cls, value: float) -> float:
+        return value if value <= 180 else value - 360
 
 
 class TerrainUnavailableSummary(BaseModel):
