@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import math
 from datetime import timedelta
 
 import httpx
@@ -26,14 +27,25 @@ from app.services.visibility import analyze_visibility
 from app.terrain_service import DatasetMismatchError, DatasetUnavailableError, TerrainService
 
 
-def _build_provenance(terrain_available: bool | None) -> ProvenanceSummary:
-    terrain_source = (
-        "NASA GSFC PGDA LOLA Site01 elevation/slope rasters"
-        if terrain_available
-        else "No regional terrain raster coverage available for one or more points"
-        if terrain_available is False
-        else "Terrain analysis was not requested"
-    )
+def _build_provenance(
+    results: list[ComparedLocationItem] | None = None,
+    *,
+    terrain_requested: bool = False,
+) -> ProvenanceSummary:
+    """Describe terrain availability without treating partial coverage as complete."""
+    if not terrain_requested:
+        terrain_source = "Terrain analysis was not requested"
+    else:
+        successful = [item for item in results or [] if item.status == "ok"]
+        available_count = sum(item.terrain_available for item in successful)
+        if successful and available_count == len(successful):
+            terrain_source = "NASA GSFC PGDA LOLA Site01 elevation/slope rasters for every successful location"
+        elif available_count:
+            terrain_source = "NASA GSFC PGDA LOLA Site01 elevation/slope rasters where coverage is available; terrain is unavailable for one or more successful locations"
+        elif successful:
+            terrain_source = "No regional terrain raster coverage available for successful locations"
+        else:
+            terrain_source = "Terrain was not evaluated because no location produced a visibility result"
     return ProvenanceSummary(
         source_measurements=[
             "NASA JPL Horizons ephemeris (Sun and Earth apparent elevation/azimuth)",
@@ -54,33 +66,42 @@ def _build_provenance(terrain_available: bool | None) -> ProvenanceSummary:
 
 
 def _summarize_tradeoffs(items: list[ComparedLocationItem]) -> list[str]:
-    valid = [item for item in items if item.status == "ok" and item.visibility is not None]
+    valid = [(index, item) for index, item in enumerate(items) if item.status == "ok" and item.visibility is not None]
     if len(valid) < 2:
         return ["Fewer than two locations succeeded; side-by-side tradeoff comparison is unavailable."]
 
+    label_counts = {item.label: sum(other.label == item.label for _, other in valid) for _, item in valid}
+
+    def label(index: int, item: ComparedLocationItem) -> str:
+        return item.label if label_counts[item.label] == 1 else f"{item.label} (site {index + 1})"
+
     notes: list[str] = []
-    best_sun = max(valid, key=lambda x: x.visibility.metrics.sunlight_percent)
-    worst_sun = min(valid, key=lambda x: x.visibility.metrics.sunlight_percent)
-    if best_sun.label != worst_sun.label:
+    best_sun = max(valid, key=lambda entry: entry[1].visibility.metrics.sunlight_percent)
+    worst_sun = min(valid, key=lambda entry: entry[1].visibility.metrics.sunlight_percent)
+    sun_difference = best_sun[1].visibility.metrics.sunlight_percent - worst_sun[1].visibility.metrics.sunlight_percent
+    if not math.isclose(sun_difference, 0.0, abs_tol=1e-9):
         notes.append(
-            f"{best_sun.label} has higher sunlight visibility ({best_sun.visibility.metrics.sunlight_percent:.1f}% "
-            f"vs. {worst_sun.visibility.metrics.sunlight_percent:.1f}% at {worst_sun.label})."
+            f"{label(*best_sun)} has higher sunlight visibility ({best_sun[1].visibility.metrics.sunlight_percent:.1f}% "
+            f"vs. {worst_sun[1].visibility.metrics.sunlight_percent:.1f}% at {label(*worst_sun)})."
         )
 
-    min_earth_gap = min(valid, key=lambda x: x.visibility.metrics.longest_earth_gap_hours)
-    max_earth_gap = max(valid, key=lambda x: x.visibility.metrics.longest_earth_gap_hours)
-    if min_earth_gap.label != max_earth_gap.label:
+    min_earth_gap = min(valid, key=lambda entry: entry[1].visibility.metrics.longest_earth_gap_hours)
+    max_earth_gap = max(valid, key=lambda entry: entry[1].visibility.metrics.longest_earth_gap_hours)
+    gap_difference = max_earth_gap[1].visibility.metrics.longest_earth_gap_hours - min_earth_gap[1].visibility.metrics.longest_earth_gap_hours
+    if gap_difference:
         notes.append(
-            f"{min_earth_gap.label} has a shorter max Earth blackout "
-            f"({min_earth_gap.visibility.metrics.longest_earth_gap_hours}h vs. "
-            f"{max_earth_gap.visibility.metrics.longest_earth_gap_hours}h at {max_earth_gap.label})."
+            f"{label(*min_earth_gap)} has a shorter maximum Earth-view gap "
+            f"({min_earth_gap[1].visibility.metrics.longest_earth_gap_hours}h vs. "
+            f"{max_earth_gap[1].visibility.metrics.longest_earth_gap_hours}h at {label(*max_earth_gap)})."
         )
 
-    if best_sun.label != min_earth_gap.label:
+    if not math.isclose(sun_difference, 0.0, abs_tol=1e-9) and gap_difference and best_sun[0] != min_earth_gap[0]:
         notes.append(
-            f"Tradeoff: {best_sun.label} maximizes sunlight exposure, whereas {min_earth_gap.label} "
-            f"minimizes continuous Earth communication blackouts."
+            f"Tradeoff: {label(*best_sun)} has the highest sunlight visibility in this comparison, whereas "
+            f"{label(*min_earth_gap)} has the shortest maximum Earth-view gap."
         )
+    if not notes:
+        notes.append("The successful locations are tied on the displayed visibility metrics.")
     return notes
 
 
@@ -141,9 +162,7 @@ async def compare_locations_service(req: CompareRequest, client: httpx.AsyncClie
         duration_hours=req.duration_hours,
         results=results,
         tradeoffs=_summarize_tradeoffs(results),
-        provenance=_build_provenance(
-            any(r.terrain_available for r in results) if req.include_terrain else None
-        ),
+        provenance=_build_provenance(results, terrain_requested=req.include_terrain),
     )
 
 
@@ -201,7 +220,7 @@ async def stress_test_service(req: StressTestRequest, client: httpx.AsyncClient)
         variant=variant_res,
         deltas=deltas,
         warnings=warnings,
-        provenance=_build_provenance(None),
+        provenance=_build_provenance(),
     )
 
 
@@ -212,10 +231,10 @@ def _score_window(metrics: Metrics, duration_hours: int, priority: str) -> float
     gap_pen = (metrics.longest_earth_gap_hours / duration_hours) * 100.0
 
     if priority == "max_sunlight":
-        return round(sun - 0.5 * dark_pen, 2)
+        return sun - 0.5 * dark_pen
     if priority == "min_earth_gap":
-        return round(earth - 1.0 * gap_pen, 2)
-    return round(0.5 * sun + 0.5 * earth - 0.25 * (dark_pen + gap_pen), 2)
+        return earth - gap_pen
+    return 0.5 * sun + 0.5 * earth - 0.25 * (dark_pen + gap_pen)
 
 
 async def mission_windows_service(req: MissionWindowsRequest, client: httpx.AsyncClient) -> MissionWindowsResponse:
@@ -270,5 +289,5 @@ async def mission_windows_service(req: MissionWindowsRequest, client: httpx.Asyn
             "Preferred window is optimal only among these tested candidates under stated criteria, not globally optimal.",
         ],
         is_globally_optimal=False,
-        provenance=_build_provenance(None),
+        provenance=_build_provenance(),
     )

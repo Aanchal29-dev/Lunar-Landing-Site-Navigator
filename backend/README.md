@@ -162,8 +162,9 @@ outcome narrative and source citations. Historical longitudes remain east-positi
 in the `0..360` convention used by the published records.
 
 `POST /api/missions/{mission_id}/replay` runs the same visibility engine for an
-eligible historical site's documented event time. Its optional body is
-`{"duration_hours": 144}`. The response has `analysis` (the normal visibility
+eligible historical site's documented event time. Send a JSON body such as
+`{"duration_hours": 144}`; the field defaults to 144 only when the body is present.
+The response has `analysis` (the normal visibility
 response) and `historical_context`; it does not present a replay as a historical
 measurement. The bridge converts the historical longitude to the signed
 `[-180, 180]` convention before calling the engine.
