@@ -146,6 +146,40 @@ Site01 is regional data, not global Moon coverage. Missing data are never replac
 by demonstration values. Roughness is an elevation-standard-deviation proxy,
 not a rock detector or landing-safety assessment.
 
+## Historical and decision APIs
+
+All endpoints below use the same FastAPI application, CORS policy, request
+validation and process-wide NASA request gate as `/api/analyze`.
+
+`GET /api/missions` returns source-backed mission summaries. Optional query
+parameters `country` and `landing_outcome` filter the list. `GET
+/api/missions/{mission_id}` returns a record with its intended and actual site,
+outcome narrative and source citations. Historical longitudes remain east-positive
+in the `0..360` convention used by the published records.
+
+`POST /api/missions/{mission_id}/replay` runs the same visibility engine for an
+eligible historical site's documented event time. Its optional body is
+`{"duration_hours": 144}`. The response has `analysis` (the normal visibility
+response) and `historical_context`; it does not present a replay as a historical
+measurement. The bridge converts the historical longitude to the signed
+`[-180, 180]` convention before calling the engine.
+
+`POST /api/compare` accepts two or three locations, one UTC start and one
+duration. It runs the shared visibility engine for every location, optionally
+includes local terrain (`include_terrain`, default `true`), and returns per-site
+results, partial upstream failures and transparent trade-off notes. The terrain
+field is either the normal terrain response, a safe unavailable summary, or
+`null` when terrain was not requested.
+
+`POST /api/stress-test` accepts one location plus `baseline` and `variant`
+windows. It returns both real visibility analyses and their metric deltas.
+`POST /api/mission-windows` evaluates two to ten explicit candidate start-date
+offsets (each between -365 and +365 days) and selects the best score only among
+those candidates. It is not a global optimisation or a landing-safety result.
+Every compared date, duration and coordinate uses the visibility API's validation
+rules. These orchestration endpoints still make genuine Horizons requests; they
+never fabricate science data if NASA is unavailable.
+
 ## Visibility scientific model
 
 Source: [NASA Horizons API](https://ssd-api.jpl.nasa.gov/doc/horizons.html) and
@@ -207,8 +241,10 @@ result = await analyze_visibility(AnalysisRequest(
 `visibility.py` assembles intervals and `metrics.py` computes the four metrics.
 `tests/` holds offline checks, captured NASA fixtures and optional live tests.
 `app/terrain_router.py`, `terrain_models.py` and `terrain_service.py` expose
-the local raster analysis separately from the astronomy calculations. Historical
-missions and comparison are not part of this backend integration.
+the local raster analysis separately from the astronomy calculations.
+`historical_router.py` reuses the visibility engine for documented replay inputs;
+`comparison_router.py` reuses it for comparison, stress-test and bounded-window
+orchestration. None of these wrappers alters the underlying astronomical model.
 
 ## Tests and verified results
 
@@ -223,9 +259,11 @@ variants and simple synthetic booleans are used only in tests. Production never
 reads fixtures. Live tests are skipped unless explicitly enabled.
 
 The suite checks shared-app startup and routing, terrain CORS, malformed input,
-radius limits, projection failures, interchangeable coordinates, and clear data
-availability errors. It retains the visibility tests for exact sampling, NASA
-request serialization, body reads, cancellation, identification and parsing.
+radius limits, projection failures, interchangeable coordinates, clear data
+availability errors, historical provenance and replay, plus comparison, stress
+test and bounded-window orchestration. It retains the visibility tests for exact
+sampling, NASA request serialization, body reads, cancellation, identification
+and parsing.
 The real-raster check skips when the Site01 files are absent. GitHub Actions runs
 the offline suite on backend pull requests without contacting NASA.
 
