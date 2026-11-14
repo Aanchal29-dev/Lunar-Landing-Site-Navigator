@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app import __version__
+from app.historical_router import router as historical_router
 from app.models import AnalysisRequest, AnalysisResponse
 from app.services.horizons import HorizonsError, TIMEOUT
 from app.services.visibility import analyze_visibility
@@ -70,6 +71,8 @@ def create_app() -> FastAPI:
         body: AnalysisRequest, client: httpx.AsyncClient = Depends(get_http_client)
     ) -> AnalysisResponse:
         return await analyze_visibility(body, client)
+
+    app.include_router(historical_router)
 
     return app
 
