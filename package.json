@@ -1,0 +1,10 @@
+{
+  "name": "threejs-root",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix Three.js run dev",
+    "build": "npm --prefix Three.js run build",
+    "preview": "npm --prefix Three.js run preview"
+  }
+}
+
