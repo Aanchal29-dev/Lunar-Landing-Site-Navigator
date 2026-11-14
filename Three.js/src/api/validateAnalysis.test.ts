@@ -12,4 +12,5 @@ const valid = {
 describe("analysis response boundary", () => {
   it("accepts a complete aligned timeline", () => expect(assertAnalysisResponse(valid)).toBe(valid));
   it("rejects a response whose timeline length differs from its mission duration", () => expect(() => assertAnalysisResponse({ ...valid, duration_hours: 2 })).toThrow("hourly timeline"));
+  it("rejects metric values that cannot safely be displayed as scientific results", () => expect(() => assertAnalysisResponse({ ...valid, metrics: { ...valid.metrics, sunlight_percent: "unknown" } })).toThrow("hourly timeline"));
 });

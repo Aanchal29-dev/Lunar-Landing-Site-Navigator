@@ -5,12 +5,23 @@
 The frontend is a Vite, React and TypeScript application in `Three.js/`. It has
 three primary routes: Explore & Analyze, Compare & Improve, and Historical
 Missions. `src/app/PlanProvider.tsx` preserves selected sites, a UTC mission
-window and comparison sites in session storage while visitors navigate.
+window and comparison sites in session storage while visitors navigate. The
+Explore route has a focused Three.js lunar globe that turns a click on the
+visible surface into the same planetocentric latitude and east-positive
+longitude contract used by the backend. Its conversion is unit-tested in
+`src/domain/globeCoordinates.test.ts`.
 
 All browser network access belongs in `Three.js/src/api/`. Components must not
 construct alternate astronomy or terrain calculations. The FastAPI backend is
 the sole source for visibility metrics, timeline positions, terrain screening,
 comparison and historical records.
+
+The Explore page submits an explicit request to `/api/analyze` only after a
+user selects a coordinate and presses its analysis button. It aborts an
+in-flight request when the plan changes, validates the returned analysis
+contract before display, and renders the four visibility metrics, UTC window,
+hourly midpoint timeline, and backend-provided limitations. No placeholder
+scientific result is displayed before a successful response.
 
 During development, `vite.config.ts` proxies `/api` and `/health` to
 `http://127.0.0.1:8000` by default. Set `LUNAR_COMPASS_API_TARGET` only for a
@@ -24,9 +35,10 @@ If `/api/analyze` fails, preserve the selected site and UTC window, report the
 error and offer retry. Do not fill metric cards, timelines, terrain fields or
 operational recommendations with estimates.
 
-The retired prototype is held in `Three.js/src/legacy/` for extracting camera,
-marker and map interaction code in Phase 3. It is not imported by `main.tsx`.
-It must not be shipped as an alternate results interface.
+The retired prototype is held in `Three.js/src/legacy/` as a migration
+reference. It is not imported by `main.tsx` and must not be shipped as an
+alternate results interface. The production globe selects a coordinate only;
+its display texture is not terrain, lighting, or scientific analysis data.
 
 ## Contract maintenance
 
