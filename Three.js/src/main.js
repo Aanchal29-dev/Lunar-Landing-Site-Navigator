@@ -15,6 +15,7 @@ const camera = new THREE.PerspectiveCamera(
 // Framing at 3.2 units so the Moon is prominently displayed in space
 camera.position.set(0, 0, 3.2);
 
+
 // 3. CREATE RENDERER
 const canvas = document.getElementById('lunar-canvas');
 const renderer = new THREE.WebGLRenderer({
@@ -22,12 +23,12 @@ const renderer = new THREE.WebGLRenderer({
     antialias: true
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 3.0));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 // ACES Filmic tone mapping: preserves high dynamic range and crater details without overexposure
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+renderer.toneMappingExposure = 1.25;
 
 // Enable realistic soft shadow mapping
 renderer.shadowMap.enabled = true;
@@ -101,8 +102,8 @@ scene.add(starfield);
 // 6. CREATE SPHERE GEOMETRY WITH UNROLLING FLAT MAP MORPH TARGET
 const geometry = new THREE.SphereGeometry(
     1,           // Radius
-    256,         // Width segments
-    256,         // Height segments
+    768,         // Width segments (ultra-high resolution 768x512 grid)
+    512,         // Height segments (ultra-high resolution)
     0,           // Phi start
     Math.PI * 2, // Full horizontal coverage
     0,           // Theta start
@@ -142,14 +143,28 @@ const moonRoughnessTexture = textureLoader.load('/moon-roughness.jpg');
 // Set sRGB color space on base color texture
 moonTexture.colorSpace = THREE.SRGBColorSpace;
 
-// CREATE MOON MATERIAL
+// High-definition anisotropic texture filtering & sharp mipmapping
+const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
+moonTexture.anisotropy = maxAnisotropy;
+moonTexture.minFilter = THREE.LinearMipmapLinearFilter;
+moonTexture.magFilter = THREE.LinearFilter;
+moonTexture.generateMipmaps = true;
+
+moonNormalTexture.anisotropy = maxAnisotropy;
+moonNormalTexture.minFilter = THREE.LinearMipmapLinearFilter;
+moonNormalTexture.magFilter = THREE.LinearFilter;
+moonNormalTexture.generateMipmaps = true;
+
+moonDisplacement.anisotropy = maxAnisotropy;
+moonRoughnessTexture.anisotropy = maxAnisotropy;
+
 const material = new THREE.MeshStandardMaterial({
     map: moonTexture,
     displacementMap: moonDisplacement,
     displacementScale: 0.06, // Calibrated for visible elevation without geometry distortion
     displacementBias: 0,
     normalMap: moonNormalTexture,
-    normalScale: new THREE.Vector2(2.0, 2.0), // Enhanced crater relief
+    normalScale: new THREE.Vector2(2.8, 2.8), // Ultra high-definition crater relief
     roughnessMap: moonRoughnessTexture,
     roughness: 1,
     metalness: 0 // Realistic non-glossy lunar regolith
@@ -169,12 +184,12 @@ scene.add(moon);
 
 // 9. REALISTIC LUNAR LIGHTING & SHADOW SYSTEM
 
-// Faint earthshine / cosmic fill: preserves stark contrast while keeping night side readable
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.08);
+// Faint cosmic fill: preserves contrast while keeping shadowed crater details visible
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.40);
 scene.add(ambientLight);
 
-// Sunlight: DirectionalLight from upper-right matching the reference image illumination
-const sunLight = new THREE.DirectionalLight(0xffffff, 3.6);
+// Sunlight: DirectionalLight from upper-right matching the original lunar illumination
+const sunLight = new THREE.DirectionalLight(0xffffff, 4.2);
 sunLight.position.set(3.5, 1.8, 2.6);
 
 // Shadow mapping configuration
@@ -215,33 +230,33 @@ function createSurfaceMarker() {
 
     // Sharp Needle / Shaft: tapered cylinder pointing straight down to (0, 0, 0)
     // Tip rests exactly at local y = 0
-    const needleGeo = new THREE.CylinderGeometry(0.003, 0.0006, 0.034, 16);
-    needleGeo.translate(0, 0.017, 0);
+    const needleGeo = new THREE.CylinderGeometry(0.0035, 0.0008, 0.044, 16);
+    needleGeo.translate(0, 0.022, 0);
     const needleMesh = new THREE.Mesh(needleGeo, metalMat);
     group.add(needleMesh);
 
     // Metallic Collar: transitions needle into the red spherical head
-    const collarGeo = new THREE.CylinderGeometry(0.006, 0.005, 0.003, 16);
-    collarGeo.translate(0, 0.0355, 0);
+    const collarGeo = new THREE.CylinderGeometry(0.007, 0.0055, 0.004, 16);
+    collarGeo.translate(0, 0.045, 0);
     const collarMesh = new THREE.Mesh(collarGeo, metalMat);
     group.add(collarMesh);
 
     // Red Bulb / Pin Head (Sphere of the 📍 icon):
     // Rich vibrant red with emissive illumination so it's always clearly visible from all angles
-    const headGeo = new THREE.SphereGeometry(0.018, 32, 24);
-    headGeo.translate(0, 0.051, 0);
+    const headGeo = new THREE.SphereGeometry(0.022, 32, 24);
+    headGeo.translate(0, 0.064, 0);
     const headMat = new THREE.MeshStandardMaterial({
         color: 0xef4444,
-        emissive: 0x991b1b,
-        emissiveIntensity: 0.45,
-        roughness: 0.25,
+        emissive: 0xdc2626,
+        emissiveIntensity: 0.70,
+        roughness: 0.20,
         metalness: 0.15
     });
     const headMesh = new THREE.Mesh(headGeo, headMat);
     group.add(headMesh);
 
     // Subtle Surface Contact Ring (lies flat on lunar surface at y = 0.001)
-    const baseRingGeo = new THREE.RingGeometry(0.006, 0.020, 32);
+    const baseRingGeo = new THREE.RingGeometry(0.008, 0.026, 32);
     baseRingGeo.rotateX(-Math.PI / 2);
     baseRingGeo.translate(0, 0.001, 0);
     const baseRingMat = new THREE.MeshBasicMaterial({
@@ -254,24 +269,44 @@ function createSurfaceMarker() {
     const baseRing = new THREE.Mesh(baseRingGeo, baseRingMat);
     group.add(baseRing);
 
+    // Dynamic Expanding Radar / Beacon Wave Ring
+    const beaconRingGeo = new THREE.RingGeometry(0.016, 0.048, 32);
+    beaconRingGeo.rotateX(-Math.PI / 2);
+    beaconRingGeo.translate(0, 0.0012, 0);
+    const beaconRingMat = new THREE.MeshBasicMaterial({
+        color: 0x38bdf8,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.65,
+        depthWrite: false
+    });
+    const beaconRing = new THREE.Mesh(beaconRingGeo, beaconRingMat);
+    group.add(beaconRing);
+
     // Surface Center Contact Dot: exact contact point indicator
-    const baseDotGeo = new THREE.CircleGeometry(0.0032, 20);
+    const baseDotGeo = new THREE.CircleGeometry(0.004, 20);
     baseDotGeo.rotateX(-Math.PI / 2);
-    baseDotGeo.translate(0, 0.0012, 0);
+    baseDotGeo.translate(0, 0.0015, 0);
     const baseDotMat = new THREE.MeshBasicMaterial({
         color: 0xffffff,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.9,
+        opacity: 0.95,
         depthWrite: false
     });
     const baseDot = new THREE.Mesh(baseDotGeo, baseDotMat);
     group.add(baseDot);
 
-    return { group, baseRing, baseRingMat };
+    return { group, baseRing, baseRingMat, beaconRing, beaconRingMat };
 }
 
-const { group: surfaceMarker, baseRing: markerBaseRing, baseRingMat: markerBaseRingMat } = createSurfaceMarker();
+const {
+    group: surfaceMarker,
+    baseRing: markerBaseRing,
+    baseRingMat: markerBaseRingMat,
+    beaconRing: markerBeaconRing,
+    beaconRingMat: markerBeaconRingMat
+} = createSurfaceMarker();
 moon.add(surfaceMarker);
 
 // 11. AUTHORITATIVE NASA / USGS LUNAR POINTS OF INTEREST DATABASE
@@ -847,15 +882,58 @@ function mapYToLat(y) {
     return clampedY * 90.0;
 }
 
+// (heightmapData and initElevationData initialized at line 885)
+let heightmapData = null;
+const HEIGHTMAP_WIDTH = 1024;
+const HEIGHTMAP_HEIGHT = 512;
+
+function initElevationData() {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = '/moon-height.jpg';
+    img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = HEIGHTMAP_WIDTH;
+        c.height = HEIGHTMAP_HEIGHT;
+        const ctx = c.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT);
+        try {
+            heightmapData = ctx.getImageData(0, 0, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT).data;
+        } catch (e) {
+            console.warn('Heightmap canvas read warning:', e);
+        }
+    };
+}
+initElevationData();
+// Precise lunar surface radius (matching GPU displacement scale = 0.06)
+function getLunarSurfaceRadius(lat, lon) {
+    if (heightmapData) {
+        const mx = lonToMapX(lon);
+        const my = latToMapY(lat);
+        const u = (mx + 2.0) / 4.0;
+        const v = (my + 1.0) / 2.0;
+        const fx = Math.max(0, Math.min(1, u)) * (HEIGHTMAP_WIDTH - 1);
+        const fy = (1.0 - Math.max(0, Math.min(1, v))) * (HEIGHTMAP_HEIGHT - 1);
+        const x0 = Math.floor(fx);
+        const y0 = Math.floor(fy);
+        const idx = (y0 * HEIGHTMAP_WIDTH + x0) * 4;
+        const rawVal = heightmapData[idx]; // 0 .. 255
+        const disp = (rawVal / 255.0) * 0.06;
+        return 1.0 + disp + 0.0035; // Tip touches exact displaced surface with clean ground clearance
+    }
+    return 1.028;
+}
+
 // 3D <-> 2D Synchronized Red Pointer (📍) Positions and Orientations
 const markerPos3D = new THREE.Vector3();
 const markerQuat3D = new THREE.Quaternion();
 const markerPos2D = new THREE.Vector3();
 const markerQuat2D = new THREE.Quaternion();
 
-function updateSurfaceMarkerTargets(lat, lon) {
+function updateSurfaceMarkerTargets(lat, lon, customRadius = null) {
     const localNorm = latLonToLocalPosition(lat, lon, 1.0).normalize();
-    markerPos3D.copy(localNorm.clone().multiplyScalar(1.002));
+    const surfaceRadius = customRadius || getLunarSurfaceRadius(lat, lon);
+    markerPos3D.copy(localNorm.clone().multiplyScalar(surfaceRadius));
     markerQuat3D.setFromUnitVectors(new THREE.Vector3(0, 1, 0), localNorm);
 
     const mx = lonToMapX(lon);
@@ -1145,10 +1223,6 @@ function selectPOI(poi) {
 
     // Attach synchronized red pointer (📍) to the selected POI
     updateSurfaceMarkerTargets(poi.lat, poi.lon);
-    if (typeof updateSolarTarget === 'function') {
-        const poiType = poi.category === 'mission' ? 'MISSION LANDER' : (poi.category === 'crater' ? 'CRATER' : (poi.type || 'POI'));
-        updateSolarTarget(poi.lat, poi.lon, poi.name, poi.date || null, poiType);
-    }
 
     // Smooth navigation based on active view mode
     if (currentViewMode === '2d') {
@@ -1193,11 +1267,8 @@ function updatePOILabels() {
         if (selectedPOI === poi) {
             showLabel = true;
         } else if (currentViewMode === '2d') {
-            if (camera.position.z <= 2.6) {
-                showLabel = true;
-            } else {
-                showLabel = poi.major === true;
-            }
+            // In 2D map view, permanently display all crater and landing spot names without requiring zoom
+            showLabel = true;
         } else {
             // 3D globe mode
             if (camDist <= 3.8) {
@@ -1507,6 +1578,7 @@ function setViewMode(mode) {
         starsMaterial.opacity = 0.0;
         ambientLight.intensity = 0.45;
         sunLight.intensity = 2.4;
+        sunLight.position.set(0, 0, 5);
 
         // Position POI markers on 2D map
         for (const item of poiEntries) {
@@ -1538,7 +1610,7 @@ function setViewMode(mode) {
             controls.target.set(0.25, 0, 0);
         }
         controls.update();
-        if (typeof updateSolarLighting === 'function') updateSolarLighting();
+        if (typeof poleGroup !== 'undefined') poleGroup.visible = false;
     } else {
         // Exit any active 2D distance measurement
         exitMeasurementMode();
@@ -1556,8 +1628,9 @@ function setViewMode(mode) {
         graticuleMat.opacity = 0.0;
 
         starsMaterial.opacity = 0.85;
-        ambientLight.intensity = 0.08;
-        sunLight.intensity = 3.6;
+        ambientLight.intensity = 0.40;
+        sunLight.intensity = 4.2;
+        sunLight.position.set(3.5, 1.8, 2.6);
 
         // Position POI markers on 3D sphere
         for (const item of poiEntries) {
@@ -1591,7 +1664,7 @@ function setViewMode(mode) {
             controls.target.set(0, 0, 0);
         }
         controls.update();
-        if (typeof updateSolarLighting === 'function') updateSolarLighting();
+        if (typeof poleGroup !== 'undefined') poleGroup.visible = true;
     }
 }
 
@@ -1604,30 +1677,6 @@ let measureState = 'IDLE'; // 'IDLE' | 'SELECTING_START' | 'DRAWING' | 'COMPLETE
 let measureStartCoords = null; // { lat, lon }
 let measureEndCoords = null;   // { lat, lon }
 let isDraggingMeasure = false;
-
-// LOLA Altimetry Data Store (1024 x 512 Equirectangular elevation data)
-let heightmapData = null;
-const HEIGHTMAP_WIDTH = 1024;
-const HEIGHTMAP_HEIGHT = 512;
-
-function initElevationData() {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = '/moon-height.jpg';
-    img.onload = () => {
-        const c = document.createElement('canvas');
-        c.width = HEIGHTMAP_WIDTH;
-        c.height = HEIGHTMAP_HEIGHT;
-        const ctx = c.getContext('2d', { willReadFrequently: true });
-        ctx.drawImage(img, 0, 0, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT);
-        try {
-            heightmapData = ctx.getImageData(0, 0, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT).data;
-        } catch (e) {
-            console.warn('Heightmap canvas read warning:', e);
-        }
-    };
-}
-initElevationData();
 
 // Bilinear lunar elevation sampling relative to datum R = 1737.4 km
 function sampleHeightmapElevationKm(lat, lon) {
@@ -2165,12 +2214,14 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
 });
 
 function isPointerOverCompass(clientX, clientY) {
-    const isMobile = window.innerWidth < 640;
-    const compassSize = isMobile ? 92 : 112;
-    const margin = isMobile ? 16 : 24;
+    const compassEl = document.getElementById('compass-panel');
+    if (!compassEl) return false;
+    const rect = compassEl.getBoundingClientRect();
     return (
-        clientX >= window.innerWidth - compassSize - margin &&
-        clientY <= compassSize + margin
+        clientX >= rect.left &&
+        clientX <= rect.right &&
+        clientY >= rect.top &&
+        clientY <= rect.bottom
     );
 }
 
@@ -2473,15 +2524,15 @@ function onLunarSurfacePointSelected(lat, lon) {
     // Attach synchronized red pointer (📍) to surface
     updateSurfaceMarkerTargets(lat, finalLon);
 
-    const isMission = missionResult.found && missionResult.mission;
-    const targetLabel = isMission
-        ? missionResult.mission.name
-        : (matchedCrater ? matchedCrater.name : `${latFormatted}, ${lonFormatted}`);
-    const targetType = isMission ? 'MISSION LANDER' : (matchedCrater ? 'CRATER' : 'SURFACE POINT');
-    const missionDate = isMission ? (missionResult.mission.date || null) : null;
+    // On standard surface clicks on the main page, keep solar analysis hidden (just coordinates & mission/crater)
+    const hudSolar = document.getElementById('hud-solar-analysis');
+    if (hudSolar) hudSolar.style.display = 'none';
 
-    if (typeof updateSolarTarget === 'function') {
-        updateSolarTarget(lat, finalLon, targetLabel, missionDate, targetType);
+    // Show Lunar Compass HUD
+    const hud = document.getElementById('lunar-hud');
+    if (hud) {
+        hud.style.display = 'block';
+        hud.classList.add('active');
     }
 }
 
@@ -2606,13 +2657,17 @@ if (btnHemiW) {
 // Camera animation transit state
 let isNavigating = false;
 let navStartTime = 0;
-const navDuration = 1200; // 1.2s smooth transit
+const navDuration = 1600; // 1.6s smooth cinematic arc transit
 const navStartDir = new THREE.Vector3();
 const navEndDir = new THREE.Vector3();
 const qNavStart = new THREE.Quaternion();
 const qNavEnd = new THREE.Quaternion();
 let navStartDist = 3.2;
-let navEndDist = 2.7;
+let navEndDist = 2.45;
+
+// Pin-drop touchdown animation state
+let markerDropActive = false;
+let markerDropStartTime = 0;
 
 function parseLatitude(input) {
     if (!input || !input.trim()) {
@@ -2773,64 +2828,466 @@ function handleClearReset() {
     });
 
     const hudPanel = document.getElementById('lunar-hud');
-    if (hudPanel) hudPanel.classList.remove('active');
+    if (hudPanel) {
+        hudPanel.style.display = 'none';
+        hudPanel.classList.remove('active');
+    }
 }
 
 if (btnGoto) btnGoto.addEventListener('click', handleGoToSubmit);
 if (btnClear) btnClear.addEventListener('click', handleClearReset);
 
-// Toggle "Go to Coordinates" box from button inside Lunar Compass HUD
-const btnToggleNav = document.getElementById('btn-toggle-nav');
-const lunarNavPanel = document.getElementById('lunar-nav');
+// ============================================================================
+// 12E. LUNAR COMPASS HUD SOLAR ANALYSIS & SITE NAVIGATOR INTEGRATION
+// ============================================================================
 
-if (btnToggleNav && lunarNavPanel) {
-    btnToggleNav.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isHidden = lunarNavPanel.style.display === 'none' || getComputedStyle(lunarNavPanel).display === 'none';
-        if (isHidden) {
-            lunarNavPanel.style.display = 'block';
-            btnToggleNav.classList.add('active');
-            if (navLatInput) {
-                setTimeout(() => navLatInput.focus(), 60);
-            }
+function updateHUDSolarAnalysis(latDeg, lonDeg, epochDate = new Date()) {
+    const hudSolarAnalysis = document.getElementById('hud-solar-analysis');
+    const hudValElevation = document.getElementById('hud-val-solar-elevation');
+    const hudValAzimuth = document.getElementById('hud-val-solar-azimuth');
+    const hudValIncidence = document.getElementById('hud-val-solar-incidence');
+    const hudSolarBadge = document.getElementById('hud-solar-badge');
+    const hudRowObstruction = document.getElementById('hud-row-terrain-obstruction');
+    const hudValObstruction = document.getElementById('hud-val-terrain-obstruction');
+
+    if (!hudSolarAnalysis) return;
+    hudSolarAnalysis.style.display = 'block';
+
+    const sunData = getSunInMoonFrame(epochDate);
+    const angles = calculateSolarAngles(latDeg, lonDeg, sunData.s_moon);
+    const obstruction = calculateTerrainHorizonObstruction(latDeg, lonDeg, angles.azimuth, angles.elevation);
+
+    if (hudValElevation) {
+        hudValElevation.textContent = `${angles.elevation >= 0 ? '+' : ''}${angles.elevation.toFixed(1)}°`;
+    }
+    if (hudValAzimuth) {
+        hudValAzimuth.textContent = `${angles.azimuth.toFixed(1)}°`;
+    }
+    if (hudValIncidence) {
+        hudValIncidence.textContent = `${angles.incidenceDeg.toFixed(1)}°`;
+    }
+
+    if (hudSolarBadge) {
+        hudSolarBadge.className = 'hud-solar-badge';
+        if (obstruction.status === 'SUNLIT') {
+            hudSolarBadge.classList.add('sunlit');
+            hudSolarBadge.textContent = '☀️ DIRECT SUNLIGHT';
+        } else if (obstruction.status === 'TERRAIN_SHADOW') {
+            hudSolarBadge.classList.add('blocked');
+            hudSolarBadge.textContent = '🌑 RIM SHADOWED';
         } else {
-            lunarNavPanel.style.display = 'none';
-            btnToggleNav.classList.remove('active');
+            hudSolarBadge.classList.add('shadowed');
+            hudSolarBadge.textContent = '🌑 NIGHT';
+        }
+    }
+
+    if (hudRowObstruction && hudValObstruction) {
+        if (obstruction.status === 'TERRAIN_SHADOW') {
+            hudRowObstruction.style.display = 'flex';
+            hudValObstruction.textContent = `Blocked by ${obstruction.horizonElevationDeg.toFixed(1)}° rim (${obstruction.obstructionSource || 'LOLA Rim'})`;
+        } else {
+            hudRowObstruction.style.display = 'none';
+        }
+    }
+}
+
+async function fetchBackendMissionData(lat, lon, epochDate) {
+    try {
+        const payload = {
+            latitude: lat,
+            longitude: lon,
+            date: epochDate.toISOString().split('T')[0],
+            epochIso: epochDate.toISOString()
+        };
+        const res = await fetch('/api/mission-analysis', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data.solarIllumination) {
+                const si = data.solarIllumination;
+                const hudValElevation = document.getElementById('hud-val-solar-elevation');
+                const hudValAzimuth = document.getElementById('hud-val-solar-azimuth');
+                const hudSolarBadge = document.getElementById('hud-solar-badge');
+                if (si.elevationDeg != null && hudValElevation) {
+                    hudValElevation.textContent = `${si.elevationDeg >= 0 ? '+' : ''}${si.elevationDeg.toFixed(1)}°`;
+                }
+                if (si.azimuthDeg != null && hudValAzimuth) {
+                    hudValAzimuth.textContent = `${si.azimuthDeg.toFixed(1)}°`;
+                }
+                if (si.state && hudSolarBadge) {
+                    hudSolarBadge.textContent = si.state;
+                }
+            }
+            if (data.matchedSite) {
+                const valSite = document.getElementById('val-site');
+                if (valSite) valSite.textContent = data.matchedSite;
+            }
+        }
+    } catch (e) {
+        // Fallback astronomical ephemeris and LOLA data already active
+    }
+}
+
+function pointAndAnalyzeSite(lat, lon, epochDate = new Date()) {
+    // 1. Ensure we are in 3D mode so Moon globe is displayed
+    if (currentViewMode !== '3d') {
+        setViewMode('3d');
+    }
+
+    // 2. Position the surface marker at exact lunar surface elevation
+    updateSurfaceMarkerTargets(lat, lon);
+    surfaceMarker.visible = true;
+
+    // Trigger pin drop touchdown animation as camera arrives at destination
+    markerDropActive = true;
+    markerDropStartTime = performance.now() + 650;
+    surfaceMarker.scale.set(0.001, 0.001, 0.001);
+
+    // 3. Transit camera smoothly to coordinates (1.6s smooth cinematic arc)
+    navigateToCoordinates(lat, lon);
+
+    // 4. Update HUD with coordinates and mission/crater info
+    onLunarSurfacePointSelected(lat, lon);
+
+    // 5. Update HUD sunlight analysis section
+    updateHUDSolarAnalysis(lat, lon, epochDate);
+
+    // 6. Ensure HUD is displayed on Moon page
+    const hud = document.getElementById('lunar-hud');
+    if (hud) {
+        hud.style.display = 'block';
+        hud.classList.add('active');
+    }
+
+    // 7. Connect to backend POST /api/mission-analysis in background
+    fetchBackendMissionData(lat, lon, epochDate);
+}
+
+// -------------------------------------------------------------------------
+// LUNAR SITE NAVIGATOR FORM CONTROLLER (PAGE 2)
+// -------------------------------------------------------------------------
+function setupSiteNavigator() {
+    const siteNavLat = document.getElementById('site-nav-lat');
+    const siteNavLon = document.getElementById('site-nav-lon');
+    const siteNavDate = document.getElementById('site-nav-date');
+    const siteNavError = document.getElementById('site-nav-error');
+    const btnSiteNavSubmit = document.getElementById('btn-site-nav-submit');
+    const btnSiteNavReset = document.getElementById('btn-site-nav-reset');
+    const btnSiteToday = document.getElementById('site-btn-today');
+
+    const siteBtnHemiN = document.getElementById('site-btn-hemi-n');
+    const siteBtnHemiS = document.getElementById('site-btn-hemi-s');
+    const siteBtnHemiE = document.getElementById('site-btn-hemi-e');
+    const siteBtnHemiW = document.getElementById('site-btn-hemi-w');
+
+    let siteLatHemi = 'N';
+    let siteLonHemi = 'E';
+
+    // Set today's date
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (siteNavDate && !siteNavDate.value) {
+        siteNavDate.value = todayStr;
+    }
+    if (btnSiteToday) {
+        btnSiteToday.addEventListener('click', () => {
+            if (siteNavDate) siteNavDate.value = new Date().toISOString().split('T')[0];
+        });
+    }
+
+    // Hemisphere toggles
+    if (siteBtnHemiN && siteBtnHemiS) {
+        siteBtnHemiN.addEventListener('click', () => {
+            siteLatHemi = 'N';
+            siteBtnHemiN.classList.add('active');
+            siteBtnHemiS.classList.remove('active');
+        });
+        siteBtnHemiS.addEventListener('click', () => {
+            siteLatHemi = 'S';
+            siteBtnHemiS.classList.add('active');
+            siteBtnHemiN.classList.remove('active');
+        });
+    }
+
+    if (siteBtnHemiE && siteBtnHemiW) {
+        siteBtnHemiE.addEventListener('click', () => {
+            siteLonHemi = 'E';
+            siteBtnHemiE.classList.add('active');
+            siteBtnHemiW.classList.remove('active');
+        });
+        siteBtnHemiW.addEventListener('click', () => {
+            siteLonHemi = 'W';
+            siteBtnHemiW.classList.add('active');
+            siteBtnHemiE.classList.remove('active');
+        });
+    }
+
+    // Preset cards
+    document.querySelectorAll('.preset-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const lat = card.getAttribute('data-lat');
+            const hLat = card.getAttribute('data-hemi-lat') || 'N';
+            const lon = card.getAttribute('data-lon');
+            const hLon = card.getAttribute('data-hemi-lon') || 'E';
+
+            if (siteNavLat) siteNavLat.value = lat;
+            if (siteNavLon) siteNavLon.value = lon;
+
+            if (hLat === 'S' && siteBtnHemiS) {
+                siteLatHemi = 'S';
+                siteBtnHemiS.classList.add('active');
+                if (siteBtnHemiN) siteBtnHemiN.classList.remove('active');
+            } else if (siteBtnHemiN) {
+                siteLatHemi = 'N';
+                siteBtnHemiN.classList.add('active');
+                if (siteBtnHemiS) siteBtnHemiS.classList.remove('active');
+            }
+
+            if (hLon === 'W' && siteBtnHemiW) {
+                siteLonHemi = 'W';
+                siteBtnHemiW.classList.add('active');
+                if (siteBtnHemiE) siteBtnHemiE.classList.remove('active');
+            } else if (siteBtnHemiE) {
+                siteLonHemi = 'E';
+                siteBtnHemiE.classList.add('active');
+                if (siteBtnHemiW) siteBtnHemiW.classList.remove('active');
+            }
+
+            if (siteNavError) siteNavError.style.display = 'none';
+
+            // Visual feedback
+            document.querySelectorAll('.preset-card').forEach(c => c.style.borderColor = '');
+            card.style.borderColor = '#38bdf8';
+        });
+    });
+
+    // Reset button
+    if (btnSiteNavReset) {
+        btnSiteNavReset.addEventListener('click', () => {
+            if (siteNavLat) siteNavLat.value = '';
+            if (siteNavLon) siteNavLon.value = '';
+            if (siteNavDate) siteNavDate.value = new Date().toISOString().split('T')[0];
+            if (siteNavError) siteNavError.style.display = 'none';
+            document.querySelectorAll('.preset-card').forEach(c => c.style.borderColor = '');
+            if (siteBtnHemiN) {
+                siteLatHemi = 'N';
+                siteBtnHemiN.classList.add('active');
+                if (siteBtnHemiS) siteBtnHemiS.classList.remove('active');
+            }
+            if (siteBtnHemiE) {
+                siteLonHemi = 'E';
+                siteBtnHemiE.classList.add('active');
+                if (siteBtnHemiW) siteBtnHemiW.classList.remove('active');
+            }
+        });
+    }
+
+    // Submit handler
+    function handleSiteNavSubmit() {
+        if (!siteNavLat || !siteNavLon) return;
+
+        let rawLatStr = siteNavLat.value.trim().replace(/°/g, '');
+        if (!rawLatStr) {
+            showError('Please enter a target latitude value (e.g. 69.373 or 0.674).');
+            siteNavLat.focus();
+            return;
+        }
+
+        // Auto-detect typed S or N or leading minus
+        if (/[sS]/.test(rawLatStr) || rawLatStr.startsWith('-')) {
+            siteLatHemi = 'S';
+            if (siteBtnHemiS) siteBtnHemiS.classList.add('active');
+            if (siteBtnHemiN) siteBtnHemiN.classList.remove('active');
+        } else if (/[nN]/.test(rawLatStr) || rawLatStr.startsWith('+')) {
+            siteLatHemi = 'N';
+            if (siteBtnHemiN) siteBtnHemiN.classList.add('active');
+            if (siteBtnHemiS) siteBtnHemiS.classList.remove('active');
+        }
+
+        rawLatStr = rawLatStr.replace(/[-+nNsS]/gi, '').trim();
+        let latVal = parseFloat(rawLatStr);
+        if (isNaN(latVal)) {
+            showError('Invalid latitude: please enter a numeric value.');
+            siteNavLat.focus();
+            return;
+        }
+        if (latVal < 0.0 || latVal > 90.0) {
+            showError('Latitude out of range: must be between 0° and 90°.');
+            siteNavLat.focus();
+            return;
+        }
+        const signedLat = (siteLatHemi === 'S') ? -Math.abs(latVal) : Math.abs(latVal);
+
+        let rawLonStr = siteNavLon.value.trim().replace(/°/g, '');
+        if (!rawLonStr) {
+            showError('Please enter a target longitude value (e.g. 32.319 or 23.473).');
+            siteNavLon.focus();
+            return;
+        }
+
+        // Auto-detect typed W or E or leading minus
+        if (/[wW]/.test(rawLonStr) || rawLonStr.startsWith('-')) {
+            siteLonHemi = 'W';
+            if (siteBtnHemiW) siteBtnHemiW.classList.add('active');
+            if (siteBtnHemiE) siteBtnHemiE.classList.remove('active');
+        } else if (/[eE]/.test(rawLonStr) || rawLonStr.startsWith('+')) {
+            siteLonHemi = 'E';
+            if (siteBtnHemiE) siteBtnHemiE.classList.add('active');
+            if (siteBtnHemiW) siteBtnHemiW.classList.remove('active');
+        }
+
+        rawLonStr = rawLonStr.replace(/[-+eEwW]/gi, '').trim();
+        let lonVal = parseFloat(rawLonStr);
+        if (isNaN(lonVal)) {
+            showError('Invalid longitude: please enter a numeric value.');
+            siteNavLon.focus();
+            return;
+        }
+        const absLon = Math.abs(lonVal);
+        let finalLon360 = absLon;
+        if (siteLonHemi === 'W') {
+            finalLon360 = (360.0 - (absLon % 360.0)) % 360.0;
+        } else {
+            finalLon360 = (absLon % 360.0);
+        }
+
+        // Epoch date
+        let epochDate = new Date();
+        if (siteNavDate && siteNavDate.value) {
+            const parts = siteNavDate.value.split('-');
+            if (parts.length === 3) {
+                epochDate = new Date(Date.UTC(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0));
+            }
+        }
+
+        if (siteNavError) siteNavError.style.display = 'none';
+
+        // 1. Smoothly fade out the overlay
+        navigateToRoute('close');
+
+        // 2. Begin smooth camera arc transit & point analysis on the Moon immediately
+        pointAndAnalyzeSite(signedLat, finalLon360, epochDate);
+    }
+
+    function showError(msg) {
+        if (siteNavError) {
+            siteNavError.textContent = msg;
+            siteNavError.style.display = 'block';
+        }
+    }
+
+    if (btnSiteNavSubmit) {
+        btnSiteNavSubmit.addEventListener('click', handleSiteNavSubmit);
+    }
+
+    if (siteNavLat) {
+        siteNavLat.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleSiteNavSubmit();
+        });
+    }
+    if (siteNavLon) {
+        siteNavLon.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleSiteNavSubmit();
+        });
+    }
+
+    // HUD buttons:
+    const btnOpenSiteNav = document.getElementById('btn-open-site-navigator');
+    if (btnOpenSiteNav) {
+        btnOpenSiteNav.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navigateToRoute('site-navigator');
+        });
+    }
+
+    const btnCloseHud = document.getElementById('btn-close-hud');
+    if (btnCloseHud) {
+        btnCloseHud.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const hud = document.getElementById('lunar-hud');
+            if (hud) hud.style.display = 'none';
+        });
+    }
+}
+
+// Coordinate Copy Feature in Lunar Compass HUD
+function setupCoordinateCopy() {
+    const btnCopy = document.getElementById('btn-copy-coords');
+    const copyText = document.getElementById('copy-coords-text');
+    const defIcon = btnCopy ? btnCopy.querySelector('.default-icon') : null;
+    const succIcon = btnCopy ? btnCopy.querySelector('.success-icon') : null;
+
+    if (!btnCopy) return;
+
+    btnCopy.addEventListener('click', async (e) => {
+        e.stopPropagation();
+
+        const latEl = document.getElementById('val-lat');
+        const lonEl = document.getElementById('val-lon');
+
+        const latText = latEl ? latEl.textContent.trim() : '';
+        const lonText = lonEl ? lonEl.textContent.trim() : '';
+
+        if (!latText || latText === '--' || !lonText || lonText === '--') {
+            if (copyText) copyText.textContent = 'NO COORDS SELECTED';
+            setTimeout(() => {
+                if (copyText) copyText.textContent = 'COPY COORDINATES';
+            }, 1500);
+            return;
+        }
+
+        const textToCopy = `${latText}, ${lonText}`;
+
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(textToCopy);
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = textToCopy;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            }
+
+            btnCopy.classList.add('copied');
+            if (defIcon) defIcon.style.display = 'none';
+            if (succIcon) succIcon.style.display = 'inline-block';
+            if (copyText) copyText.textContent = 'COPIED TO CLIPBOARD!';
+
+            setTimeout(() => {
+                btnCopy.classList.remove('copied');
+                if (defIcon) defIcon.style.display = 'inline-block';
+                if (succIcon) succIcon.style.display = 'none';
+                if (copyText) copyText.textContent = 'COPY COORDINATES';
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy coordinates:', err);
+        }
+    });
+
+    // Also clicking directly on latitude or longitude value copies
+    const valLat = document.getElementById('val-lat');
+    const valLon = document.getElementById('val-lon');
+    [valLat, valLon].forEach(el => {
+        if (el) {
+            el.addEventListener('click', () => {
+                if (btnCopy) btnCopy.click();
+            });
         }
     });
 }
 
-if (navLatInput) {
-    navLatInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleGoToSubmit();
-    });
-    navLatInput.addEventListener('input', () => {
-        const text = navLatInput.value.trim();
-        if (text.startsWith('-') || /[sS]/.test(text)) {
-            setLatHemisphere('S');
-        } else if (text.startsWith('+') || /[nN]/.test(text)) {
-            setLatHemisphere('N');
-        }
-    });
-    navLatInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-}
-
-if (navLonInput) {
-    navLonInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleGoToSubmit();
-    });
-    navLonInput.addEventListener('input', () => {
-        const text = navLonInput.value.trim();
-        if (text.startsWith('-') || /[wW]/.test(text)) {
-            setLonHemisphere('W');
-        } else if (text.startsWith('+') || /[eE]/.test(text)) {
-            setLonHemisphere('E');
-        }
-    });
-    navLonInput.addEventListener('pointerdown', (e) => e.stopPropagation());
-}
+// Initialize Site Navigator & Coordinate Copy
+setupSiteNavigator();
+setupCoordinateCopy();
 
 
+// ============================================================================
 // ============================================================================
 // 13. 3D LUNAR GEOGRAPHIC ORIENTATION COMPASS (TOP-RIGHT CORNER)
 // ============================================================================
@@ -2841,7 +3298,7 @@ const compassRenderer = new THREE.WebGLRenderer({
     alpha: true,
     antialias: true
 });
-const dpr = Math.min(window.devicePixelRatio || 1, 2);
+const dpr = Math.min(window.devicePixelRatio || 1, 3);
 compassRenderer.setPixelRatio(dpr);
 compassRenderer.setSize(112, 112, false);
 compassRenderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -3049,9 +3506,7 @@ function createFacetMesh(p1, p2, p3, color, metalness = 0.85, roughness = 0.25) 
     return new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color, metalness, roughness }));
 }
 
-// -------------------------------------------------------------------------
 // NORTH POLE POINTER (Single Faceted Vibrant Red Needle - Length: 0.65)
-// -------------------------------------------------------------------------
 // Left bevel facet (Bright Crimson / Ruby)
 needleGroup.add(createFacetMesh([-0.055, 0.0, 0.020], [0.0, 0.0, 0.048], [0.0, 0.65, 0.035], 0xef4444, 0.80, 0.22));
 // Right bevel facet (Deep Crimson / Ruby shadow)
@@ -3061,9 +3516,7 @@ needleGroup.add(createFacetMesh([ 0.055, 0.0, 0.020], [0.0, 0.65, 0.035], [0.0, 
 needleGroup.add(createFacetMesh([-0.040, 0.0, 0.020], [0.0, -0.14, 0.030], [0.0, 0.0, 0.048], 0xdc2626, 0.80, 0.28));
 needleGroup.add(createFacetMesh([ 0.040, 0.0, 0.020], [0.0, 0.0, 0.048], [0.0, -0.14, 0.030], 0xb91c1c, 0.80, 0.32));
 
-// -------------------------------------------------------------------------
-// 6. Central Pivot Hub (Attached to rotating pointer)
-// -------------------------------------------------------------------------
+// Central Pivot Hub (Attached to rotating pointer)
 const pivotCollarGeo = new THREE.CylinderGeometry(0.09, 0.11, 0.03, 32);
 pivotCollarGeo.rotateX(Math.PI / 2);
 const pivotCollarMat = new THREE.MeshStandardMaterial({
@@ -3103,16 +3556,12 @@ let currentCompassAngle = 0;
 let targetCompassAngle = 0;
 
 function updateCompassOrientation() {
+    if (!compassRenderer || !compassCanvas) return;
     if (currentViewMode === '2d') {
         // In 2D equirectangular map mode, geographic North is permanently Up (+Y)
         targetCompassAngle = 0;
     } else {
-        // 3D Globe Mode: Dynamically tracks lunar orientation in all 4 cardinal directions:
-        // - Turn East -> needle points to East (E)
-        // - Turn West -> needle points to West (W)
-        // - Rotate towards North Pole -> needle indicates North (N)
-        // - Rotate towards South Pole -> needle indicates South (S)
-        // - Startup (Near Side equator) -> needle is in center and points towards North (N)
+        // 3D Globe Mode: Dynamically tracks lunar orientation in all 4 cardinal directions
         const camLocal = moon.worldToLocal(camera.position.clone()).normalize();
 
         const latRad = Math.asin(Math.max(-1.0, Math.min(1.0, camLocal.y)));
@@ -3120,11 +3569,9 @@ function updateCompassOrientation() {
 
         let heading = 0;
         if (latRad >= 0) {
-            // Northern hemisphere: blends from horizontal longitude heading towards North (0 rad)
             const fNorth = latRad / (Math.PI / 2);
             heading = lonRad * (1.0 - fNorth);
         } else {
-            // Southern hemisphere: blends from horizontal longitude heading towards South (PI rad)
             const fSouth = -latRad / (Math.PI / 2);
             if (lonRad >= 0) {
                 heading = lonRad * (1.0 - fSouth) + Math.PI * fSouth;
@@ -3132,9 +3579,6 @@ function updateCompassOrientation() {
                 heading = lonRad * (1.0 - fSouth) - Math.PI * fSouth;
             }
         }
-
-        // On the compass dial: N is Top (0 rad), E is Right (-PI/2 in Three.js Z-rotation),
-        // S is Bottom (PI rad), W is Left (+PI/2 in Three.js Z-rotation)
         targetCompassAngle = -heading;
     }
 
@@ -3144,13 +3588,13 @@ function updateCompassOrientation() {
     if (diff > Math.PI) diff -= Math.PI * 2;
     currentCompassAngle += diff * 0.22;
 
-    // Rotate ONLY the needle; the dial face (N, E, S, W) and bezel remain 100% stationary
     needleGroup.rotation.z = currentCompassAngle;
     needleGroup.rotation.x = 0;
     needleGroup.rotation.y = 0;
 }
 
 function updateCompassSize() {
+    if (!compassRenderer || !compassCanvas) return;
     const isMobile = window.innerWidth < 640;
     const size = isMobile ? 92 : 112;
     compassRenderer.setSize(size, size, false);
@@ -3165,7 +3609,6 @@ if (compassPanelEl) {
         if (currentViewMode === '2d') {
             pan2DMapTo(0.25, 0, 2.9);
         } else {
-            // Reset camera and controls to standard Near Side North-Up view
             camera.position.set(0, 0, 3.2);
             camera.lookAt(0, 0, 0);
             controls.target.set(0, 0, 0);
@@ -3173,6 +3616,579 @@ if (compassPanelEl) {
         }
     });
 }
+
+// ============================================================================
+// 13B. COLLAPSIBLE LUNAR LANDING SITE SIDEBAR CONTROLLER
+// Pushes down Lunar Compass HUD naturally when expanded
+// ============================================================================
+
+const navSidebar = document.getElementById('lunar-nav-sidebar');
+const navSidebarHeader = document.getElementById('nav-sidebar-header');
+const btnToggleNavSidebar = document.getElementById('btn-toggle-nav-sidebar');
+
+function toggleNavSidebar(forceState) {
+    if (!navSidebar) return;
+    const isCurrentlyCollapsed = navSidebar.classList.contains('collapsed');
+    const shouldCollapse = forceState !== undefined ? forceState : !isCurrentlyCollapsed;
+
+    if (shouldCollapse) {
+        navSidebar.classList.add('collapsed');
+    } else {
+        navSidebar.classList.remove('collapsed');
+    }
+}
+
+if (navSidebarHeader) {
+    navSidebarHeader.addEventListener('click', () => {
+        toggleNavSidebar();
+    });
+    navSidebarHeader.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleNavSidebar();
+        }
+    });
+}
+if (btnToggleNavSidebar) {
+    btnToggleNavSidebar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleNavSidebar();
+    });
+}
+
+// ============================================================================
+// 13C. MULTI-PAGE OVERLAY & ROUTING CONTROLLER
+// Supports: 'plan-mission', 'site-navigator', 'comparative-study', 'history'
+// Pages 2, 3, 4 display strictly "YET TO WORK"
+// ============================================================================
+
+const missionPagesOverlay = document.getElementById('mission-pages-overlay');
+const btnBackToMoon = document.getElementById('btn-back-to-moon');
+const breadcrumbPageName = document.getElementById('breadcrumb-page-name');
+const pageViews = {
+    'plan-mission': document.getElementById('view-plan-mission'),
+    'site-navigator': document.getElementById('view-site-navigator'),
+    'comparative-study': document.getElementById('view-comparative-study'),
+    'history': document.getElementById('view-history')
+};
+const pageTitles = {
+    'plan-mission': 'Plan Your Mission',
+    'site-navigator': 'Lunar Site Coordinator',
+    'comparative-study': 'Comparative Study',
+    'history': 'History'
+};
+
+let currentRoute = null;
+let isRouteTransitioning = false;
+
+function navigateToRoute(route, onComplete = null) {
+    if (!missionPagesOverlay) return;
+
+    if (!route || route === 'close') {
+        if (missionPagesOverlay.classList.contains('active')) {
+            isRouteTransitioning = true;
+            missionPagesOverlay.classList.remove('active');
+            missionPagesOverlay.classList.add('fading-out');
+
+            setTimeout(() => {
+                missionPagesOverlay.style.display = 'none';
+                missionPagesOverlay.classList.remove('fading-out');
+                currentRoute = null;
+                isRouteTransitioning = false;
+                if (window.location.hash) {
+                    history.replaceState(null, '', window.location.pathname + window.location.search);
+                }
+                if (typeof onComplete === 'function') onComplete();
+            }, 380);
+        } else {
+            missionPagesOverlay.style.display = 'none';
+            missionPagesOverlay.classList.remove('active', 'fading-out');
+            currentRoute = null;
+            if (typeof onComplete === 'function') onComplete();
+        }
+        return;
+    }
+
+    if (!pageViews[route]) return;
+    currentRoute = route;
+
+    // Show overlay explicitly with smooth fade in
+    missionPagesOverlay.style.display = 'flex';
+    void missionPagesOverlay.offsetWidth; // Force layout reflow
+    missionPagesOverlay.classList.add('active');
+    missionPagesOverlay.classList.remove('fading-out');
+
+    // Update active tab buttons
+    document.querySelectorAll('.page-tab-btn').forEach(btn => {
+        const targetRoute = btn.getAttribute('data-target-route');
+        if (targetRoute === route) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // Update active menu buttons in sidebar
+    document.querySelectorAll('.nav-menu-item').forEach(btn => {
+        const itemRoute = btn.getAttribute('data-route');
+        if (itemRoute === route) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // Toggle view content visibility
+    Object.keys(pageViews).forEach(r => {
+        const el = pageViews[r];
+        if (!el) return;
+        if (r === route) {
+            el.style.display = 'block';
+            el.classList.add('active');
+        } else {
+            el.style.display = 'none';
+            el.classList.remove('active');
+        }
+    });
+
+    // Update breadcrumb
+    const crumb = document.getElementById('breadcrumb-page-name') || document.getElementById('page-crumb-title');
+    if (crumb) {
+        crumb.textContent = pageTitles[route] || route;
+    }
+
+    // Update URL hash without reload
+    window.location.hash = route;
+}
+
+// Hook up sidebar menu buttons
+document.querySelectorAll('.nav-menu-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const route = btn.getAttribute('data-route');
+        if (route) {
+            navigateToRoute(route);
+        }
+    });
+});
+
+// Hook up tab buttons inside the overlay
+document.querySelectorAll('.page-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const route = btn.getAttribute('data-target-route');
+        if (route) {
+            navigateToRoute(route);
+        }
+    });
+});
+
+// Back to Moon button
+if (btnBackToMoon) {
+    btnBackToMoon.addEventListener('click', () => {
+        navigateToRoute('close');
+    });
+}
+
+// Handle browser navigation (hashchange)
+window.addEventListener('hashchange', () => {
+    const hash = window.location.hash.replace('#', '').trim();
+    if (pageViews[hash]) {
+        navigateToRoute(hash);
+    } else if (!hash) {
+        navigateToRoute('close');
+    }
+});
+
+// Close overlay on Escape key
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && missionPagesOverlay && missionPagesOverlay.classList.contains('active')) {
+        navigateToRoute('close');
+    }
+});
+
+// Initial state on page load: ensure overlay is closed and Moon is visible by default
+if (window.location.hash) {
+    const initHash = window.location.hash.replace('#', '').trim();
+    if (pageViews[initHash]) {
+        navigateToRoute(initHash);
+    } else {
+        navigateToRoute('close');
+    }
+} else {
+    navigateToRoute('close');
+}
+
+// ============================================================================
+// 13D. "PLAN YOUR MISSION" FORM & BACKEND INTEGRATION
+// Handles inputs (Lat -90..+90, Lon 0..360 E NASA ME, Date calendar)
+// Connects to POST /api/mission-analysis with transparent status display
+// Displays: (A) Earth Visibility, (B) Solar Power, (C) Lunar Water Ice Distance
+// ============================================================================
+
+let planLatHemi = 'N';
+let planLonHemi = 'E';
+
+const planLatInput = document.getElementById('plan-lat');
+const planLonInput = document.getElementById('plan-lon');
+const planDateInput = document.getElementById('plan-date');
+const btnPlanHemiN = document.getElementById('btn-plan-hemi-n');
+const btnPlanHemiS = document.getElementById('btn-plan-hemi-s');
+const btnPlanHemiE = document.getElementById('btn-plan-hemi-e');
+const btnPlanHemiW = document.getElementById('btn-plan-hemi-w');
+const btnPlanDateToday = document.getElementById('btn-plan-date-today');
+const btnAnalyseLandingSite = document.getElementById('btn-analyse-landing-site');
+const planFormError = document.getElementById('plan-form-error');
+
+const resultsIdleState = document.getElementById('results-idle-state');
+const resultsLoadingState = document.getElementById('results-loading-state');
+const resultsContentBox = document.getElementById('results-content-box');
+const resultsSiteCoords = document.getElementById('results-site-coords');
+const backendStatusBanner = document.getElementById('backend-status-banner');
+const backendStatusDot = document.getElementById('backend-status-dot');
+const backendStatusText = document.getElementById('backend-status-text');
+
+// Set default date to today
+if (planDateInput) {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    planDateInput.value = todayStr;
+}
+if (btnPlanDateToday && planDateInput) {
+    btnPlanDateToday.addEventListener('click', () => {
+        planDateInput.value = new Date().toISOString().slice(0, 10);
+    });
+}
+
+// Hemisphere toggles
+function setPlanLatHemi(hemi) {
+    planLatHemi = hemi;
+    if (btnPlanHemiN) btnPlanHemiN.classList.toggle('active', hemi === 'N');
+    if (btnPlanHemiS) btnPlanHemiS.classList.toggle('active', hemi === 'S');
+}
+function setPlanLonHemi(hemi) {
+    planLonHemi = hemi;
+    if (btnPlanHemiE) btnPlanHemiE.classList.toggle('active', hemi === 'E');
+    if (btnPlanHemiW) btnPlanHemiW.classList.toggle('active', hemi === 'W');
+}
+
+if (btnPlanHemiN) btnPlanHemiN.addEventListener('click', () => setPlanLatHemi('N'));
+if (btnPlanHemiS) btnPlanHemiS.addEventListener('click', () => setPlanLatHemi('S'));
+if (btnPlanHemiE) btnPlanHemiE.addEventListener('click', () => setPlanLonHemi('E'));
+if (btnPlanHemiW) btnPlanHemiW.addEventListener('click', () => setPlanLonHemi('W'));
+
+// Documented NASA LRO LAMP / Mini-RF / Diviner Permanently Shadowed Region (PSR) Ice Deposits
+const DOCUMENTED_LUNAR_ICE_SITES = [
+    { name: 'Shackleton Crater PSR', lat: -89.9, lon: 0.0, evidence: 'LRO LAMP UV albedo anomaly & LOLA radar reflectance' },
+    { name: 'Faustini Crater PSR', lat: -87.3, lon: 77.0, evidence: 'Diviner < 40K cold trap & Mini-RF CPR signature' },
+    { name: 'Shoemaker Crater PSR', lat: -88.1, lon: 44.9, evidence: 'LCROSS plume water vapor (5.5 wt%) confirmed' },
+    { name: 'Cabeus Crater PSR', lat: -84.9, lon: 324.5, evidence: 'Confirmed pure surface water ice deposit (LCROSS/LRO)' },
+    { name: 'Haworth Crater PSR', lat: -87.4, lon: 355.0, evidence: 'Diviner deep cryogenic reservoir' },
+    { name: 'Amundsen Crater Floor', lat: -84.5, lon: 82.8, evidence: 'Sub-surface hydrogen enrichment (LEND)' },
+    { name: 'Nobile Rim Cold Traps', lat: -85.2, lon: 53.5, evidence: 'VIPER targeted high-volatile concentration zone' },
+    { name: 'Hermite Crater PSR (North)', lat: 86.0, lon: 270.1, evidence: 'Coldest measured solar system surface (-247°C)' },
+    { name: 'Peary Crater PSR (North)', lat: 88.6, lon: 33.0, evidence: 'Peak of eternal light adjacent to deep ice traps' },
+    { name: 'Rozhdestvenskiy PSR (North)', lat: 85.2, lon: 202.1, evidence: 'LRO LAMP Lyman-alpha albedo confirmation' }
+];
+
+// Great circle distance calculation on Moon (R = 1737.4 km)
+function computeLunarDistanceKm(lat1, lon1, lat2, lon2) {
+    const phi1 = lat1 * DEG2RAD;
+    const phi2 = lat2 * DEG2RAD;
+    const deltaPhi = (lat2 - lat1) * DEG2RAD;
+    const deltaLambda = (lon2 - lon1) * DEG2RAD;
+
+    const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+              Math.cos(phi1) * Math.cos(phi2) *
+              Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return 1737.4 * c;
+}
+
+async function runMissionAnalysis() {
+    if (!planLatInput || !planLonInput || !planDateInput) return;
+
+    if (planFormError) {
+        planFormError.style.display = 'none';
+        planFormError.textContent = '';
+    }
+
+    const latRaw = parseFloat(planLatInput.value);
+    const lonRaw = parseFloat(planLonInput.value);
+    const dateStr = planDateInput.value;
+
+    if (isNaN(latRaw) || latRaw < 0 || latRaw > 90) {
+        if (planFormError) {
+            planFormError.textContent = 'Please enter a valid latitude between 0° and 90°.';
+            planFormError.style.display = 'block';
+        }
+        return;
+    }
+    if (isNaN(lonRaw) || (planLonHemi === 'E' && (lonRaw < 0 || lonRaw > 360)) || (planLonHemi === 'W' && (lonRaw < 0 || lonRaw > 180))) {
+        if (planFormError) {
+            planFormError.textContent = 'Please enter a valid longitude.';
+            planFormError.style.display = 'block';
+        }
+        return;
+    }
+    if (!dateStr) {
+        if (planFormError) {
+            planFormError.textContent = 'Please select a valid landing date.';
+            planFormError.style.display = 'block';
+        }
+        return;
+    }
+
+    // Convert to signed latitude and 0..360 East NASA ME longitude
+    const signedLat = planLatHemi === 'S' ? -Math.abs(latRaw) : Math.abs(latRaw);
+    let eastLon360 = lonRaw;
+    if (planLonHemi === 'W') {
+        eastLon360 = (360 - (lonRaw % 360)) % 360;
+    } else {
+        eastLon360 = ((lonRaw % 360) + 360) % 360;
+    }
+
+    const epochDate = new Date(`${dateStr}T12:00:00Z`);
+
+    // UI: switch to loading state
+    if (resultsIdleState) resultsIdleState.style.display = 'none';
+    if (resultsContentBox) resultsContentBox.style.display = 'none';
+    if (resultsLoadingState) resultsLoadingState.style.display = 'block';
+
+    const coordsDisplay = `${Math.abs(signedLat).toFixed(4)}° ${planLatHemi}, ${eastLon360.toFixed(4)}° E (${dateStr})`;
+    if (resultsSiteCoords) resultsSiteCoords.textContent = coordsDisplay;
+
+    // Payload for backend endpoint POST /api/mission-analysis
+    const requestPayload = {
+        latitude: signedLat,
+        longitude: eastLon360,
+        date: epochDate.toISOString(),
+        referenceFrame: "MOON_ME"
+    };
+
+    let backendData = null;
+    let isLiveBackend = false;
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+        const response = await fetch('/api/mission-analysis', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(requestPayload),
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            backendData = await response.json();
+            isLiveBackend = true;
+        }
+    } catch (err) {
+        // Backend not deployed or unreachable
+        isLiveBackend = false;
+    }
+
+    // Render results
+    renderMissionAnalysisResults(signedLat, eastLon360, epochDate, backendData, isLiveBackend);
+}
+
+function renderMissionAnalysisResults(signedLat, lon360, epochDate, backendData, isLiveBackend) {
+    if (resultsLoadingState) resultsLoadingState.style.display = 'none';
+    if (resultsContentBox) resultsContentBox.style.display = 'block';
+
+    // Status Banner
+    if (backendStatusBanner && backendStatusText && backendStatusDot) {
+        if (isLiveBackend) {
+            backendStatusBanner.className = 'backend-status-banner connected';
+            backendStatusText.textContent = 'API Status: Connected to /api/mission-analysis (Live Backend Response)';
+        } else {
+            backendStatusBanner.className = 'backend-status-banner standalone';
+            backendStatusText.textContent = 'Awaiting Backend Service (/api/mission-analysis) Deployment — Displaying Verified Astronomical & LOLA Topography Data';
+        }
+    }
+
+    // 1. SECTION A: EARTH COMMUNICATION VISIBILITY
+    const latRad = signedLat * DEG2RAD;
+    const lonRad = lon360 * DEG2RAD;
+    const cosAngleFromEarth = Math.cos(latRad) * Math.cos(lonRad);
+    const angleFromSubEarthDeg = Math.acos(Math.max(-1.0, Math.min(1.0, cosAngleFromEarth))) * RAD2DEG;
+    const earthElevationDeg = 90.0 - angleFromSubEarthDeg;
+
+    const valEarthLOS = document.getElementById('val-earth-los');
+    const badgeEarthComm = document.getElementById('badge-earth-comm');
+    const descEarthComm = document.getElementById('desc-earth-comm');
+    const valEarthElevation = document.getElementById('val-earth-elevation');
+    const valEarthTravelDist = document.getElementById('val-earth-travel-dist');
+    const valEarthNearestCoords = document.getElementById('val-earth-nearest-coords');
+
+    if (backendData && backendData.earthCommunication) {
+        const ec = backendData.earthCommunication;
+        if (valEarthLOS) valEarthLOS.textContent = ec.status || (ec.visible ? 'DIRECT VISIBILITY' : 'NO DIRECT VISIBILITY');
+        if (badgeEarthComm) {
+            badgeEarthComm.textContent = ec.visible ? 'FAVORABLE' : 'UNFAVORABLE';
+            badgeEarthComm.className = `card-status-badge ${ec.visible ? 'status-good' : 'status-bad'}`;
+        }
+        if (descEarthComm) descEarthComm.textContent = ec.description || (ec.visible ? 'Continuous line-of-sight to Earth Deep Space Network ground stations.' : 'Obstructed by lunar body (Far Side / below local horizon). Lunar relay satellite required.');
+        if (valEarthElevation) valEarthElevation.textContent = ec.earthElevation != null ? `${ec.earthElevation.toFixed(1)}°` : `${earthElevationDeg.toFixed(1)}°`;
+        if (valEarthTravelDist) valEarthTravelDist.textContent = ec.travelDistanceKm != null ? `${ec.travelDistanceKm.toFixed(1)} km` : (earthElevationDeg >= 0 ? '0 km (In View)' : `${((angleFromSubEarthDeg - 90) * (Math.PI / 180) * 1737.4).toFixed(1)} km`);
+        if (valEarthNearestCoords) valEarthNearestCoords.textContent = ec.nearestVisibleSite || (earthElevationDeg >= 0 ? 'Current Location' : 'Lunar Limb Horizon');
+    } else {
+        const hasLOS = earthElevationDeg > 0;
+        if (valEarthLOS) {
+            valEarthLOS.textContent = hasLOS ? 'DIRECT VISIBILITY' : 'NO DIRECT VISIBILITY';
+            valEarthLOS.className = `primary-stat-value ${hasLOS ? 'stat-good' : 'stat-bad'}`;
+        }
+        if (badgeEarthComm) {
+            badgeEarthComm.textContent = hasLOS ? 'CONTINUOUS LOS' : 'RELAY REQUIRED';
+            badgeEarthComm.className = `card-status-badge ${hasLOS ? 'status-good' : 'status-bad'}`;
+        }
+        if (descEarthComm) {
+            if (hasLOS) {
+                descEarthComm.textContent = `Continuous direct line-of-sight to Earth Deep Space Network (DSN) stations. Earth sits at ${earthElevationDeg.toFixed(1)}° elevation above the horizon. No relay satellites needed for direct communication.`;
+            } else {
+                const distToLimbKm = (angleFromSubEarthDeg - 90.0) * DEG2RAD * 1737.4;
+                descEarthComm.textContent = `Located on the lunar Far Side or below the geometric horizon (${earthElevationDeg.toFixed(1)}° elevation). Direct radio transmission to Earth is fully blocked. A lunar communications orbiter relay (e.g. Queqiao / Gateway) is mandatory.`;
+                if (valEarthTravelDist) valEarthTravelDist.textContent = `${distToLimbKm.toFixed(1)} km`;
+                if (valEarthNearestCoords) valEarthNearestCoords.textContent = 'Traverse across Lunar Limb to Near Side';
+            }
+        }
+        if (valEarthElevation) valEarthElevation.textContent = `${earthElevationDeg.toFixed(1)}°`;
+        if (hasLOS) {
+            if (valEarthTravelDist) valEarthTravelDist.textContent = '0 km (Already in LOS)';
+            if (valEarthNearestCoords) valEarthNearestCoords.textContent = 'Current Site';
+        }
+    }
+
+    // 2. SECTION B: SOLAR ILLUMINATION & POWER AVAILABILITY
+    const valSolarState = document.getElementById('val-solar-state');
+    const badgeSolarPower = document.getElementById('badge-solar-power');
+    const descSolarPower = document.getElementById('desc-solar-power');
+    const valPlanSolarElevation = document.getElementById('val-plan-solar-elevation');
+    const valPlanSunlitDuration = document.getElementById('val-plan-sunlit-duration');
+    const valPlanSunDist = document.getElementById('val-plan-sun-dist');
+
+    if (backendData && backendData.solarIllumination) {
+        const si = backendData.solarIllumination;
+        if (valSolarState) valSolarState.textContent = si.state || (si.isSunlit ? 'SUNLIT' : 'SHADOWED');
+        if (badgeSolarPower) {
+            badgeSolarPower.textContent = si.isSunlit ? 'POWER OPTIMAL' : 'STORAGE / NIGHT';
+            badgeSolarPower.className = `card-status-badge ${si.isSunlit ? 'status-good' : 'status-warning'}`;
+        }
+        if (descSolarPower) descSolarPower.textContent = si.description || '';
+        if (valPlanSolarElevation) valPlanSolarElevation.textContent = si.solarElevation != null ? `${si.solarElevation.toFixed(1)}°` : '--';
+        if (valPlanSunlitDuration) valPlanSunlitDuration.textContent = si.sunlitDurationHours != null ? `${si.sunlitDurationHours.toFixed(1)} hours` : '--';
+        if (valPlanSunDist) valPlanSunDist.textContent = si.distToSunlightKm != null ? `${si.distToSunlightKm.toFixed(1)} km` : '0 km';
+    } else {
+        const sunData = getSunInMoonFrame(epochDate);
+        const angles = calculateSolarAngles(signedLat, lon360, sunData.s_moon);
+        const horizon = calculateTerrainHorizonObstruction(signedLat, lon360, angles.azimuth, angles.elevation);
+
+        const isSunlit = horizon.status === 'SUNLIT';
+        const isNight = horizon.status === 'LUNAR NIGHT';
+        const isTopoSadow = horizon.status === 'TERRAIN_SHADOW';
+
+        if (valSolarState) {
+            valSolarState.textContent = isSunlit ? 'SUNLIT' : (isTopoSadow ? 'CRATER SHADOWED' : 'LUNAR NIGHT');
+            valSolarState.className = `primary-stat-value ${isSunlit ? 'stat-good' : 'stat-bad'}`;
+        }
+        if (badgeSolarPower) {
+            badgeSolarPower.textContent = isSunlit ? 'POWER AVAILABLE' : (isTopoSadow ? 'SHADOW OBSTRUCTED' : 'BATTERY / RTG MODE');
+            badgeSolarPower.className = `card-status-badge ${isSunlit ? 'status-good' : (isTopoSadow ? 'status-warning' : 'status-bad')}`;
+        }
+        if (valPlanSolarElevation) valPlanSolarElevation.textContent = `${angles.elevation.toFixed(1)}° (${angles.azimuth.toFixed(1)}° Az)`;
+
+        let estDuration = '14 Earth Days (~354 hrs)';
+        if (Math.abs(signedLat) > 85) {
+            estDuration = 'Polar micro-illumination (~50-120 hrs per cycle)';
+        } else if (Math.abs(signedLat) > 75) {
+            estDuration = 'Low-angle periodic (~180-280 hrs)';
+        }
+        if (valPlanSunlitDuration) valPlanSunlitDuration.textContent = estDuration;
+
+        if (descSolarPower) {
+            if (isSunlit) {
+                descSolarPower.textContent = `Sun is at ${angles.elevation.toFixed(1)}° elevation (clearing local terrain by ${(angles.elevation - horizon.horizonElevationDeg).toFixed(1)}°). Solar arrays will generate direct electrical power on landing.`;
+                if (valPlanSunDist) valPlanSunDist.textContent = '0 km (Direct Sunlit Ground)';
+            } else if (isTopoSadow) {
+                descSolarPower.textContent = `Sun is geometrically above the horizon (${angles.elevation.toFixed(1)}°), but blocked by an elevated crater rim rising ${horizon.horizonElevationDeg.toFixed(1)}° along azimuth ${angles.azimuth.toFixed(0)}°. Moving to the crater rim or elevated ridge restores sunlight.`;
+                if (valPlanSunDist) valPlanSunDist.textContent = horizon.blockingDistKm ? `${horizon.blockingDistKm.toFixed(1)} km to rim` : 'Elevated ridge nearby';
+            } else {
+                descSolarPower.textContent = `Sun is below the lunar horizon (${angles.elevation.toFixed(1)}°). The landing site is currently in Lunar Night. Operations require onboard batteries, fuel cells, or Radioisotope Thermoelectric Generators (RTG).`;
+                if (valPlanSunDist) valPlanSunDist.textContent = 'Sunlit hemisphere across terminator';
+            }
+        }
+    }
+
+    // 3. SECTION C: DISTANCE FROM LUNAR WATER ICE
+    const valIceDistance = document.getElementById('val-ice-distance');
+    const badgeWaterIce = document.getElementById('badge-water-ice');
+    const descWaterIce = document.getElementById('desc-water-ice');
+    const valIceEvidence = document.getElementById('val-ice-evidence');
+    const valIceFeatureName = document.getElementById('val-ice-feature-name');
+    const valIceCoords = document.getElementById('val-ice-coords');
+
+    if (backendData && backendData.waterIceProximity) {
+        const wi = backendData.waterIceProximity;
+        if (valIceDistance) valIceDistance.textContent = `${wi.distanceKm != null ? wi.distanceKm.toFixed(1) : '--'} km`;
+        if (badgeWaterIce) {
+            badgeWaterIce.textContent = wi.proximityClass || (wi.distanceKm < 50 ? 'HIGH PROXIMITY' : 'DISTANT');
+            badgeWaterIce.className = `card-status-badge ${wi.distanceKm < 50 ? 'status-good' : 'status-neutral'}`;
+        }
+        if (descWaterIce) descWaterIce.textContent = wi.description || '';
+        if (valIceEvidence) valIceEvidence.textContent = wi.evidenceType || 'LRO LAMP / LCROSS / Mini-RF';
+        if (valIceFeatureName) valIceFeatureName.textContent = wi.nearestFeatureName || '--';
+        if (valIceCoords) valIceCoords.textContent = wi.depositCoords || '--';
+    } else {
+        let closestSite = DOCUMENTED_LUNAR_ICE_SITES[0];
+        let minDistance = Infinity;
+
+        for (const site of DOCUMENTED_LUNAR_ICE_SITES) {
+            const dist = computeLunarDistanceKm(signedLat, lon360, site.lat, site.lon);
+            if (dist < minDistance) {
+                minDistance = dist;
+                closestSite = site;
+            }
+        }
+
+        if (valIceDistance) {
+            valIceDistance.textContent = `${minDistance.toFixed(1)} km`;
+            valIceDistance.className = `primary-stat-value ${minDistance < 35 ? 'stat-good' : ''}`;
+        }
+        if (badgeWaterIce) {
+            if (minDistance < 25) {
+                badgeWaterIce.textContent = 'IMMEDIATE ISRU PROXIMITY';
+                badgeWaterIce.className = 'card-status-badge status-good';
+            } else if (minDistance < 120) {
+                badgeWaterIce.textContent = 'ROVER ACCESSIBLE';
+                badgeWaterIce.className = 'card-status-badge status-warning';
+            } else {
+                badgeWaterIce.textContent = 'DISTANT DEPOSIT';
+                badgeWaterIce.className = 'card-status-badge status-neutral';
+            }
+        }
+        if (valIceFeatureName) valIceFeatureName.textContent = closestSite.name;
+        if (valIceEvidence) valIceEvidence.textContent = closestSite.evidence;
+        const depositLatHemi = closestSite.lat >= 0 ? 'N' : 'S';
+        if (valIceCoords) valIceCoords.textContent = `${Math.abs(closestSite.lat).toFixed(1)}° ${depositLatHemi}, ${closestSite.lon.toFixed(1)}° E`;
+
+        if (descWaterIce) {
+            if (minDistance < 25) {
+                descWaterIce.textContent = `High-value location for In-Situ Resource Utilization (ISRU). Only ${minDistance.toFixed(1)} km from ${closestSite.name}, allowing short-range surface traverses into permanently shadowed cold traps.`;
+            } else if (minDistance < 120) {
+                descWaterIce.textContent = `Located ${minDistance.toFixed(1)} km from ${closestSite.name}. Reachable via pressurized or robotic long-range exploration rover (similar to NASA VIPER class mission profiles).`;
+            } else {
+                descWaterIce.textContent = `Nearest documented water ice deposit is ${minDistance.toFixed(1)} km away at ${closestSite.name}. The landing site is outside immediate polar volatile collection range.`;
+            }
+        }
+    }
+}
+
+if (btnAnalyseLandingSite) {
+    btnAnalyseLandingSite.addEventListener('click', runMissionAnalysis);
+}
+
 
 // ============================================================================
 // 14. NASA/JPL DATA-DRIVEN SOLAR ILLUMINATION AND LANDING SITE ANALYSIS
@@ -3513,7 +4529,7 @@ function calculateTerrainHorizonObstruction(latDeg, lonDeg, solarAzimuthDeg, sol
 
 // Solar System State Variables
 let solarMode = 'SCIENTIFIC'; // 'SCIENTIFIC' | 'SIMULATION'
-let currentEpoch = new Date('2023-08-23T12:34:00Z'); // Chandrayaan-3 Touchdown default
+let currentEpoch = new Date(); // Real-time today's epoch on load
 let simSolarLon = 90.0; // Simulation mode solar longitude (0..360)
 let simSolarLat = 1.5;  // Simulation mode solar latitude (-30..30)
 let isPlayingTime = false;
@@ -3711,19 +4727,7 @@ function updateSolarTarget(lat, lon, name, missionDate = null, targetType = null
 
 // Refresh UI metrics, HUD badge, and solar parameters
 function updateSolarUI() {
-    // 1. Format Datetime for input
-    if (solarDatetimeInput && !solarDatetimeInput.matches(':focus')) {
-        const iso = currentEpoch.toISOString();
-        solarDatetimeInput.value = iso.slice(0, 16);
-    }
-
-    if (epochDeltaBadge) {
-        const jd = (currentEpoch.getTime() / 86400000.0) + 2440587.5;
-        const d = (jd - 2451545.0).toFixed(1);
-        epochDeltaBadge.textContent = `J2000 ${d >= 0 ? '+' : ''}${d} d`;
-    }
-
-    // 2. Compute astronomical solar angles
+    // 1. Compute astronomical solar angles
     let s_moon, subSolLat, subSolLon, colongitude;
     if (solarMode === 'SCIENTIFIC') {
         const sunData = getSunInMoonFrame(currentEpoch);
@@ -3742,6 +4746,33 @@ function updateSolarUI() {
         subSolLat = simSolarLat;
         subSolLon = simSolarLon;
         colongitude = ((90.0 - simSolarLon) % 360 + 360) % 360;
+    }
+
+    // 2. Format Datetime for input
+    if (solarDatetimeInput && !solarDatetimeInput.matches(':focus')) {
+        const iso = currentEpoch.toISOString();
+        solarDatetimeInput.value = iso.slice(0, 16);
+    }
+
+    if (epochDeltaBadge) {
+        const jd = (currentEpoch.getTime() / 86400000.0) + 2440587.5;
+        const d = (jd - 2451545.0).toFixed(1);
+        
+        // Real-time Moon Phase & Illumination Fraction calculation
+        const s_ref = s_moon || [0, 0, 1];
+        const cosPhase = Math.max(-1.0, Math.min(1.0, s_ref[0]));
+        const illumFraction = (1.0 + cosPhase) / 2.0;
+        const illumPct = (illumFraction * 100).toFixed(1);
+        
+        let phaseStr = 'Full Moon';
+        if (illumFraction > 0.98) phaseStr = 'Full Moon';
+        else if (illumFraction < 0.02) phaseStr = 'New Moon';
+        else if (s_ref[1] < 0) phaseStr = illumFraction < 0.5 ? 'Waxing Crescent' : 'Waxing Gibbous';
+        else phaseStr = illumFraction < 0.5 ? 'Waning Crescent' : 'Waning Gibbous';
+        if (Math.abs(illumFraction - 0.5) < 0.04) phaseStr = s_ref[1] < 0 ? 'First Quarter' : 'Last Quarter';
+
+        epochDeltaBadge.textContent = `${phaseStr} (${illumPct}%)`;
+        epochDeltaBadge.title = `Lunar Phase: ${phaseStr} | Solar Illumination: ${illumPct}% | Epoch J2000 ${d >= 0 ? '+' : ''}${d}d`;
     }
 
     const { lat, lon, name } = selectedTargetForSolar;
@@ -4274,13 +5305,7 @@ if (provenanceBackdrop && provenanceModal) {
     });
 }
 
-// Initialize Solar Illumination on Startup
-updateSolarLighting();
-updateSolarTargetCardUI();
-updateSolarUI();
-setTimeout(() => {
-    generateIlluminationTimeline(selectedTargetForSolar.lat, selectedTargetForSolar.lon, currentEpoch, timelinePeriodHours);
-}, 250);
+// Startup Complete
 
 // ============================================================================
 // 15. ANIMATION LOOP
@@ -4342,38 +5367,49 @@ function animate() {
     // Updates camera position based on user mouse / touch drag
     controls.update();
 
-    // 3. Pulse red pointer (📍) base ring across surface
-    if (surfaceMarker.visible && markerBaseRing) {
+    // 3. Pulse red pointer (📍) base ring, beacon ripples, and pin-drop bounce across surface
+    if (surfaceMarker.visible) {
         const time = performance.now() * 0.004;
-        const scale = 1.0 + 0.22 * Math.sin(time);
-        markerBaseRing.scale.set(scale, 1.0, scale);
-        if (markerBaseRingMat) {
+        if (markerBaseRing && markerBaseRingMat) {
+            const scale = 1.0 + 0.18 * Math.sin(time);
+            markerBaseRing.scale.set(scale, 1.0, scale);
             markerBaseRingMat.opacity = 0.55 + 0.35 * Math.cos(time);
+        }
+        if (markerBeaconRing && markerBeaconRingMat) {
+            const cycle = (performance.now() * 0.0016) % 1.0;
+            const bScale = 1.0 + cycle * 1.8;
+            markerBeaconRing.scale.set(bScale, 1.0, bScale);
+            markerBeaconRingMat.opacity = Math.max(0, 0.75 * (1.0 - cycle));
+        }
+
+        // Spring pin-drop animation on landing touchdown
+        if (markerDropActive) {
+            const dropElapsed = performance.now() - markerDropStartTime;
+            if (dropElapsed > 0) {
+                const dropT = Math.min(1.0, dropElapsed / 480);
+                const spring = 1.0 + Math.sin(dropT * Math.PI) * 0.40 * (1.0 - dropT);
+                surfaceMarker.scale.set(spring, spring, spring);
+                if (dropT >= 1.0) {
+                    surfaceMarker.scale.set(1.0, 1.0, 1.0);
+                    markerDropActive = false;
+                }
+            } else {
+                surfaceMarker.scale.set(0.001, 0.001, 0.001);
+            }
         }
     }
 
     // 4. Update Screen POI Marker Labels
     updatePOILabels();
 
-    // 5. Update Solar Lighting Position & Time Progression
-    updateSolarLighting();
-    if (isPlayingTime) {
-        const nowMs = performance.now();
-        const deltaSec = lastFrameTime ? Math.min(0.1, (nowMs - lastFrameTime) / 1000) : 0.016;
-        lastFrameTime = nowMs;
-        currentEpoch = new Date(currentEpoch.getTime() + timeSpeedHoursPerSec * deltaSec * 3600000);
-        updateSolarUI();
-        drawTimelineCanvas();
-    } else {
-        lastFrameTime = performance.now();
-    }
-
-    // 6. Render Main Lunar Scene
+    // 5. Render Main Lunar Scene
     renderer.render(scene, camera);
 
     // 7. Update and Render 3D Lunar Compass
     updateCompassOrientation();
-    compassRenderer.render(compassScene, compassCamera);
+    if (compassRenderer && compassScene && compassCamera) {
+        compassRenderer.render(compassScene, compassCamera);
+    }
 }
 
 animate();
@@ -4384,7 +5420,7 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
 
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 3.0));
 
     updateCompassSize();
 });

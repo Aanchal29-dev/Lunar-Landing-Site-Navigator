@@ -12,46 +12,44 @@
     <!-- Main Three.js Lunar Canvas -->
     <canvas id="lunar-canvas"></canvas>
 
-    <!-- Left UI Stack (Controls + HUD + Manual Navigation) -->
+    <!-- Left UI Stack (Navigation Sidebar + HUD + Manual Navigation) -->
     <div class="left-ui-container">
-        <!-- Compact 3D Globe / 2D Map View Mode Switcher (Positioned safely off the Moon) -->
-        <div id="view-mode-selector" class="view-mode-selector" role="group" aria-label="Lunar Viewing Mode">
-            <button id="btn-mode-3d" class="mode-btn active" type="button" title="Switch to 3D Globe View">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path
-                        d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
-                    </path>
-                    <path d="M2 12h20"></path>
-                </svg>
-                <span>3D GLOBE</span>
-            </button>
-            <button id="btn-mode-2d" class="mode-btn" type="button" title="Switch to 2D Flat Map View">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="4" width="18" height="16" rx="2"></rect>
-                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                    <line x1="12" y1="4" x2="12" y2="20"></line>
-                </svg>
-                <span>2D MAP</span>
-            </button>
-            <button id="btn-toggle-solar" class="mode-btn solar-toggle-btn" type="button"
-                title="NASA/JPL Solar Illumination & Landing Site Analysis">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <line x1="12" y1="1" x2="12" y2="3"></line>
-                    <line x1="12" y1="21" x2="12" y2="23"></line>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                    <line x1="1" y1="12" x2="3" y2="12"></line>
-                    <line x1="21" y1="12" x2="23" y2="12"></line>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                </svg>
-                <span>SOLAR ANALYSIS</span>
-            </button>
+        <!-- Collapsible Lunar Landing Site Navigation Section (Collapsed by default on load) -->
+        <div id="lunar-nav-sidebar" class="lunar-nav-sidebar collapsed">
+            <div class="nav-sidebar-header" id="nav-sidebar-header" role="button" tabindex="0" title="Click to toggle Navigation Menu">
+                <div class="nav-sidebar-title-box">
+                    <span class="nav-sidebar-main-title">Lunar Landing Site Navigator</span>
+                </div>
+                <button id="btn-toggle-nav-sidebar" class="nav-sidebar-toggle-btn" type="button" aria-label="Toggle Navigation Menu">
+                    <svg class="chevron-icon" id="sidebar-chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+            </div>
+            <div class="nav-sidebar-body" id="nav-sidebar-body">
+                <nav class="nav-sidebar-menu">
+                    <button class="nav-menu-item" id="nav-item-plan" type="button" data-route="plan-mission">
+                        <span class="nav-item-num">01</span>
+                        <span class="nav-item-label">Plan Your Mission</span>
+                        <span class="nav-item-arrow">→</span>
+                    </button>
+                    <button class="nav-menu-item" id="nav-item-navigator" type="button" data-route="site-navigator">
+                        <span class="nav-item-num">02</span>
+                        <span class="nav-item-label">Lunar Site Coordinator</span>
+                        <span class="nav-item-arrow">→</span>
+                    </button>
+                    <button class="nav-menu-item" id="nav-item-comparative" type="button" data-route="comparative-study">
+                        <span class="nav-item-num">03</span>
+                        <span class="nav-item-label">Comparative Study</span>
+                        <span class="nav-item-arrow">→</span>
+                    </button>
+                    <button class="nav-menu-item" id="nav-item-history" type="button" data-route="history">
+                        <span class="nav-item-num">04</span>
+                        <span class="nav-item-label">History</span>
+                        <span class="nav-item-arrow">→</span>
+                    </button>
+                </nav>
+            </div>
         </div>
 
         <!-- Unified Lunar Compass Precision Information Panel (Top-Left) -->
@@ -67,28 +65,40 @@
                             <line x1="5" y1="12" x2="19" y2="12"></line>
                         </svg>
                     </button>
+                    <button id="btn-close-hud" class="hud-collapse-btn" type="button"
+                        title="Close Information Panel" aria-label="Close" style="margin-left: 2px;">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
                 </div>
             </div>
             <div class="hud-body">
                 <div class="coord-row">
                     <span class="coord-label">LATITUDE</span>
-                    <span class="coord-value" id="val-lat">--</span>
+                    <span class="coord-value" id="val-lat" title="Click to copy coordinates">--</span>
                 </div>
                 <div class="coord-row">
                     <span class="coord-label">LONGITUDE</span>
-                    <span class="coord-value" id="val-lon">--</span>
+                    <span class="coord-value" id="val-lon" title="Click to copy coordinates">--</span>
+                </div>
+                <!-- Copy Coordinates Action Button -->
+                <div class="coord-copy-row">
+                    <button id="btn-copy-coords" class="hud-copy-btn" type="button" title="Copy coordinates to clipboard" aria-label="Copy Lunar Coordinates">
+                        <svg class="copy-icon default-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <svg class="copy-icon success-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span id="copy-coords-text">COPY COORDINATES</span>
+                    </button>
                 </div>
                 <div class="coord-row mission-row">
                     <span class="coord-label" id="label-mission">MOON MISSION</span>
                     <span class="coord-value mission-val" id="val-mission">No nearby verified landing site</span>
-                </div>
-                <div class="coord-row solar-hud-row" id="hud-solar-row">
-                    <span class="coord-label">SOLAR STATE</span>
-                    <div class="hud-solar-val-wrapper">
-                        <span class="hud-solar-badge" id="hud-solar-badge">CALCULATING</span>
-                        <span class="coord-value" id="hud-solar-angle">--</span>
-                        <button type="button" id="btn-hud-solar-analyze" class="hud-solar-analyze-btn" title="Open Detailed Solar Illumination Analysis">ANALYZE ↗</button>
-                    </div>
                 </div>
 
                 <!-- Dynamic Extended POI / Mission Details (Only shown when a mission or POI is selected / matched) -->
@@ -108,87 +118,54 @@
                     </div>
                 </div>
 
-                <!-- Action Button to Toggle "Go to Coordinates" Box -->
+                <!-- Real-time Solar Illumination Analysis for Selected Point -->
+                <div id="hud-solar-analysis" class="hud-solar-analysis" style="display: none;">
+                    <div class="hud-divider"></div>
+                    <div class="hud-section-header">
+                        <span class="hud-subheading">SUNLIGHT ANALYSIS</span>
+                        <span id="hud-solar-badge" class="hud-solar-badge">DIRECT SUNLIGHT</span>
+                    </div>
+                    <div class="coord-row">
+                        <span class="coord-label">SOLAR ELEVATION</span>
+                        <span class="coord-value" id="hud-val-solar-elevation">--</span>
+                    </div>
+                    <div class="coord-row">
+                        <span class="coord-label">SOLAR AZIMUTH</span>
+                        <span class="coord-value" id="hud-val-solar-azimuth">--</span>
+                    </div>
+                    <div class="coord-row">
+                        <span class="coord-label">INCIDENCE ANGLE</span>
+                        <span class="coord-value" id="hud-val-solar-incidence">--</span>
+                    </div>
+                    <div class="coord-row" id="hud-row-terrain-obstruction" style="display: none;">
+                        <span class="coord-label">TERRAIN PROFILE</span>
+                        <span class="coord-value warn-val" id="hud-val-terrain-obstruction">--</span>
+                    </div>
+                </div>
+
+                <!-- Action Button to Open "Lunar Site Navigator" Page -->
                 <div class="hud-action-row">
-                    <button id="btn-toggle-nav" class="hud-nav-btn" type="button"
-                        title="Open Manual Coordinate Navigation">
+                    <button id="btn-open-site-navigator" class="hud-nav-btn" type="button"
+                        title="Open Lunar Site Navigator to Choose or Enter Coordinates">
                         <span class="hud-nav-btn-left">
                             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
                                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
                             </svg>
-                            <span>GO TO COORDINATES</span>
+                            <span>NAVIGATE / CHANGE SITE</span>
                         </span>
-                        <svg id="toggle-nav-arrow" class="toggle-arrow" viewBox="0 0 24 24" width="12" height="12"
-                            fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
-                            stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
+                        <span class="btn-arrow">→</span>
                     </button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Manual Coordinate Navigation Component ("Go to Coordinates" - Hidden at start) -->
-        <div id="lunar-nav" class="lunar-panel nav-panel" style="display: none;">
-            <div class="hud-header">
-                <span class="hud-title">GO TO COORDINATES</span>
-                <span class="hud-badge nav-badge">NAVIGATE</span>
-            </div>
-            <div class="nav-body">
-                <div class="nav-input-row">
-                    <div class="nav-row-header">
-                        <label class="nav-label" for="nav-lat">LATITUDE</label>
-                        <span class="nav-hint" id="lat-hemi-hint">0° to 90° (N / S)</span>
-                    </div>
-                    <div class="nav-input-group">
-                        <div class="nav-input-wrapper">
-                            <input type="text" id="nav-lat" class="nav-input" placeholder="e.g. 69.373 or 0.674"
-                                autocomplete="off" spellcheck="false" />
-                            <span class="nav-unit">°</span>
-                        </div>
-                        <div class="hemi-toggle" id="lat-hemi-toggle" role="group" aria-label="North / South Hemisphere">
-                            <button type="button" class="hemi-btn active" data-hemi="N" id="btn-hemi-n" title="North (positive)">N</button>
-                            <button type="button" class="hemi-btn" data-hemi="S" id="btn-hemi-s" title="South (negative)">S</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="nav-input-row">
-                    <div class="nav-row-header">
-                        <label class="nav-label" for="nav-lon">LONGITUDE</label>
-                        <span class="nav-hint" id="lon-hemi-hint">0° to 360° (E / W)</span>
-                    </div>
-                    <div class="nav-input-group">
-                        <div class="nav-input-wrapper">
-                            <input type="text" id="nav-lon" class="nav-input" placeholder="e.g. 32.319 or 23.473"
-                                autocomplete="off" spellcheck="false" />
-                            <span class="nav-unit">°</span>
-                        </div>
-                        <div class="hemi-toggle" id="lon-hemi-toggle" role="group" aria-label="East / West Hemisphere">
-                            <button type="button" class="hemi-btn active" data-hemi="E" id="btn-hemi-e" title="East (positive)">E</button>
-                            <button type="button" class="hemi-btn" data-hemi="W" id="btn-hemi-w" title="West">W</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="nav-error" class="nav-error" style="display: none;"></div>
-
-                <div class="nav-buttons-row">
-                    <button id="btn-goto" class="nav-btn nav-btn-primary" type="button" title="Navigate to coordinates">
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
-                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
-                        </svg>
-                        <span>GO TO</span>
-                    </button>
-                    <button id="btn-clear" class="nav-btn nav-btn-secondary" type="button"
-                        title="Clear inputs and reset marker">
-                        <span>RESET</span>
-                    </button>
-                </div>
-            </div>
-        </div>
+    <!-- 3D Lunar Geographic Compass Container (Top-Right) -->
+    <div id="compass-panel" class="compass-panel" title="Lunar Geographic Compass — Click to align North-Up">
+        <canvas id="compass-canvas" width="112" height="112"></canvas>
+        <span class="compass-label">LUNAR COMPASS</span>
     </div>
 
     <!-- 2D Map Interactive Toolbar (Only visible in 2D Mode) -->
@@ -303,10 +280,26 @@
         </div>
     </div>
 
-    <!-- 3D Lunar Geographic Compass Container (Top-Right) -->
-    <div id="compass-panel" class="compass-panel" title="Lunar Geographic Compass — Click to align North-Up">
-        <canvas id="compass-canvas" width="112" height="112"></canvas>
-        <span class="compass-label">LUNAR COMPASS</span>
+    <!-- Compact View Mode Switcher Moved to Bottom-Left Corner (Horizontal, Icons Only with Tooltips) -->
+    <div id="view-mode-selector" class="view-mode-selector bottom-left" role="group" aria-label="Lunar Viewing Mode">
+        <button id="btn-mode-3d" class="mode-btn active" type="button" data-tooltip="3D Globe" title="3D Globe">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                <path d="M2 12h20"></path>
+            </svg>
+            <span class="mode-btn-label">3D GLOBE</span>
+        </button>
+        <button id="btn-mode-2d" class="mode-btn" type="button" data-tooltip="2D Map" title="2D Map">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="12" y1="4" x2="12" y2="20"></line>
+            </svg>
+            <span class="mode-btn-label">2D MAP</span>
+        </button>
     </div>
 
     <!-- 3D Projected Marker Labels Container -->
@@ -315,324 +308,468 @@
     <!-- 2D Projected Marker Labels Container -->
     <div id="poi-2d-labels-container" class="poi-labels-container poi-2d-labels" style="display: none;"></div>
 
-    <!-- NASA / JPL Solar Illumination & Landing Site Analysis Panel (Collapsible Drawer / Floating Panel) -->
-    <div id="solar-panel" class="solar-panel" style="display: none;">
-        <div class="solar-panel-header">
-            <div class="solar-header-title-box">
-                <div class="solar-header-super">NASA / JPL NAIF SPICE • LRO LOLA</div>
-                <div class="solar-header-title">SOLAR ILLUMINATION & LANDING ANALYSIS</div>
-            </div>
-            <div class="solar-header-actions">
-                <button id="btn-solar-info" class="solar-icon-btn" type="button" title="Data Provenance & Traceability">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                </button>
-                <button id="btn-close-solar" class="solar-close-btn" type="button" title="Close Solar Panel">✕</button>
-            </div>
-        </div>
+    <!-- Dedicated Multi-Page Overlay for Mission Planning & Navigator Modules -->
+    <div id="mission-pages-overlay" class="mission-pages-overlay">
+        <!-- Cosmic Starfield in Background along with the Moon -->
+        <div class="mission-starfield" aria-hidden="true"></div>
 
-        <!-- Mode Selector: Scientific (NASA Ephemeris) vs Simulation (Virtual) -->
-        <div class="solar-mode-switch-row">
-            <div class="solar-mode-toggles" role="group" aria-label="Calculation Mode">
-                <button type="button" id="btn-mode-scientific" class="solar-mode-toggle active" title="NASA/JPL SPICE ephemeris & LOLA altimetry">
-                    <span class="mode-led"></span>
-                    <span>SCIENTIFIC (SPICE)</span>
-                </button>
-                <button type="button" id="btn-mode-simulation" class="solar-mode-toggle" title="Interactive virtual light simulation">
-                    <span class="mode-led sim-led"></span>
-                    <span>SIMULATION</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Simulation Warning Banner (Only visible in Simulation Mode) -->
-        <div id="solar-sim-warning" class="solar-sim-warning" style="display: none;">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                <line x1="12" y1="9" x2="12" y2="13"></line>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-            </svg>
-            <span>SIMULATION MODE: Virtual light position does not reflect real astronomical data.</span>
-        </div>
-
-        <div class="solar-panel-body">
-            <!-- 1. Active Selected Target & Run Analysis Action -->
-            <div class="solar-section solar-target-section">
-                <div class="section-title-row">
-                    <span class="section-label">SELECTED LOCATION</span>
-                    <span class="section-badge" id="solar-target-type-badge">SURFACE POINT</span>
-                </div>
-                <div class="target-location-card">
-                    <div class="target-card-top">
-                        <span class="target-card-pin">📍</span>
-                        <div class="target-card-text">
-                            <span class="target-card-name" id="solar-target-name">CHANDRAYAAN-3</span>
-                            <span class="target-card-coords" id="solar-target-coords">69.3730° S, 32.3190° E</span>
-                        </div>
-                    </div>
-                    <div id="target-mission-date-row" class="target-mission-date-row" style="display: none;">
-                        <span class="mission-date-label" id="target-mission-date-label">LANDING: 2023-08-23 12:34 UTC</span>
-                        <button type="button" id="btn-sync-mission-date" class="mission-date-sync-btn" title="Set astronomical epoch to this mission's historical landing date">SET EPOCH TO LANDING</button>
-                    </div>
-                </div>
-                <button type="button" id="btn-run-solar-analysis" class="solar-run-btn" title="Run NASA/JPL Solar Illumination & Terrain Horizon Analysis for Selected Location">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                    </svg>
-                    <span>RUN SOLAR ANALYSIS FOR THIS POINT</span>
-                </button>
-            </div>
-
-            <!-- 2. Astronomical Epoch & Time Control (Scientific Mode) -->
-            <div id="solar-epoch-section" class="solar-section">
-                <div class="section-title-row">
-                    <span class="section-label">ASTRONOMICAL EPOCH (UTC)</span>
-                    <span class="section-badge" id="epoch-delta-badge">J2000.0 TDB</span>
-                </div>
-                
-                <div class="epoch-input-row">
-                    <input type="datetime-local" id="solar-datetime-input" class="solar-datetime-input" step="60" />
-                    <button type="button" id="btn-epoch-now" class="solar-chip-btn" title="Set to Current Real-Time UTC">NOW (UTC)</button>
-                </div>
-
-                <!-- Time Stepper & Animation Controls -->
-                <div class="time-step-controls">
-                    <button type="button" id="btn-step-m7d" class="step-btn" title="Step -7 Days">-7d</button>
-                    <button type="button" id="btn-step-m1d" class="step-btn" title="Step -1 Day">-1d</button>
-                    <button type="button" id="btn-step-m1h" class="step-btn" title="Step -1 Hour">-1h</button>
-                    <button type="button" id="btn-play-pause-time" class="step-btn play-btn" title="Play / Pause Time Progression">
-                        <span id="play-icon">▶</span>
+        <div class="mission-page-container">
+            <!-- Common Page Top Bar -->
+            <div class="page-top-bar">
+                <div class="page-top-left">
+                    <button type="button" id="btn-back-to-moon" class="page-back-btn" title="Return to interactive lunar explorer">
+                        <span class="back-arrow">←</span>
+                        <span>RETURN TO MOON EXPLORER</span>
                     </button>
-                    <button type="button" id="btn-step-p1h" class="step-btn" title="Step +1 Hour">+1h</button>
-                    <button type="button" id="btn-step-p1d" class="step-btn" title="Step +1 Day">+1d</button>
-                    <button type="button" id="btn-step-p7d" class="step-btn" title="Step +7 Days">+7d</button>
+                    <div class="page-top-crumbs">
+                        <span class="crumb-root">LUNAR COMPASS</span>
+                        <span class="crumb-sep">/</span>
+                        <span class="crumb-current" id="breadcrumb-page-name">PLAN YOUR MISSION</span>
+                    </div>
+                </div>
+                <div class="page-nav-tabs">
+                    <button type="button" class="page-tab-btn active" data-target-route="plan-mission">Plan Your Mission</button>
+                    <button type="button" class="page-tab-btn" data-target-route="site-navigator">Lunar Site Coordinator</button>
+                    <button type="button" class="page-tab-btn" data-target-route="comparative-study">Comparative Study</button>
+                    <button type="button" class="page-tab-btn" data-target-route="history">History</button>
                 </div>
             </div>
 
-            <!-- Simulation Controls (Simulation Mode Only) -->
-            <div id="solar-sim-section" class="solar-section" style="display: none;">
-                <div class="section-title-row">
-                    <span class="section-label">VIRTUAL LIGHT DIRECTION</span>
-                    <span class="section-badge sim-badge">UNCONSTRAINED</span>
-                </div>
-                <div class="sim-slider-row">
-                    <div class="slider-header">
-                        <label class="sim-slider-label" for="sim-lon-slider">Solar Longitude (Azimuth angle)</label>
-                        <span class="slider-num-val" id="val-sim-lon">90.0°</span>
-                    </div>
-                    <input type="range" id="sim-lon-slider" min="0" max="360" step="0.5" value="90" class="solar-range" />
-                </div>
-                <div class="sim-slider-row">
-                    <div class="slider-header">
-                        <label class="sim-slider-label" for="sim-lat-slider">Solar Latitude (Inclination angle)</label>
-                        <span class="slider-num-val" id="val-sim-lat">1.5°</span>
-                    </div>
-                    <input type="range" id="sim-lat-slider" min="-30" max="30" step="0.5" value="1.5" class="solar-range" />
-                </div>
-            </div>
-
-            <!-- 3. Real Surface Solar Parameters (For Currently Selected Lunar Location) -->
-            <div class="solar-section">
-                <div class="section-title-row">
-                    <span class="section-label">SURFACE SOLAR PARAMETERS</span>
-                </div>
-
-                <!-- Primary Illumination Status Hero -->
-                <div class="solar-status-hero" id="solar-hero-status">
-                    <div class="status-indicator-dot" id="status-hero-dot"></div>
-                    <div class="status-hero-texts">
-                        <span class="status-hero-main" id="status-hero-title">DIRECT SUNLIGHT</span>
-                        <span class="status-hero-sub" id="status-hero-desc">Sun is clear above terrain horizon (+8.47° elevation)</span>
-                    </div>
-                </div>
-
-                <!-- Metrics Grid -->
-                <div class="solar-metrics-grid">
-                    <div class="solar-metric-card">
-                        <span class="m-card-label">SOLAR ELEVATION (h)</span>
-                        <div class="m-card-val-row">
-                            <span id="m-val-elevation" class="m-card-val">+8.47</span>
-                            <span class="m-card-unit">°</span>
+            <!-- Page 1: Plan Your Mission -->
+            <div id="view-plan-mission" class="page-view-content active">
+                <div class="mission-page-layout">
+                    <!-- Left Column: Mission Input Form -->
+                    <div class="mission-form-panel">
+                        <div class="form-panel-header">
+                            <span class="form-badge">LANDING SITE SPECIFICATION</span>
+                            <h2 class="form-title">PLAN YOUR MISSION</h2>
+                            <p class="form-subtitle">Enter proposed lunar coordinates and arrival date to analyze environmental suitability, direct Earth visibility, solar availability, and resource proximity.</p>
                         </div>
-                        <span class="m-card-sub" id="m-sub-elevation">Above local horizon</span>
+
+                        <form id="mission-plan-form" class="mission-plan-form" onsubmit="return false;">
+                            <!-- Latitude Input Row -->
+                            <div class="form-group">
+                                <div class="form-label-row">
+                                    <label class="form-label" for="plan-lat">1. LANDING LATITUDE</label>
+                                    <span class="form-hint" id="plan-lat-hint">-90° to +90°</span>
+                                </div>
+                                <div class="form-input-group">
+                                    <div class="form-input-wrapper">
+                                        <input type="number" id="plan-lat" class="form-input" placeholder="e.g. 69.373" step="any" min="0" max="90" required />
+                                        <span class="form-unit">°</span>
+                                    </div>
+                                    <div class="hemi-toggle" role="group" aria-label="Latitude Hemisphere">
+                                        <button type="button" class="hemi-btn active" id="btn-plan-hemi-n" data-hemi="N">N (+)</button>
+                                        <button type="button" class="hemi-btn" id="btn-plan-hemi-s" data-hemi="S">S (-)</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Longitude Input Row -->
+                            <div class="form-group">
+                                <div class="form-label-row">
+                                    <label class="form-label" for="plan-lon">2. LANDING LONGITUDE</label>
+                                    <span class="form-hint" id="plan-lon-hint">0° to 360° E (NASA ME)</span>
+                                </div>
+                                <div class="form-input-group">
+                                    <div class="form-input-wrapper">
+                                        <input type="number" id="plan-lon" class="form-input" placeholder="e.g. 32.319" step="any" min="0" max="360" required />
+                                        <span class="form-unit">°</span>
+                                    </div>
+                                    <div class="hemi-toggle" role="group" aria-label="Longitude Hemisphere">
+                                        <button type="button" class="hemi-btn active" id="btn-plan-hemi-e" data-hemi="E">E (0-360°)</button>
+                                        <button type="button" class="hemi-btn" id="btn-plan-hemi-w" data-hemi="W">W (-180°)</button>
+                                    </div>
+                                </div>
+                                <span class="coord-system-notice">
+                                    NASA Mean Earth / Polar Axis (ME) reference frame. East-positive 0°–360° (or -180° to +180° W/E).
+                                </span>
+                            </div>
+
+                            <!-- Date Input Row -->
+                            <div class="form-group">
+                                <div class="form-label-row">
+                                    <label class="form-label" for="plan-date">3. LANDING DATE</label>
+                                    <span class="form-hint">Calendar Selection</span>
+                                </div>
+                                <div class="form-input-wrapper date-wrapper">
+                                    <input type="date" id="plan-date" class="form-input date-input" required />
+                                </div>
+                                <div class="time-epoch-row">
+                                    <span class="epoch-label">Epoch Time: <strong>12:00:00 UTC</strong> (Mid-day Sun transit reference)</span>
+                                    <button type="button" id="btn-plan-date-today" class="form-sub-btn">TODAY</button>
+                                </div>
+                            </div>
+
+                            <!-- Error Message Display -->
+                            <div id="plan-form-error" class="form-error" style="display: none;"></div>
+
+                            <!-- Submit Action Button -->
+                            <div class="form-actions">
+                                <button type="button" id="btn-analyse-landing-site" class="analyse-submit-btn">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                    </svg>
+                                    <span>ANALYSE LANDING SITE</span>
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                    <div class="solar-metric-card">
-                        <span class="m-card-label">SOLAR AZIMUTH (A)</span>
-                        <div class="m-card-val-row">
-                            <span id="m-val-azimuth" class="m-card-val">242.2</span>
-                            <span class="m-card-unit">°</span>
+
+                    <!-- Right Column: Mission Analysis Results Presentation -->
+                    <div class="mission-results-panel">
+                        <div class="results-panel-header">
+                            <span class="results-badge" id="results-engine-badge">BACKEND MISSION ANALYSIS</span>
+                            <h3 class="results-title">SITE FEASIBILITY ASSESSMENT</h3>
+                            <span class="results-coords-label" id="results-site-coords">Awaiting coordinates input...</span>
                         </div>
-                        <span class="m-card-sub" id="m-sub-azimuth">Clockwise from North</span>
-                    </div>
-                    <div class="solar-metric-card">
-                        <span class="m-card-label">INCIDENCE ANGLE (i)</span>
-                        <div class="m-card-val-row">
-                            <span id="m-val-incidence" class="m-card-val">81.53</span>
-                            <span class="m-card-unit">°</span>
+
+                        <!-- Initial Placeholder State (Before Submission) -->
+                        <div id="results-idle-state" class="results-state-card idle-state">
+                            <div class="state-icon">🛰️</div>
+                            <h4 class="state-title">READY TO ANALYSE LANDING SITE</h4>
+                            <p class="state-desc">Specify proposed landing coordinates and target date on the left, then click <strong>Analyse Landing Site</strong> to query the mission planning module.</p>
                         </div>
-                        <span class="m-card-sub" id="m-sub-incidence">90° - elevation</span>
-                    </div>
-                    <div class="solar-metric-card">
-                        <span class="m-card-label">LOLA DATUM ELEVATION</span>
-                        <div class="m-card-val-row">
-                            <span id="m-val-lola-elev" class="m-card-val">-3.84</span>
-                            <span class="m-card-unit">km</span>
+
+                        <!-- Loading State -->
+                        <div id="results-loading-state" class="results-state-card loading-state" style="display: none;">
+                            <div class="spinner"></div>
+                            <h4 class="state-title">COMMUNICATING WITH MISSION BACKEND</h4>
+                            <p class="state-desc" id="loading-status-text">Querying ephemeris, line-of-sight communication vector, and LOLA topography data at /api/mission-analysis...</p>
                         </div>
-                        <span class="m-card-sub">Ref R = 1737.4 km</span>
-                    </div>
-                </div>
 
-                <!-- Astronomical Context Row -->
-                <div class="astro-context-box">
-                    <div class="context-item">
-                        <span class="ctx-label">SUBSOLAR POINT</span>
-                        <span class="ctx-val" id="ctx-subsolar-coords">1.312° N, 93.695° E</span>
-                    </div>
-                    <div class="context-item">
-                        <span class="ctx-label">COLONGITUDE (c₀)</span>
-                        <span class="ctx-val" id="ctx-colongitude">356.31°</span>
-                    </div>
-                    <div class="context-item">
-                        <span class="ctx-label">TERRAIN HORIZON LIMIT</span>
-                        <span class="ctx-val" id="ctx-terrain-limit">+2.10° (Clear)</span>
+                        <!-- Populated Results Container -->
+                        <div id="results-content-box" class="results-content-box" style="display: none;">
+                            <!-- Backend Status Banner -->
+                            <div id="backend-status-banner" class="backend-status-banner">
+                                <span class="backend-status-dot" id="backend-status-dot"></span>
+                                <span class="backend-status-text" id="backend-status-text">API Status: Connected to /api/mission-analysis</span>
+                            </div>
+
+                            <!-- Result Section A: Earth Communication Visibility -->
+                            <div class="mission-card" id="card-earth-comm">
+                                <div class="card-header">
+                                    <div class="card-header-left">
+                                        <span class="card-num">A</span>
+                                        <span class="card-title">EARTH COMMUNICATION VISIBILITY</span>
+                                    </div>
+                                    <span class="card-status-badge" id="badge-earth-comm">CALCULATING</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="card-primary-stat">
+                                        <span class="primary-stat-label">DIRECT LINE-OF-SIGHT</span>
+                                        <span class="primary-stat-value" id="val-earth-los">--</span>
+                                    </div>
+                                    <p class="card-explanation" id="desc-earth-comm">Evaluating selenocentric Earth position vector and local horizon clearance...</p>
+                                    <div class="card-details-grid" id="grid-earth-comm">
+                                        <div class="grid-cell">
+                                            <span class="cell-label">EARTH ELEVATION</span>
+                                            <span class="cell-value" id="val-earth-elevation">--</span>
+                                        </div>
+                                        <div class="grid-cell">
+                                            <span class="cell-label">TRAVEL TO VISIBILITY</span>
+                                            <span class="cell-value" id="val-earth-travel-dist">0 km</span>
+                                        </div>
+                                        <div class="grid-cell full-width">
+                                            <span class="cell-label">NEAREST LOS SITE</span>
+                                            <span class="cell-value" id="val-earth-nearest-coords">Current Site</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Result Section B: Solar Illumination and Power Availability -->
+                            <div class="mission-card" id="card-solar-power">
+                                <div class="card-header">
+                                    <div class="card-header-left">
+                                        <span class="card-num">B</span>
+                                        <span class="card-title">SOLAR ILLUMINATION & POWER AVAILABILITY</span>
+                                    </div>
+                                    <span class="card-status-badge" id="badge-solar-power">CALCULATING</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="card-primary-stat">
+                                        <span class="primary-stat-label">SOLAR STATE ON ARRIVAL</span>
+                                        <span class="primary-stat-value" id="val-solar-state">--</span>
+                                    </div>
+                                    <p class="card-explanation" id="desc-solar-power">Evaluating Sun altitude and LOLA crater rim obstruction profile...</p>
+                                    <div class="card-details-grid" id="grid-solar-power">
+                                        <div class="grid-cell">
+                                            <span class="cell-label">SOLAR ELEVATION</span>
+                                            <span class="cell-value" id="val-plan-solar-elevation">--</span>
+                                        </div>
+                                        <div class="grid-cell">
+                                            <span class="cell-label">SUNLIT DURATION</span>
+                                            <span class="cell-value" id="val-plan-sunlit-duration">--</span>
+                                        </div>
+                                        <div class="grid-cell full-width">
+                                            <span class="cell-label">DISTANCE TO SUNLIGHT</span>
+                                            <span class="cell-value" id="val-plan-sun-dist">0 km</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Result Section C: Distance from Lunar Water Ice -->
+                            <div class="mission-card" id="card-water-ice">
+                                <div class="card-header">
+                                    <div class="card-header-left">
+                                        <span class="card-num">C</span>
+                                        <span class="card-title">DISTANCE FROM LUNAR WATER ICE</span>
+                                    </div>
+                                    <span class="card-status-badge" id="badge-water-ice">CALCULATING</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="card-primary-stat">
+                                        <span class="primary-stat-label">NEAREST ICE DEPOSIT</span>
+                                        <span class="primary-stat-value" id="val-ice-distance">-- km</span>
+                                    </div>
+                                    <p class="card-explanation" id="desc-water-ice">Evaluating proximity to documented LRO LAMP/Mini-RF Permanently Shadowed Regions...</p>
+                                    <div class="card-details-grid" id="grid-water-ice">
+                                        <div class="grid-cell">
+                                            <span class="cell-label">EVIDENCE CLASS</span>
+                                            <span class="cell-value" id="val-ice-evidence">--</span>
+                                        </div>
+                                        <div class="grid-cell">
+                                            <span class="cell-label">TARGET FEATURE</span>
+                                            <span class="cell-value" id="val-ice-feature-name">--</span>
+                                        </div>
+                                        <div class="grid-cell full-width">
+                                            <span class="cell-label">DEPOSIT LOCATION</span>
+                                            <span class="cell-value" id="val-ice-coords">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Expandable Technical Details & Science Metadata -->
+                            <details class="mission-tech-details">
+                                <summary class="mission-tech-summary">
+                                    <span>🔬 Technical Reference & Coordinate Contracts</span>
+                                    <span class="tech-toggle-chevron">▾</span>
+                                </summary>
+                                <div class="tech-details-content">
+                                    <div class="tech-row">
+                                        <span class="tech-k">API Endpoint</span>
+                                        <span class="tech-v">POST /api/mission-analysis</span>
+                                    </div>
+                                    <div class="tech-row">
+                                        <span class="tech-k">Coordinate Datum</span>
+                                        <span class="tech-v">NASA Mean Earth / Polar Axis (ME), IAU R = 1737.4 km</span>
+                                    </div>
+                                    <div class="tech-row">
+                                        <span class="tech-k">Topography Source</span>
+                                        <span class="tech-v">NASA LRO LOLA Gridded Data Records (DEM 1024×512)</span>
+                                    </div>
+                                    <div class="tech-row">
+                                        <span class="tech-k">Water Ice Catalog</span>
+                                        <span class="tech-v">NASA LRO LAMP / Mini-RF / Diviner PSR Polar Volatiles Catalog</span>
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 3. Landing Site Illumination Timeline Analysis -->
-            <div class="solar-section">
-                <div class="section-title-row">
-                    <span class="section-label">LANDING SITE ILLUMINATION TIMELINE</span>
-                    <div class="period-select-wrapper">
-                        <select id="timeline-period-select" class="solar-select" title="Observation Period">
-                            <option value="24">24 Hours (15-min sampling)</option>
-                            <option value="168">7 Days (1-hr sampling)</option>
-                            <option value="708.7" selected>1 Lunar Day (29.53 d)</option>
-                            <option value="2160">90 Days (Seasonal study)</option>
-                        </select>
+            <!-- Page 2: Lunar Site Navigator -->
+            <div id="view-site-navigator" class="page-view-content">
+                <div class="site-nav-container">
+                    <div class="site-nav-header">
+                        <div class="site-nav-badge-row">
+                            <span class="site-nav-badge">LUNAR SITE COORDINATOR</span>
+                            <span class="site-nav-subbadge">NASA ME / POLAR AXIS • LOLA 1737.4 KM</span>
+                        </div>
+                        <h2 class="site-nav-title">Lunar Site Coordinator & Landing Navigator</h2>
+                        <p class="site-nav-subtitle">
+                            Enter any target latitude and longitude to pinpoint the location on the 3D Moon, retrieve documented mission & crater data, and compute authentic NASA/JPL ephemeris solar illumination analysis.
+                        </p>
                     </div>
-                </div>
 
-                <!-- Timeline Summary Stats -->
-                <div class="timeline-stats-row">
-                    <div class="t-stat">
-                        <span class="t-stat-label">DIRECT SUNLIGHT</span>
-                        <span class="t-stat-val sunlit-color" id="t-stat-sunlit">346.0 hrs</span>
-                        <span class="t-stat-sub" id="t-stat-sunlit-days">14.42 Earth days</span>
-                    </div>
-                    <div class="t-stat">
-                        <span class="t-stat-label">SHADOW DURATION</span>
-                        <span class="t-stat-val shadow-color" id="t-stat-shadow">364.0 hrs</span>
-                        <span class="t-stat-sub" id="t-stat-shadow-days">15.17 Earth days</span>
-                    </div>
-                    <div class="t-stat">
-                        <span class="t-stat-label">SUNLIT FRACTION</span>
-                        <span class="t-stat-val" id="t-stat-fraction">48.7%</span>
-                        <span class="t-stat-sub" id="t-stat-transitions">2 transitions</span>
-                    </div>
-                    <div class="t-stat">
-                        <span class="t-stat-label">ELEVATION RANGE</span>
-                        <span class="t-stat-val" id="t-stat-range">-21.6° to +19.4°</span>
-                        <span class="t-stat-sub" id="t-stat-next-event">Sunset: Sep 4 16:34</span>
-                    </div>
-                </div>
+                    <div class="site-nav-grid">
+                        <!-- Left Panel: Coordinate Input Form -->
+                        <div class="site-nav-card site-nav-form-card">
+                            <div class="site-card-header">
+                                <span class="site-card-title">SPECIFY TARGET COORDINATES</span>
+                                <span class="site-card-tag">MANUAL INPUT</span>
+                            </div>
 
-                <!-- Interactive Canvas Illumination Chart -->
-                <div class="timeline-chart-container" id="timeline-chart-box">
-                    <canvas id="timeline-canvas" width="560" height="150" class="timeline-canvas"></canvas>
-                    <div id="timeline-scrub-cursor" class="timeline-scrub-cursor" style="display: none;"></div>
-                    <div id="timeline-tooltip" class="timeline-tooltip" style="display: none;"></div>
-                </div>
-                <div class="timeline-legend">
-                    <div class="legend-item"><span class="legend-swatch swatch-sunlit"></span><span>Sunlit (Direct)</span></div>
-                    <div class="legend-item"><span class="legend-swatch swatch-terrain"></span><span>Terrain Shadow</span></div>
-                    <div class="legend-item"><span class="legend-swatch swatch-night"></span><span>Lunar Night</span></div>
-                    <div class="legend-hint">Hover or drag across chart to inspect & scrub epoch</div>
+                            <form id="site-nav-form" class="site-nav-form" onsubmit="return false;">
+                                <!-- Latitude Input Row -->
+                                <div class="nav-form-group">
+                                    <div class="nav-form-label-row">
+                                        <label class="nav-form-label" for="site-nav-lat">1. TARGET LATITUDE</label>
+                                        <span class="nav-form-hint">0.000° to 90.000° (N / S)</span>
+                                    </div>
+                                    <div class="nav-form-input-group">
+                                        <div class="nav-form-input-wrapper">
+                                            <input type="text" id="site-nav-lat" class="site-form-input" placeholder="e.g. 69.373 or 0.674" autocomplete="off" spellcheck="false" />
+                                            <span class="nav-form-unit">°</span>
+                                        </div>
+                                        <div class="hemi-toggle" id="site-lat-hemi-toggle" role="group" aria-label="North / South Hemisphere">
+                                            <button type="button" class="hemi-btn active" data-hemi="N" id="site-btn-hemi-n">N (+)</button>
+                                            <button type="button" class="hemi-btn" data-hemi="S" id="site-btn-hemi-s">S (-)</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Longitude Input Row -->
+                                <div class="nav-form-group">
+                                    <div class="nav-form-label-row">
+                                        <label class="nav-form-label" for="site-nav-lon">2. TARGET LONGITUDE</label>
+                                        <span class="nav-form-hint">0.000° to 360.000° (E / W)</span>
+                                    </div>
+                                    <div class="nav-form-input-group">
+                                        <div class="nav-form-input-wrapper">
+                                            <input type="text" id="site-nav-lon" class="site-form-input" placeholder="e.g. 32.319 or 23.473" autocomplete="off" spellcheck="false" />
+                                            <span class="nav-form-unit">°</span>
+                                        </div>
+                                        <div class="hemi-toggle" id="site-lon-hemi-toggle" role="group" aria-label="East / West Hemisphere">
+                                            <button type="button" class="hemi-btn active" data-hemi="E" id="site-btn-hemi-e">E (East +)</button>
+                                            <button type="button" class="hemi-btn" data-hemi="W" id="site-btn-hemi-w">W (West)</button>
+                                        </div>
+                                    </div>
+                                    <span class="coord-convention-note">
+                                        NASA Mean Earth / Polar Axis (ME) frame. Coordinates default to East-positive 0°–360° or signed -180° to +180°.
+                                    </span>
+                                </div>
+
+                                <!-- Solar Date Selection -->
+                                <div class="nav-form-group">
+                                    <div class="nav-form-label-row">
+                                        <label class="nav-form-label" for="site-nav-date">3. SOLAR ANALYSIS DATE</label>
+                                        <span class="nav-form-hint">Calendar Date</span>
+                                    </div>
+                                    <div class="nav-form-input-wrapper date-wrapper">
+                                        <input type="date" id="site-nav-date" class="site-form-input date-input" />
+                                    </div>
+                                    <div class="site-epoch-row">
+                                        <span class="site-epoch-text">Ephemeris Epoch: <strong>12:00:00 UTC</strong></span>
+                                        <button type="button" id="site-btn-today" class="site-today-btn">TODAY</button>
+                                    </div>
+                                </div>
+
+                                <!-- Error Box -->
+                                <div id="site-nav-error" class="site-form-error" style="display: none;"></div>
+
+                                <!-- Primary Action Button -->
+                                <div class="site-action-row">
+                                    <button type="button" id="btn-site-nav-submit" class="site-nav-submit-btn">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                                        </svg>
+                                        <span>POINT ON MOON & RUN ANALYSIS →</span>
+                                    </button>
+                                    <button type="button" id="btn-site-nav-reset" class="site-nav-reset-btn">
+                                        <span>RESET</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Right Panel: Quick Lunar Landmark Presets -->
+                        <div class="site-nav-card site-nav-presets-card">
+                            <div class="site-card-header">
+                                <span class="site-card-title">QUICK LUNAR PRESETS</span>
+                                <span class="site-card-tag">VERIFIED SITES</span>
+                            </div>
+                            <p class="presets-intro">Select a historic Apollo landing site, international robotic probe, or prominent IAU lunar crater to pre-populate coordinates:</p>
+
+                            <div class="site-presets-grid" id="site-presets-grid">
+                                <button type="button" class="preset-card" data-lat="0.674" data-hemi-lat="N" data-lon="23.473" data-hemi-lon="E" data-name="Apollo 11 (Mare Tranquillitatis)">
+                                    <div class="preset-top">
+                                        <span class="preset-name">Apollo 11</span>
+                                        <span class="preset-badge nasa">NASA</span>
+                                    </div>
+                                    <span class="preset-site">Mare Tranquillitatis</span>
+                                    <span class="preset-coords">0.674° N, 23.473° E</span>
+                                </button>
+
+                                <button type="button" class="preset-card" data-lat="69.373" data-hemi-lat="S" data-lon="32.319" data-hemi-lon="E" data-name="Chandrayaan-3 (Shiv Shakti)">
+                                    <div class="preset-top">
+                                        <span class="preset-name">Chandrayaan-3</span>
+                                        <span class="preset-badge isro">ISRO</span>
+                                    </div>
+                                    <span class="preset-site">Shiv Shakti Point (South Polar)</span>
+                                    <span class="preset-coords">69.373° S, 32.319° E</span>
+                                </button>
+
+                                <button type="button" class="preset-card" data-lat="45.444" data-hemi-lat="S" data-lon="177.588" data-hemi-lon="E" data-name="Chang'e 4 (Von Kármán)">
+                                    <div class="preset-top">
+                                        <span class="preset-name">Chang'e 4</span>
+                                        <span class="preset-badge cnsa">CNSA</span>
+                                    </div>
+                                    <span class="preset-site">Von Kármán Crater (Far Side)</span>
+                                    <span class="preset-coords">45.444° S, 177.588° E</span>
+                                </button>
+
+                                <button type="button" class="preset-card" data-lat="26.132" data-hemi-lat="N" data-lon="3.634" data-hemi-lon="E" data-name="Apollo 15 (Hadley Rille)">
+                                    <div class="preset-top">
+                                        <span class="preset-name">Apollo 15</span>
+                                        <span class="preset-badge nasa">NASA</span>
+                                    </div>
+                                    <span class="preset-site">Hadley Rille / Apennines</span>
+                                    <span class="preset-coords">26.132° N, 3.634° E</span>
+                                </button>
+
+                                <button type="button" class="preset-card" data-lat="89.9" data-hemi-lat="S" data-lon="0.0" data-hemi-lon="E" data-name="Shackleton Crater">
+                                    <div class="preset-top">
+                                        <span class="preset-name">Shackleton Rim</span>
+                                        <span class="preset-badge polar">POLAR</span>
+                                    </div>
+                                    <span class="preset-site">Lunar South Pole Peak</span>
+                                    <span class="preset-coords">89.900° S, 0.000° E</span>
+                                </button>
+
+                                <button type="button" class="preset-card" data-lat="43.31" data-hemi-lat="S" data-lon="11.36" data-hemi-lon="W" data-name="Tycho Crater">
+                                    <div class="preset-top">
+                                        <span class="preset-name">Tycho Crater</span>
+                                        <span class="preset-badge crater">IAU</span>
+                                    </div>
+                                    <span class="preset-site">Prominent Impact Ray System</span>
+                                    <span class="preset-coords">43.310° S, 11.360° W</span>
+                                </button>
+
+                                <button type="button" class="preset-card" data-lat="9.62" data-hemi-lat="N" data-lon="20.08" data-hemi-lon="W" data-name="Copernicus Crater">
+                                    <div class="preset-top">
+                                        <span class="preset-name">Copernicus</span>
+                                        <span class="preset-badge crater">IAU</span>
+                                    </div>
+                                    <span class="preset-site">Oceanus Procellarum Peak</span>
+                                    <span class="preset-coords">9.620° N, 20.080° W</span>
+                                </button>
+
+                                <button type="button" class="preset-card" data-lat="32.8" data-hemi-lat="N" data-lon="15.6" data-hemi-lon="W" data-name="Mare Imbrium">
+                                    <div class="preset-top">
+                                        <span class="preset-name">Mare Imbrium</span>
+                                        <span class="preset-badge mare">MARE</span>
+                                    </div>
+                                    <span class="preset-site">Sea of Rains Lava Plain</span>
+                                    <span class="preset-coords">32.800° N, 15.600° W</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- 4. Visual Light Controls (Independent of Scientific Calculations) -->
-            <div class="solar-section visual-controls-section">
-                <div class="section-title-row">
-                    <span class="section-label">VISUAL DISPLAY CONTROLS</span>
-                    <span class="section-badge visual-badge">RENDER ONLY</span>
-                </div>
-                <div class="sim-slider-row">
-                    <div class="slider-header">
-                        <label class="sim-slider-label" for="slider-sun-intensity">Sunlight Visual Intensity</label>
-                        <span class="slider-num-val" id="val-sun-intensity">3.6×</span>
-                    </div>
-                    <input type="range" id="slider-sun-intensity" min="0.5" max="8.0" step="0.1" value="3.6" class="solar-range" />
-                </div>
-                <div class="sim-slider-row">
-                    <div class="slider-header">
-                        <label class="sim-slider-label" for="slider-ambient-intensity">Earthshine / Ambient Contrast</label>
-                        <span class="slider-num-val" id="val-ambient-intensity">0.08×</span>
-                    </div>
-                    <input type="range" id="slider-ambient-intensity" min="0.0" max="0.6" step="0.02" value="0.08" class="solar-range" />
-                </div>
-                <div class="visual-note">
-                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                    <span>Visual intensity controls display appearance only and never alters scientific solar angles or duration measurements.</span>
+            <!-- Page 3: Comparative Study (Yet to Work) -->
+            <div id="view-comparative-study" class="page-view-content">
+                <div class="yet-to-work-card">
+                    <div class="ytw-badge">MODULE PENDING</div>
+                    <h2 class="ytw-heading">COMPARATIVE STUDY</h2>
+                    <div class="ytw-notice">YET TO WORK</div>
+                    <p class="ytw-desc">This module is currently in specification and will be integrated in an upcoming release.</p>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Data Provenance & Traceability Modal -->
-    <div id="provenance-modal" class="provenance-modal" style="display: none;">
-        <div class="provenance-backdrop" id="provenance-backdrop"></div>
-        <div class="provenance-card">
-            <div class="prov-header">
-                <div class="prov-title-row">
-                    <span class="prov-title">NASA/JPL SCIENTIFIC PROVENANCE & METHODOLOGY</span>
-                    <span class="prov-badge">AUDIT TRACE</span>
-                </div>
-                <button type="button" id="btn-close-provenance" class="prov-close-btn" title="Close">✕</button>
-            </div>
-            <div class="prov-body">
-                <div class="prov-item">
-                    <span class="prov-key">Ephemeris Engine</span>
-                    <span class="prov-val">NASA/JPL NAIF SPICE DE421 / DE440 & IAU WGCCRE Analytical Series</span>
-                </div>
-                <div class="prov-item">
-                    <span class="prov-key">Reference Frame</span>
-                    <span class="prov-val">NASA Mean Earth / Polar Axis (MOON_ME), Planetocentric East-Positive (0°–360°)</span>
-                </div>
-                <div class="prov-item">
-                    <span class="prov-key">Vertical Datum</span>
-                    <span class="prov-val">IAU Reference Sphere Radius R = 1,737.4 km</span>
-                </div>
-                <div class="prov-item">
-                    <span class="prov-key">Lunar Topography</span>
-                    <span class="prov-val">NASA Lunar Reconnaissance Orbiter (LRO) LOLA Altimetry DEM (1024×512 raster)</span>
-                </div>
-                <div class="prov-item">
-                    <span class="prov-key">Topographic Range</span>
-                    <span class="prov-val">-9.12 km (Antoniadi Basin) to +10.79 km (Engel'gardt Rim), Resolution ~78 m/DN</span>
-                </div>
-                <div class="prov-item">
-                    <span class="prov-key">Terrain Shadow Method</span>
-                    <span class="prov-val">Spherical Horizon Radial Raycast along Solar Azimuth with Lunar Curvature Correction</span>
-                </div>
-                <div class="prov-item">
-                    <span class="prov-key">Aberration Correction</span>
-                    <span class="prov-val">Geometric Selenocentric Solar Direction with Lunar Parallax Correction (~0.15°)</span>
-                </div>
-                <div class="prov-item">
-                    <span class="prov-key">Limitations</span>
-                    <span class="prov-val">Regional DEM resolution (~0.35°/pixel). Sub-kilometer micro-boulder shadows require high-res NAC DTMs.</span>
-                </div>
-                <div class="prov-item">
-                    <span class="prov-key">Source Citation</span>
-                    <span class="prov-val"><a href="https://naif.jpl.nasa.gov/naif/" target="_blank" rel="noopener">NASA/JPL NAIF SPICE</a> • <a href="https://imbrium.mit.edu/" target="_blank" rel="noopener">NASA PDS LOLA Data Node</a></span>
+            <!-- Page 4: History (Yet to Work) -->
+            <div id="view-history" class="page-view-content">
+                <div class="yet-to-work-card">
+                    <div class="ytw-badge">MODULE PENDING</div>
+                    <h2 class="ytw-heading">HISTORY</h2>
+                    <div class="ytw-notice">YET TO WORK</div>
+                    <p class="ytw-desc">This module is currently in specification and will be integrated in an upcoming release.</p>
                 </div>
             </div>
         </div>
