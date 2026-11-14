@@ -1,0 +1,2059 @@
+{
+  "components": {
+    "schemas": {
+      "AnalysisRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "duration_hours": {
+            "maximum": 336.0,
+            "minimum": 1.0,
+            "title": "Duration Hours",
+            "type": "integer"
+          },
+          "latitude_deg": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude Deg",
+            "type": "number"
+          },
+          "longitude_deg": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude Deg",
+            "type": "number"
+          },
+          "start_utc": {
+            "format": "date-time",
+            "title": "Start Utc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "latitude_deg",
+          "longitude_deg",
+          "start_utc",
+          "duration_hours"
+        ],
+        "title": "AnalysisRequest",
+        "type": "object"
+      },
+      "AnalysisResponse": {
+        "properties": {
+          "duration_hours": {
+            "maximum": 336.0,
+            "minimum": 1.0,
+            "title": "Duration Hours",
+            "type": "integer"
+          },
+          "end_utc": {
+            "format": "date-time",
+            "title": "End Utc",
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/components/schemas/app__models__Location"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/Metrics"
+          },
+          "model": {
+            "$ref": "#/components/schemas/ModelMetadata"
+          },
+          "sampling_minutes": {
+            "const": 60,
+            "default": 60,
+            "title": "Sampling Minutes",
+            "type": "integer"
+          },
+          "start_utc": {
+            "format": "date-time",
+            "title": "Start Utc",
+            "type": "string"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineEntry"
+            },
+            "maxItems": 336,
+            "minItems": 1,
+            "title": "Timeline",
+            "type": "array"
+          }
+        },
+        "required": [
+          "location",
+          "start_utc",
+          "end_utc",
+          "duration_hours",
+          "metrics",
+          "timeline",
+          "model"
+        ],
+        "title": "AnalysisResponse",
+        "type": "object"
+      },
+      "CompareRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "duration_hours": {
+            "default": 144,
+            "maximum": 336.0,
+            "minimum": 1.0,
+            "title": "Duration Hours",
+            "type": "integer"
+          },
+          "include_terrain": {
+            "default": true,
+            "title": "Include Terrain",
+            "type": "boolean"
+          },
+          "locations": {
+            "items": {
+              "$ref": "#/components/schemas/CoordinateCandidate"
+            },
+            "maxItems": 3,
+            "minItems": 2,
+            "title": "Locations",
+            "type": "array"
+          },
+          "start_utc": {
+            "format": "date-time",
+            "title": "Start Utc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "locations",
+          "start_utc"
+        ],
+        "title": "CompareRequest",
+        "type": "object"
+      },
+      "CompareResponse": {
+        "properties": {
+          "duration_hours": {
+            "maximum": 336.0,
+            "minimum": 1.0,
+            "title": "Duration Hours",
+            "type": "integer"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/ProvenanceSummary"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/ComparedLocationItem"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "start_utc": {
+            "format": "date-time",
+            "title": "Start Utc",
+            "type": "string"
+          },
+          "tradeoffs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tradeoffs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "start_utc",
+          "duration_hours",
+          "results",
+          "tradeoffs",
+          "provenance"
+        ],
+        "title": "CompareResponse",
+        "type": "object"
+      },
+      "ComparedLocationItem": {
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "latitude_deg": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude Deg",
+            "type": "number"
+          },
+          "longitude_deg": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude Deg",
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "error"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "terrain": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TerrainResponse"
+              },
+              {
+                "$ref": "#/components/schemas/TerrainUnavailableSummary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terrain"
+          },
+          "terrain_available": {
+            "default": false,
+            "title": "Terrain Available",
+            "type": "boolean"
+          },
+          "visibility": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnalysisResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "label",
+          "latitude_deg",
+          "longitude_deg",
+          "status"
+        ],
+        "title": "ComparedLocationItem",
+        "type": "object"
+      },
+      "CoordinateCandidate": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "latitude_deg": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude Deg",
+            "type": "number"
+          },
+          "longitude_deg": {
+            "maximum": 360.0,
+            "minimum": -180.0,
+            "title": "Longitude Deg",
+            "type": "number"
+          }
+        },
+        "required": [
+          "latitude_deg",
+          "longitude_deg"
+        ],
+        "title": "CoordinateCandidate",
+        "type": "object"
+      },
+      "EvaluatedWindowItem": {
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "offset_days": {
+            "title": "Offset Days",
+            "type": "integer"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "start_utc": {
+            "format": "date-time",
+            "title": "Start Utc",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "error"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "visibility": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnalysisResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "offset_days",
+          "start_utc",
+          "status"
+        ],
+        "title": "EvaluatedWindowItem",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HistoricalReplayResponse": {
+        "additionalProperties": false,
+        "description": "A visibility-engine result with the historical site labels that selected it.",
+        "properties": {
+          "analysis": {
+            "$ref": "#/components/schemas/AnalysisResponse"
+          },
+          "historical_context": {
+            "$ref": "#/components/schemas/ReplayHistoricalContext"
+          }
+        },
+        "required": [
+          "analysis",
+          "historical_context"
+        ],
+        "title": "HistoricalReplayResponse",
+        "type": "object"
+      },
+      "Metrics": {
+        "properties": {
+          "earth_visibility_percent": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Earth Visibility Percent",
+            "type": "number"
+          },
+          "longest_darkness_hours": {
+            "maximum": 336.0,
+            "minimum": 0.0,
+            "title": "Longest Darkness Hours",
+            "type": "integer"
+          },
+          "longest_earth_gap_hours": {
+            "maximum": 336.0,
+            "minimum": 0.0,
+            "title": "Longest Earth Gap Hours",
+            "type": "integer"
+          },
+          "sunlight_percent": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Sunlight Percent",
+            "type": "number"
+          }
+        },
+        "required": [
+          "sunlight_percent",
+          "earth_visibility_percent",
+          "longest_darkness_hours",
+          "longest_earth_gap_hours"
+        ],
+        "title": "Metrics",
+        "type": "object"
+      },
+      "MissionDetail": {
+        "additionalProperties": false,
+        "description": "Full historical record and provenance for one mission.",
+        "properties": {
+          "achievements": {
+            "minLength": 1,
+            "title": "Achievements",
+            "type": "string"
+          },
+          "actual_location": {
+            "$ref": "#/components/schemas/MissionLocation"
+          },
+          "country": {
+            "minLength": 1,
+            "title": "Country",
+            "type": "string"
+          },
+          "documented_failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Documented Failure Reason"
+          },
+          "event_description": {
+            "minLength": 1,
+            "title": "Event Description",
+            "type": "string"
+          },
+          "event_time_utc": {
+            "format": "date-time",
+            "title": "Event Time Utc",
+            "type": "string"
+          },
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "intended_location": {
+            "$ref": "#/components/schemas/MissionLocation"
+          },
+          "landing_outcome": {
+            "minLength": 1,
+            "title": "Landing Outcome",
+            "type": "string"
+          },
+          "media": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Media",
+            "type": "array"
+          },
+          "mission_objective": {
+            "minLength": 1,
+            "title": "Mission Objective",
+            "type": "string"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "operator": {
+            "minLength": 1,
+            "title": "Operator",
+            "type": "string"
+          },
+          "overall_mission_outcome": {
+            "minLength": 1,
+            "title": "Overall Mission Outcome",
+            "type": "string"
+          },
+          "replay": {
+            "$ref": "#/components/schemas/ReplayMetadata"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceCitation"
+            },
+            "minItems": 1,
+            "title": "Sources",
+            "type": "array"
+          },
+          "spacecraft_or_lander": {
+            "minLength": 1,
+            "title": "Spacecraft Or Lander",
+            "type": "string"
+          },
+          "time_precision": {
+            "minLength": 1,
+            "title": "Time Precision",
+            "type": "string"
+          },
+          "what_happened": {
+            "minLength": 1,
+            "title": "What Happened",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "spacecraft_or_lander",
+          "country",
+          "operator",
+          "event_time_utc",
+          "time_precision",
+          "event_description",
+          "mission_objective",
+          "landing_outcome",
+          "overall_mission_outcome",
+          "what_happened",
+          "achievements",
+          "intended_location",
+          "actual_location",
+          "replay",
+          "sources"
+        ],
+        "title": "MissionDetail",
+        "type": "object"
+      },
+      "MissionLocation": {
+        "additionalProperties": false,
+        "description": "A documented intended, actual landing, or impact location.",
+        "properties": {
+          "coordinate_quality": {
+            "minLength": 1,
+            "title": "Coordinate Quality",
+            "type": "string"
+          },
+          "coordinate_reference": {
+            "minLength": 1,
+            "title": "Coordinate Reference",
+            "type": "string"
+          },
+          "latitude_deg": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude Deg",
+            "type": "number"
+          },
+          "location_type": {
+            "minLength": 1,
+            "title": "Location Type",
+            "type": "string"
+          },
+          "longitude_deg": {
+            "exclusiveMaximum": 360.0,
+            "minimum": 0.0,
+            "title": "Longitude Deg",
+            "type": "number"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "original_coordinate_text": {
+            "minLength": 1,
+            "title": "Original Coordinate Text",
+            "type": "string"
+          },
+          "precision_or_uncertainty": {
+            "minLength": 1,
+            "title": "Precision Or Uncertainty",
+            "type": "string"
+          },
+          "source_keys": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Source Keys",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "latitude_deg",
+          "longitude_deg",
+          "location_type",
+          "coordinate_quality",
+          "precision_or_uncertainty",
+          "coordinate_reference",
+          "original_coordinate_text",
+          "source_keys"
+        ],
+        "title": "MissionLocation",
+        "type": "object"
+      },
+      "MissionMarkerLocation": {
+        "additionalProperties": false,
+        "description": "Location fields required for a mission list map marker.",
+        "properties": {
+          "coordinate_quality": {
+            "minLength": 1,
+            "title": "Coordinate Quality",
+            "type": "string"
+          },
+          "latitude_deg": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude Deg",
+            "type": "number"
+          },
+          "location_type": {
+            "minLength": 1,
+            "title": "Location Type",
+            "type": "string"
+          },
+          "longitude_deg": {
+            "exclusiveMaximum": 360.0,
+            "minimum": 0.0,
+            "title": "Longitude Deg",
+            "type": "number"
+          }
+        },
+        "required": [
+          "latitude_deg",
+          "longitude_deg",
+          "location_type",
+          "coordinate_quality"
+        ],
+        "title": "MissionMarkerLocation",
+        "type": "object"
+      },
+      "MissionSummary": {
+        "additionalProperties": false,
+        "description": "Compact mission data used by mission lists and map views.",
+        "properties": {
+          "country": {
+            "minLength": 1,
+            "title": "Country",
+            "type": "string"
+          },
+          "event_time_utc": {
+            "format": "date-time",
+            "title": "Event Time Utc",
+            "type": "string"
+          },
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "landing_outcome": {
+            "minLength": 1,
+            "title": "Landing Outcome",
+            "type": "string"
+          },
+          "marker_location": {
+            "$ref": "#/components/schemas/MissionMarkerLocation"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "operator": {
+            "minLength": 1,
+            "title": "Operator",
+            "type": "string"
+          },
+          "replay": {
+            "$ref": "#/components/schemas/ReplayMetadata"
+          },
+          "time_precision": {
+            "minLength": 1,
+            "title": "Time Precision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "country",
+          "operator",
+          "event_time_utc",
+          "time_precision",
+          "landing_outcome",
+          "marker_location",
+          "replay"
+        ],
+        "title": "MissionSummary",
+        "type": "object"
+      },
+      "MissionWindowsRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_offsets_days": {
+            "items": {
+              "maximum": 365.0,
+              "minimum": -365.0,
+              "type": "integer"
+            },
+            "maxItems": 10,
+            "minItems": 2,
+            "title": "Candidate Offsets Days",
+            "type": "array"
+          },
+          "duration_hours": {
+            "default": 144,
+            "maximum": 336.0,
+            "minimum": 1.0,
+            "title": "Duration Hours",
+            "type": "integer"
+          },
+          "latitude_deg": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude Deg",
+            "type": "number"
+          },
+          "longitude_deg": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude Deg",
+            "type": "number"
+          },
+          "priority": {
+            "default": "balanced",
+            "enum": [
+              "balanced",
+              "max_sunlight",
+              "min_earth_gap"
+            ],
+            "title": "Priority",
+            "type": "string"
+          },
+          "target_start_utc": {
+            "format": "date-time",
+            "title": "Target Start Utc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "latitude_deg",
+          "longitude_deg",
+          "target_start_utc"
+        ],
+        "title": "MissionWindowsRequest",
+        "type": "object"
+      },
+      "MissionWindowsResponse": {
+        "properties": {
+          "duration_hours": {
+            "maximum": 336.0,
+            "minimum": 1.0,
+            "title": "Duration Hours",
+            "type": "integer"
+          },
+          "evaluated_windows": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluatedWindowItem"
+            },
+            "title": "Evaluated Windows",
+            "type": "array"
+          },
+          "is_globally_optimal": {
+            "default": false,
+            "title": "Is Globally Optimal",
+            "type": "boolean"
+          },
+          "latitude_deg": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude Deg",
+            "type": "number"
+          },
+          "longitude_deg": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude Deg",
+            "type": "number"
+          },
+          "preferred_window": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvaluatedWindowItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/ProvenanceSummary"
+          },
+          "selection_criteria": {
+            "title": "Selection Criteria",
+            "type": "string"
+          },
+          "tested_offsets_days": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Tested Offsets Days",
+            "type": "array"
+          },
+          "tradeoffs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tradeoffs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "latitude_deg",
+          "longitude_deg",
+          "duration_hours",
+          "selection_criteria",
+          "tested_offsets_days",
+          "evaluated_windows",
+          "preferred_window",
+          "tradeoffs",
+          "provenance"
+        ],
+        "title": "MissionWindowsResponse",
+        "type": "object"
+      },
+      "ModelMetadata": {
+        "properties": {
+          "horizon_degrees": {
+            "const": 0,
+            "default": 0,
+            "title": "Horizon Degrees",
+            "type": "integer"
+          },
+          "limitations": {
+            "default": [
+              "Body centers above a zero-degree local horizon; apparent airless angles.",
+              "Altitude 0 km on the Horizons lunar reference ellipsoid is an approximation.",
+              "Hourly midpoint estimates, not exact rise/set times; gaps are clipped to the mission.",
+              "No terrain obstruction, finite body discs, or eclipse/occultation screening.",
+              "Visibility does not guarantee usable solar power, communication, or landing safety."
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "lunar_radii_km": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Lunar Radii Km",
+            "type": "array"
+          },
+          "lunar_reference_frame": {
+            "title": "Lunar Reference Frame",
+            "type": "string"
+          },
+          "sampling_method": {
+            "const": "hourly_midpoints",
+            "default": "hourly_midpoints",
+            "title": "Sampling Method",
+            "type": "string"
+          },
+          "site_altitude_km": {
+            "const": 0,
+            "default": 0,
+            "title": "Site Altitude Km",
+            "type": "integer"
+          },
+          "source": {
+            "const": "NASA JPL Horizons",
+            "default": "NASA JPL Horizons",
+            "title": "Source",
+            "type": "string"
+          },
+          "terrain_obstruction_included": {
+            "const": false,
+            "default": false,
+            "title": "Terrain Obstruction Included",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "simplified_geometric_horizon",
+            "default": "simplified_geometric_horizon",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "lunar_reference_frame",
+          "lunar_radii_km"
+        ],
+        "title": "ModelMetadata",
+        "type": "object"
+      },
+      "PixelMetrics": {
+        "properties": {
+          "column": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Column"
+          },
+          "elevation_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Elevation M"
+          },
+          "row": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row"
+          },
+          "slope_deg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slope Deg"
+          }
+        },
+        "required": [
+          "row",
+          "column",
+          "elevation_m",
+          "slope_deg"
+        ],
+        "title": "PixelMetrics",
+        "type": "object"
+      },
+      "ProvenanceSummary": {
+        "properties": {
+          "assumed_values": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumed Values",
+            "type": "array"
+          },
+          "calculated_estimates": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Calculated Estimates",
+            "type": "array"
+          },
+          "source_measurements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Measurements",
+            "type": "array"
+          },
+          "unavailable_information": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unavailable Information",
+            "type": "array"
+          }
+        },
+        "required": [
+          "source_measurements",
+          "calculated_estimates",
+          "assumed_values",
+          "unavailable_information"
+        ],
+        "title": "ProvenanceSummary",
+        "type": "object"
+      },
+      "RasterInfo": {
+        "properties": {
+          "crs": {
+            "title": "Crs",
+            "type": "string"
+          },
+          "dataset_limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Dataset Limitations",
+            "type": "array"
+          },
+          "dataset_provenance": {
+            "title": "Dataset Provenance",
+            "type": "string"
+          },
+          "dataset_source_url": {
+            "title": "Dataset Source Url",
+            "type": "string"
+          },
+          "resolution_m": {
+            "title": "Resolution M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "resolution_m",
+          "crs",
+          "dataset_provenance",
+          "dataset_source_url",
+          "dataset_limitations"
+        ],
+        "title": "RasterInfo",
+        "type": "object"
+      },
+      "RegionMetrics": {
+        "properties": {
+          "analysis_radius_m": {
+            "title": "Analysis Radius M",
+            "type": "number"
+          },
+          "coverage_status": {
+            "title": "Coverage Status",
+            "type": "string"
+          },
+          "elevation_range_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Elevation Range M"
+          },
+          "elevation_stddev_m_roughness_proxy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Elevation Stddev M Roughness Proxy"
+          },
+          "maximum_slope_deg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maximum Slope Deg"
+          },
+          "mean_elevation_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Elevation M"
+          },
+          "mean_slope_deg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Slope Deg"
+          },
+          "requested_area_coverage_percentage": {
+            "title": "Requested Area Coverage Percentage",
+            "type": "number"
+          },
+          "total_pixel_count": {
+            "title": "Total Pixel Count",
+            "type": "integer"
+          },
+          "valid_data_percentage": {
+            "title": "Valid Data Percentage",
+            "type": "number"
+          },
+          "valid_pixel_count": {
+            "title": "Valid Pixel Count",
+            "type": "integer"
+          },
+          "valid_pixel_percentage": {
+            "title": "Valid Pixel Percentage",
+            "type": "number"
+          }
+        },
+        "required": [
+          "analysis_radius_m",
+          "mean_elevation_m",
+          "elevation_range_m",
+          "mean_slope_deg",
+          "maximum_slope_deg",
+          "elevation_stddev_m_roughness_proxy",
+          "valid_pixel_count",
+          "total_pixel_count",
+          "valid_pixel_percentage",
+          "valid_data_percentage",
+          "requested_area_coverage_percentage",
+          "coverage_status"
+        ],
+        "title": "RegionMetrics",
+        "type": "object"
+      },
+      "ReplayHistoricalContext": {
+        "additionalProperties": false,
+        "description": "Historical labels retained alongside shared-engine replay inputs.",
+        "properties": {
+          "coordinate_quality": {
+            "minLength": 1,
+            "title": "Coordinate Quality",
+            "type": "string"
+          },
+          "location_label": {
+            "minLength": 1,
+            "title": "Location Label",
+            "type": "string"
+          },
+          "location_type": {
+            "minLength": 1,
+            "title": "Location Type",
+            "type": "string"
+          },
+          "mission_id": {
+            "minLength": 1,
+            "title": "Mission Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mission_id",
+          "location_label",
+          "location_type",
+          "coordinate_quality"
+        ],
+        "title": "ReplayHistoricalContext",
+        "type": "object"
+      },
+      "ReplayMetadata": {
+        "additionalProperties": false,
+        "description": "Whether a mission can be replayed and which historical site it uses.",
+        "properties": {
+          "label": {
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "location_field": {
+            "enum": [
+              "actual_location",
+              "intended_location"
+            ],
+            "title": "Location Field",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "eligible",
+              "eligible_with_location_note",
+              "ineligible"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "location_field",
+          "label"
+        ],
+        "title": "ReplayMetadata",
+        "type": "object"
+      },
+      "ReplayRequest": {
+        "additionalProperties": false,
+        "description": "Optional replay settings supplied by a client.",
+        "properties": {
+          "duration_hours": {
+            "default": 144,
+            "maximum": 336.0,
+            "minimum": 1.0,
+            "title": "Duration Hours",
+            "type": "integer"
+          }
+        },
+        "title": "ReplayRequest",
+        "type": "object"
+      },
+      "ScenarioDeltas": {
+        "properties": {
+          "duration_hours_delta": {
+            "title": "Duration Hours Delta",
+            "type": "integer"
+          },
+          "earth_visibility_percent_delta": {
+            "title": "Earth Visibility Percent Delta",
+            "type": "number"
+          },
+          "longest_darkness_hours_delta": {
+            "title": "Longest Darkness Hours Delta",
+            "type": "integer"
+          },
+          "longest_earth_gap_hours_delta": {
+            "title": "Longest Earth Gap Hours Delta",
+            "type": "integer"
+          },
+          "sunlight_percent_delta": {
+            "title": "Sunlight Percent Delta",
+            "type": "number"
+          }
+        },
+        "required": [
+          "sunlight_percent_delta",
+          "earth_visibility_percent_delta",
+          "longest_darkness_hours_delta",
+          "longest_earth_gap_hours_delta",
+          "duration_hours_delta"
+        ],
+        "title": "ScenarioDeltas",
+        "type": "object"
+      },
+      "ScenarioWindow": {
+        "additionalProperties": false,
+        "properties": {
+          "duration_hours": {
+            "default": 144,
+            "maximum": 336.0,
+            "minimum": 1.0,
+            "title": "Duration Hours",
+            "type": "integer"
+          },
+          "start_utc": {
+            "format": "date-time",
+            "title": "Start Utc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start_utc"
+        ],
+        "title": "ScenarioWindow",
+        "type": "object"
+      },
+      "SourceCitation": {
+        "additionalProperties": false,
+        "description": "A dataset source and the facts it supports.",
+        "properties": {
+          "key": {
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "supports": {
+            "minLength": 1,
+            "title": "Supports",
+            "type": "string"
+          },
+          "title": {
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "url",
+          "supports"
+        ],
+        "title": "SourceCitation",
+        "type": "object"
+      },
+      "StressTestRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline": {
+            "$ref": "#/components/schemas/ScenarioWindow"
+          },
+          "latitude_deg": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude Deg",
+            "type": "number"
+          },
+          "longitude_deg": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude Deg",
+            "type": "number"
+          },
+          "variant": {
+            "$ref": "#/components/schemas/ScenarioWindow"
+          }
+        },
+        "required": [
+          "latitude_deg",
+          "longitude_deg",
+          "baseline",
+          "variant"
+        ],
+        "title": "StressTestRequest",
+        "type": "object"
+      },
+      "StressTestResponse": {
+        "properties": {
+          "baseline": {
+            "$ref": "#/components/schemas/AnalysisResponse"
+          },
+          "deltas": {
+            "$ref": "#/components/schemas/ScenarioDeltas"
+          },
+          "latitude_deg": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude Deg",
+            "type": "number"
+          },
+          "longitude_deg": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude Deg",
+            "type": "number"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/ProvenanceSummary"
+          },
+          "variant": {
+            "$ref": "#/components/schemas/AnalysisResponse"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "latitude_deg",
+          "longitude_deg",
+          "baseline",
+          "variant",
+          "deltas",
+          "warnings",
+          "provenance"
+        ],
+        "title": "StressTestResponse",
+        "type": "object"
+      },
+      "TerrainRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "analysis_radius_m": {
+            "default": 500,
+            "exclusiveMinimum": 0.0,
+            "maximum": 5000.0,
+            "title": "Analysis Radius M",
+            "type": "number"
+          },
+          "latitude_deg": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude Deg",
+            "type": "number"
+          },
+          "longitude_deg": {
+            "title": "Longitude Deg",
+            "type": "number"
+          }
+        },
+        "required": [
+          "latitude_deg",
+          "longitude_deg"
+        ],
+        "title": "TerrainRequest",
+        "type": "object"
+      },
+      "TerrainResponse": {
+        "properties": {
+          "location": {
+            "$ref": "#/components/schemas/app__terrain_models__Location"
+          },
+          "pixel": {
+            "$ref": "#/components/schemas/PixelMetrics"
+          },
+          "raster": {
+            "$ref": "#/components/schemas/RasterInfo"
+          },
+          "region": {
+            "$ref": "#/components/schemas/RegionMetrics"
+          },
+          "terrain_available": {
+            "title": "Terrain Available",
+            "type": "boolean"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "terrain_available",
+          "location",
+          "pixel",
+          "region",
+          "raster",
+          "warnings"
+        ],
+        "title": "TerrainResponse",
+        "type": "object"
+      },
+      "TerrainUnavailableSummary": {
+        "additionalProperties": false,
+        "description": "Safe terrain result when the local raster cannot be used by comparison.",
+        "properties": {
+          "terrain_available": {
+            "const": false,
+            "default": false,
+            "title": "Terrain Available",
+            "type": "boolean"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "warnings"
+        ],
+        "title": "TerrainUnavailableSummary",
+        "type": "object"
+      },
+      "TimelineEntry": {
+        "properties": {
+          "earth_azimuth_deg": {
+            "maximum": 360.0,
+            "minimum": 0.0,
+            "title": "Earth Azimuth Deg",
+            "type": "number"
+          },
+          "earth_elevation_deg": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Earth Elevation Deg",
+            "type": "number"
+          },
+          "earth_visible": {
+            "title": "Earth Visible",
+            "type": "boolean"
+          },
+          "interval_end_utc": {
+            "format": "date-time",
+            "title": "Interval End Utc",
+            "type": "string"
+          },
+          "interval_start_utc": {
+            "format": "date-time",
+            "title": "Interval Start Utc",
+            "type": "string"
+          },
+          "sample_utc": {
+            "format": "date-time",
+            "title": "Sample Utc",
+            "type": "string"
+          },
+          "sun_azimuth_deg": {
+            "maximum": 360.0,
+            "minimum": 0.0,
+            "title": "Sun Azimuth Deg",
+            "type": "number"
+          },
+          "sun_elevation_deg": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Sun Elevation Deg",
+            "type": "number"
+          },
+          "sun_visible": {
+            "title": "Sun Visible",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "interval_start_utc",
+          "interval_end_utc",
+          "sample_utc",
+          "sun_azimuth_deg",
+          "sun_elevation_deg",
+          "earth_azimuth_deg",
+          "earth_elevation_deg",
+          "sun_visible",
+          "earth_visible"
+        ],
+        "title": "TimelineEntry",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "app__models__Location": {
+        "properties": {
+          "latitude_deg": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude Deg",
+            "type": "number"
+          },
+          "longitude_deg": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude Deg",
+            "type": "number"
+          }
+        },
+        "required": [
+          "latitude_deg",
+          "longitude_deg"
+        ],
+        "title": "Location",
+        "type": "object"
+      },
+      "app__terrain_models__Location": {
+        "properties": {
+          "latitude_deg": {
+            "title": "Latitude Deg",
+            "type": "number"
+          },
+          "longitude_deg": {
+            "title": "Longitude Deg",
+            "type": "number"
+          }
+        },
+        "required": [
+          "latitude_deg",
+          "longitude_deg"
+        ],
+        "title": "Location",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Lunar Compass Backend",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/analyze": {
+      "post": {
+        "operationId": "analyze_api_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analyze"
+      }
+    },
+    "/api/compare": {
+      "post": {
+        "operationId": "compare_locations_api_compare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompareResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Compare Locations",
+        "tags": [
+          "Comparison & Stress Test"
+        ]
+      }
+    },
+    "/api/mission-windows": {
+      "post": {
+        "operationId": "suggest_mission_windows_api_mission_windows_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MissionWindowsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionWindowsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Suggest Mission Windows",
+        "tags": [
+          "Comparison & Stress Test"
+        ]
+      }
+    },
+    "/api/missions": {
+      "get": {
+        "description": "Return compact, source-backed mission records for cards and map markers.",
+        "operationId": "read_missions_api_missions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Country"
+            }
+          },
+          {
+            "in": "query",
+            "name": "landing_outcome",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Landing Outcome"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MissionSummary"
+                  },
+                  "title": "Response Read Missions Api Missions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Missions",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/api/missions/{mission_id}": {
+      "get": {
+        "description": "Return one complete verified mission record with its source provenance.",
+        "operationId": "read_mission_api_missions__mission_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mission_id",
+            "required": true,
+            "schema": {
+              "title": "Mission Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read Mission",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/api/missions/{mission_id}/replay": {
+      "post": {
+        "description": "Run the shared visibility engine for an eligible documented mission site.",
+        "operationId": "replay_mission_api_missions__mission_id__replay_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mission_id",
+            "required": true,
+            "schema": {
+              "title": "Mission Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalReplayResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Replay Mission",
+        "tags": [
+          "missions"
+        ]
+      }
+    },
+    "/api/stress-test": {
+      "post": {
+        "operationId": "stress_test_mission_api_stress_test_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StressTestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StressTestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Stress Test Mission",
+        "tags": [
+          "Comparison & Stress Test"
+        ]
+      }
+    },
+    "/api/terrain/analyze": {
+      "post": {
+        "operationId": "analyze_terrain_api_terrain_analyze_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TerrainRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerrainResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analyze Terrain",
+        "tags": [
+          "terrain"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Health Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "description": "Report local deployment prerequisites without contacting NASA.",
+        "operationId": "readiness_health_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Readiness"
+      }
+    }
+  }
+}
