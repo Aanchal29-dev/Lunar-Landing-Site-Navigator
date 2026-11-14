@@ -20,7 +20,9 @@ Changes are deliberately uncommitted for team review.
   models, and all four metric calculations unchanged.
 - Added integration regressions, explicit dependency ranges and backend CI.
 
-Frontend code and historical/comparison modules are outside these changes.
+The historical mission and comparison/stress-test modules were integrated in
+subsequent pull requests. They now reuse this shared application and visibility
+engine; see `README.md` for their current routes and limitations.
 
 ## Verification on 2026-11-14
 

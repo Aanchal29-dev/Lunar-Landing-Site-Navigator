@@ -1,4 +1,4 @@
-"""FastAPI entry point."""
+"""FastAPI entry point for the shared Lunar Compass backend."""
 
 import os
 from contextlib import asynccontextmanager
@@ -10,13 +10,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app import __version__
+from app.comparison_router import router as comparison_router
 from app.historical_router import router as historical_router
 from app.models import AnalysisRequest, AnalysisResponse
 from app.services.historical_missions import validate_historical_dataset
 from app.services.horizons import HorizonsError, TIMEOUT
 from app.services.visibility import analyze_visibility
 from app.terrain_router import router as terrain_router
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -48,15 +48,13 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST"],
         allow_headers=["Content-Type"],
     )
-    app.include_router(terrain_router)
-
     @app.exception_handler(HorizonsError)
     async def horizons_error(request: Request, exc: HorizonsError) -> JSONResponse:
         return JSONResponse(status_code=exc.status_code, content={"detail": str(exc)})
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
-        # Allowlist error metadata: raw input and exception context are not response data.
+        # Raw input and exception context can contain unsafe or private values.
         errors = [{
             "type": _safe_error_text(error["type"]),
             "loc": [part if type(part) is int else _safe_error_text(part) for part in error["loc"]],
@@ -73,8 +71,9 @@ def create_app() -> FastAPI:
         body: AnalysisRequest, client: httpx.AsyncClient = Depends(get_http_client)
     ) -> AnalysisResponse:
         return await analyze_visibility(body, client)
-
+    app.include_router(terrain_router)
     app.include_router(historical_router)
+    app.include_router(comparison_router)
 
     return app
 
