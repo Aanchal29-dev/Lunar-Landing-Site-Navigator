@@ -53,6 +53,10 @@ development, with no second running instance.
 Open [interactive API docs](http://127.0.0.1:8000/docs).
 `GET /health` returns `{"status":"ok"}` without contacting NASA.
 This is a liveness check, not a guarantee that NASA or terrain data are available.
+`GET /health/ready` checks the configured NASA contact and opens/validates the
+two local terrain rasters without making a NASA request. It returns 200 only
+when both local prerequisites are ready; `nasa_live_check_performed` remains
+false because real Horizons verification belongs to an explicit analysis call.
 
 Default CORS origins are `http://localhost:3000` and `http://localhost:5173`.
 Set an explicit comma-separated list before startup:
@@ -169,7 +173,11 @@ duration. It runs the shared visibility engine for every location, optionally
 includes local terrain (`include_terrain`, default `true`), and returns per-site
 results, partial upstream failures and transparent trade-off notes. The terrain
 field is either the normal terrain response, a safe unavailable summary, or
-`null` when terrain was not requested.
+`null` when terrain was not requested. It accepts the normal signed visibility
+longitude convention and documented east-positive historical longitudes from
+`0..360`; comparison responses normalize them to signed longitudes before the
+shared engine is called. A frontend can therefore get a historical mission's
+actual location and submit it with a newly clicked location in one comparison.
 
 `POST /api/stress-test` accepts one location plus `baseline` and `variant`
 windows. It returns both real visibility analyses and their metric deltas.
@@ -179,6 +187,11 @@ those candidates. It is not a global optimisation or a landing-safety result.
 Every compared date, duration and coordinate uses the visibility API's validation
 rules. These orchestration endpoints still make genuine Horizons requests; they
 never fabricate science data if NASA is unavailable.
+
+The historical records contain sourced mission overview facts, intended and
+actual locations, and modeled replay context. They are not a complete official
+event chronology and do not currently bundle mission media; adding milestones or
+images requires Shiya to verify and cite each item before it is published.
 
 ## Visibility scientific model
 
@@ -250,7 +263,7 @@ orchestration. None of these wrappers alters the underlying astronomical model.
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
-.\.venv\Scripts\python.exe -m pytest tests/test_live.py --live-horizons -v -s
+.\.venv\Scripts\python.exe -m pytest tests/test_live.py tests/test_live_workflows.py --live-horizons -v -s
 ```
 
 The default suite needs no network. Fixtures are actual reports captured on
@@ -269,10 +282,12 @@ the offline suite on backend pull requests without contacting NASA.
 
 Live checks cover six-day and maximum-duration series, a single epoch, near/far
 sides, both poles, longitude normalization, nonzero seconds and milliseconds.
-They inspect actual report metadata and independently recalculate metrics from
-CSV columns. Dependency deprecation warnings may appear during tests.
-This is API/report verification, not an independent astronomical-model validation
-or a separate comparison against the graphical Horizons interface.
+They also exercise real API-level comparison, stress-test, mission-window and
+historical-replay workflows. The tests inspect actual report metadata and
+independently recalculate metrics from CSV columns. Dependency deprecation
+warnings may appear during tests. This is API/report verification, not an
+independent astronomical-model validation or a separate comparison against the
+graphical Horizons interface.
 
 During earlier live verification, NASA returned 100% sunlight and 100% Earth
 visibility, with both longest gaps 0 hours. Sun elevations were 4.494109° to

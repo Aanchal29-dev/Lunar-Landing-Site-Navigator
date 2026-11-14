@@ -10,6 +10,7 @@ from app.data.historical_missions import MISSIONS, SOURCES
 from app.historical_router import _visibility_longitude, router
 from app.main import create_app
 from app.models import AnalysisResponse
+from app.services.horizons import HorizonsError
 from app.services.historical_missions import (
     get_mission_detail,
     get_replay_input,
@@ -159,3 +160,17 @@ def test_historical_replay_route_rejects_unknown_mission_without_calling_engine(
         response = client.post("/api/missions/not-a-mission/replay", json={"duration_hours": 1})
     assert response.status_code == 404
     assert response.json() == {"detail": "Mission not found"}
+
+
+def test_mission_history_remains_available_when_replay_is_unavailable(monkeypatch):
+    async def unavailable_engine(*args):
+        raise HorizonsError("NASA JPL Horizons is unavailable; retry later", 503)
+
+    monkeypatch.setattr("app.historical_router.analyze_visibility", unavailable_engine)
+    with TestClient(create_app()) as client:
+        replay = client.post("/api/missions/chandrayaan_3/replay", json={"duration_hours": 1})
+        detail = client.get("/api/missions/chandrayaan_3")
+
+    assert replay.status_code == 503
+    assert detail.status_code == 200
+    assert detail.json()["id"] == "chandrayaan_3"

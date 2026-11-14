@@ -31,6 +31,20 @@ def test_health_never_calls_nasa(client):
     assert client.horizons_calls == []
 
 
+def test_readiness_reports_prerequisites_without_making_nasa_requests(client, monkeypatch):
+    monkeypatch.setattr("app.main._nasa_contact_is_configured", lambda: True)
+    monkeypatch.setattr("app.main._terrain_dataset_is_ready", lambda: False)
+    response = client.get("/health/ready")
+    assert response.status_code == 503
+    assert response.json() == {
+        "status": "not_ready",
+        "nasa_contact_configured": True,
+        "terrain_dataset_ready": False,
+        "nasa_live_check_performed": False,
+    }
+    assert client.horizons_calls == []
+
+
 def test_complete_real_fixture_response(client, payload):
     response = client.post("/api/analyze", json=payload)
     assert response.status_code == 200
