@@ -994,6 +994,7 @@ const poiHitMat = new THREE.MeshBasicMaterial({ visible: false });
 const poiEntries = [];
 const poiHitMeshes = [];
 let selectedPOI = null;
+let overlaysVisible = true;
 
 // DOM references for unified Lunar Compass Information Panel
 const poiLabelsContainer = document.getElementById('poi-labels-container');
@@ -1147,6 +1148,38 @@ function initPOISystem() {
 
 initPOISystem();
 
+// ============================================================================
+// LAYER VISIBILITY TOGGLE (Toggle prominent craters, missions, POIs, labels)
+// ============================================================================
+function setupOverlayToggle() {
+    const btnToggle = document.getElementById('btn-toggle-overlays');
+    const toggleText = document.getElementById('overlay-toggle-text');
+    if (!btnToggle) return;
+
+    btnToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        overlaysVisible = !overlaysVisible;
+        if (overlaysVisible) {
+            btnToggle.classList.add('active');
+            btnToggle.classList.remove('muted');
+            if (toggleText) toggleText.textContent = 'LAYERS: ON';
+        } else {
+            btnToggle.classList.remove('active');
+            btnToggle.classList.add('muted');
+            if (toggleText) toggleText.textContent = 'LAYERS: OFF';
+        }
+
+        // Immediately update all pins and labels
+        for (const item of poiEntries) {
+            item.pinGroup.visible = overlaysVisible;
+            if (!overlaysVisible && item.labelEl) {
+                item.labelEl.style.display = 'none';
+            }
+        }
+    });
+}
+setupOverlayToggle();
+
 // Select and display details for a Lunar POI directly inside the Lunar Compass box
 function selectPOI(poi) {
     selectedPOI = poi;
@@ -1217,6 +1250,14 @@ const _toCam = new THREE.Vector3();
 const _moonWorldPos = new THREE.Vector3();
 
 function updatePOILabels() {
+    if (!overlaysVisible) {
+        for (const item of poiEntries) {
+            item.pinGroup.visible = false;
+            if (item.labelEl) item.labelEl.style.display = 'none';
+        }
+        return;
+    }
+
     const camDist = camera.position.distanceTo(controls.target);
     moon.getWorldPosition(_moonWorldPos);
     _toCam.copy(camera.position).sub(_moonWorldPos).normalize();
@@ -2268,7 +2309,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
 
     // Normal Hover Checks (POI and Moon surface)
     // Check if hovering over any POI marker hit sphere in 3D or 2D
-    const poiIntersects = raycaster.intersectObjects(poiHitMeshes, false);
+    const poiIntersects = overlaysVisible ? raycaster.intersectObjects(poiHitMeshes, false) : [];
     if (poiIntersects.length > 0) {
         renderer.domElement.style.cursor = 'pointer';
         return;
@@ -2382,7 +2423,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
     }
 
     // 1. Raycast POI markers FIRST in both 2D and 3D: disambiguates marker clicks from general surface
-    const poiIntersects = raycaster.intersectObjects(poiHitMeshes, false);
+    const poiIntersects = overlaysVisible ? raycaster.intersectObjects(poiHitMeshes, false) : [];
     if (poiIntersects.length > 0) {
         const hitObj = poiIntersects[0].object;
         if (hitObj.userData && hitObj.userData.poi) {
@@ -3749,8 +3790,99 @@ const pageTitles = {
 
 let currentRoute = null;
 let isRouteTransitioning = false;
+let isFlightTransitionActive = false;
 
-function navigateToRoute(route, onComplete = null) {
+// Monochromatic Flight-Control Screen Transition Wipe (Earth launch -> Trajectory -> Earth fades -> Moon touchdown)
+function triggerFlightTransition(onMidpoint = null) {
+    const overlay = document.getElementById('flight-transition-overlay');
+    if (!overlay) {
+        if (typeof onMidpoint === 'function') onMidpoint();
+        return;
+    }
+
+    if (isFlightTransitionActive) {
+        if (typeof onMidpoint === 'function') onMidpoint();
+        return;
+    }
+
+    isFlightTransitionActive = true;
+    overlay.style.display = 'flex';
+    overlay.classList.remove('anim-hold', 'anim-out');
+    overlay.classList.add('anim-in');
+
+    const earthNode = document.getElementById('trans-earth-node');
+    const craftWrap = document.getElementById('trans-spacecraft-wrap');
+    const pathBeam = document.getElementById('trans-path-beam');
+    const statStatus = document.getElementById('trans-stat-status');
+    const statThrust = document.getElementById('trans-stat-thrust');
+    const statDist = document.getElementById('trans-stat-dist');
+    const statDeltaV = document.getElementById('trans-stat-deltav');
+
+    // Reset initial visual state
+    if (earthNode) earthNode.classList.remove('faded');
+    if (pathBeam) pathBeam.classList.remove('active');
+    if (craftWrap) {
+        craftWrap.style.transition = 'none';
+        craftWrap.style.left = '60px';
+        craftWrap.style.top = '140px';
+        craftWrap.style.opacity = '1';
+    }
+    if (statStatus) statStatus.textContent = 'TLI PRE-IGNITION // STANDBY';
+    if (statThrust) statThrust.textContent = '100% NOMINAL';
+    if (statDist) statDist.textContent = '384,400 KM';
+    if (statDeltaV) statDeltaV.textContent = '3,140 m/s';
+
+    // 0.25s: Screen has slid in from left. Hold starts.
+    setTimeout(() => {
+        overlay.classList.remove('anim-in');
+        overlay.classList.add('anim-hold');
+
+        // Launch rocket from Earth towards Moon along translunar trajectory
+        if (pathBeam) pathBeam.classList.add('active');
+        if (craftWrap) {
+            craftWrap.style.transition = 'all 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            craftWrap.style.left = 'calc(100% - 120px)';
+            craftWrap.style.top = '70px';
+        }
+        if (statStatus) statStatus.textContent = 'TRANSLUNAR INJECTION ACTIVE';
+        if (statDist) statDist.textContent = '190,000 KM';
+    }, 250);
+
+    // 0.55s: Spacecraft in flight, Earth fades / disappears, route switch happens
+    setTimeout(() => {
+        if (earthNode) earthNode.classList.add('faded');
+        if (statStatus) statStatus.textContent = 'EARTH SEPARATION // TRANSLUNAR CRUISE';
+        if (statDist) statDist.textContent = '65,000 KM';
+        if (statDeltaV) statDeltaV.textContent = '820 m/s';
+
+        // Execute route switch while the screen is covering the viewport
+        if (typeof onMidpoint === 'function') {
+            try { onMidpoint(); } catch (err) { console.warn('Transition callback error:', err); }
+        }
+    }, 550);
+
+    // 0.90s: Spacecraft reaches Moon (lunar capture / touchdown)
+    setTimeout(() => {
+        if (statStatus) statStatus.textContent = 'LUNAR CAPTURE // TOUCHDOWN CONFIRMED';
+        if (statDist) statDist.textContent = '0 KM [SURFACE]';
+        if (statThrust) statThrust.textContent = 'DESCENT ENGINE CUTOFF';
+    }, 900);
+
+    // 1.15s: Monochromatic screen swiftly moves right to reveal the destination view
+    setTimeout(() => {
+        overlay.classList.remove('anim-hold');
+        overlay.classList.add('anim-out');
+    }, 1150);
+
+    // 1.55s: Animation complete, reset overlay
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        overlay.classList.remove('anim-out');
+        isFlightTransitionActive = false;
+    }, 1550);
+}
+
+function performRouteNavigation(route, onComplete = null) {
     if (!missionPagesOverlay) return;
 
     if (!route || route === 'close') {
@@ -3829,6 +3961,17 @@ function navigateToRoute(route, onComplete = null) {
 
     // Update URL hash without reload
     window.location.hash = route;
+    if (typeof onComplete === 'function') onComplete();
+}
+
+function navigateToRoute(route, onComplete = null) {
+    if (currentRoute === route && route !== 'close') {
+        if (typeof onComplete === 'function') onComplete();
+        return;
+    }
+    triggerFlightTransition(() => {
+        performRouteNavigation(route, onComplete);
+    });
 }
 
 // Hook up sidebar menu buttons
@@ -3875,16 +4018,18 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
-// Initial state on page load: ensure overlay is closed and Moon is visible by default
+// Initial state on page load: trigger transition animation
 if (window.location.hash) {
     const initHash = window.location.hash.replace('#', '').trim();
     if (pageViews[initHash]) {
         navigateToRoute(initHash);
     } else {
-        navigateToRoute('close');
+        performRouteNavigation('close');
+        triggerFlightTransition();
     }
 } else {
-    navigateToRoute('close');
+    performRouteNavigation('close');
+    triggerFlightTransition();
 }
 
 // ============================================================================
@@ -5626,6 +5771,66 @@ if (provenanceBackdrop && provenanceModal) {
 
 // Startup Complete
 
+// Fullscreen Reticle Crosshair Telemetry Lines (Thin 1px H & V lines running across entire screen)
+const _crosshairMarkerWorldPos = new THREE.Vector3();
+const _crosshairMoonWorldPos = new THREE.Vector3();
+const _crosshairToCam = new THREE.Vector3();
+const _crosshairMarkerNorm = new THREE.Vector3();
+
+function updateFullscreenCrosshairs() {
+    const crosshairReticle = document.getElementById('crosshair-reticle');
+    const crosshairH = document.getElementById('crosshair-h');
+    const crosshairV = document.getElementById('crosshair-v');
+    const crosshairTarget = document.getElementById('crosshair-target-box');
+    const coordTag = document.getElementById('reticle-coord-tag');
+    if (!crosshairReticle || !crosshairH || !crosshairV || !crosshairTarget) return;
+
+    if (!surfaceMarker || !surfaceMarker.visible) {
+        crosshairReticle.style.display = 'none';
+        return;
+    }
+
+    surfaceMarker.getWorldPosition(_crosshairMarkerWorldPos);
+
+    if (currentViewMode === '3d' && !isModeTransitioning) {
+        moon.getWorldPosition(_crosshairMoonWorldPos);
+        _crosshairToCam.copy(camera.position).sub(_crosshairMoonWorldPos).normalize();
+        _crosshairMarkerNorm.copy(_crosshairMarkerWorldPos).sub(_crosshairMoonWorldPos).normalize();
+        if (_crosshairMarkerNorm.dot(_crosshairToCam) <= 0.05) {
+            crosshairReticle.style.display = 'none';
+            return;
+        }
+    }
+
+    const projected = _crosshairMarkerWorldPos.clone().project(camera);
+    if (projected.z >= 1.0) {
+        crosshairReticle.style.display = 'none';
+        return;
+    }
+
+    const halfW = window.innerWidth * 0.5;
+    const halfH = window.innerHeight * 0.5;
+    const screenX = (projected.x * halfW) + halfW;
+    const screenY = (-(projected.y * halfH)) + halfH;
+
+    if (screenX < -50 || screenX > window.innerWidth + 50 || screenY < -50 || screenY > window.innerHeight + 50) {
+        crosshairReticle.style.display = 'none';
+        return;
+    }
+
+    crosshairReticle.style.display = 'block';
+    crosshairH.style.top = `${screenY}px`;
+    crosshairV.style.left = `${screenX}px`;
+    crosshairTarget.style.top = `${screenY}px`;
+    crosshairTarget.style.left = `${screenX}px`;
+
+    if (coordTag && selectedCoords) {
+        const latSign = selectedCoords.lat >= 0 ? '+' : '';
+        const lonSign = selectedCoords.lon >= 0 ? '+' : '';
+        coordTag.textContent = `${latSign}${selectedCoords.lat.toFixed(3)}°, ${lonSign}${selectedCoords.lon.toFixed(3)}°`;
+    }
+}
+
 // ============================================================================
 // 15. ANIMATION LOOP
 // ============================================================================
@@ -5838,6 +6043,9 @@ function animate() {
 
     // 4. Update Screen POI Marker Labels
     updatePOILabels();
+
+    // 4B. Update Fullscreen Reticle Crosshairs for Pinpoint Marker
+    updateFullscreenCrosshairs();
 
     // 5. Render Main Lunar Scene
     renderer.render(scene, camera);

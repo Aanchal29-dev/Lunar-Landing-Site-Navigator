@@ -1,3 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@600;700;800;900&family=Share+Tech+Mono&display=swap');
+
+:root {
+    --bg-base: #0B1229;
+    --bg-panel: #17223B;
+    --bg-panel-dark: #0D172E;
+    --bg-panel-trans: rgba(23, 34, 59, 0.94);
+    --border-color: rgba(0, 180, 216, 0.28);
+    --border-subtle: rgba(148, 163, 184, 0.20);
+    --border-active: #00B4D8;
+    --text-white: #FFFFFF;
+    --text-cyan: #00B4D8;
+    --text-silver: #94A3B8;
+    --accent-blue: #1D4ED8;
+    --accent-cyan: #00B4D8;
+    --accent-gold: #F59E0B;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'Orbitron', monospace;
+    --font-telemetry: 'Share Tech Mono', 'SF Mono', Consolas, monospace;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -9,8 +30,13 @@ body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #02050e;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #0B1229;
+    background-image: 
+        linear-gradient(rgba(0, 180, 216, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 180, 216, 0.035) 1px, transparent 1px);
+    background-size: 24px 24px;
+    font-family: var(--font-sans);
+    color: #e2e8f0;
 }
 
 #lunar-canvas {
@@ -5381,3 +5407,785 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     background: rgba(251, 191, 36, 0.2);
     border-color: #fbbf24;
 }
+
+/* ============================================================================
+   AEROSPACE INDUSTRIAL FLIGHT-CONTROL DESIGN SYSTEM (NASA / ESA TELEMETRY SPEC)
+   ============================================================================ */
+
+/* 1. STRICT RECTANGULAR GEOMETRY: NO PILL SHAPES OR OVERSIZED ROUNDED CORNERS */
+.lunar-panel,
+.lunar-nav-sidebar,
+.nav-sidebar-header,
+.nav-sidebar-body,
+.nav-menu-item,
+.hud-header,
+.hud-collapse-btn,
+.hud-reset-btn,
+.hud-copy-btn,
+.hud-nav-btn,
+.mode-btn,
+.toolbar-btn,
+.measure-info-panel,
+.measure-act-btn,
+.measure-guide-pill,
+.page-top-bar,
+.page-tab-btn,
+.page-back-btn,
+.mission-form-panel,
+.mission-results-panel,
+.mission-card,
+.analyse-submit-btn,
+.plan-reset-btn,
+.hemi-btn,
+.form-input,
+.btn-today-prominent,
+.site-nav-card,
+.site-form-input,
+.site-nav-submit-btn,
+.site-nav-reset-btn,
+.preset-card,
+.preset-badge,
+.compare-site-card,
+.cmp-card-tag,
+.cmp-number-input,
+.cmp-date-input,
+.cmp-select-input,
+.cmp-preset-pill,
+.cmp-submit-btn,
+.cmp-reset-btn,
+.cmp-metric-box,
+.cmp-metric-values,
+.cmp-winner-badge,
+.cmp-action-btn,
+.cmp-stress-btn,
+.history-filter-pill,
+.history-card,
+.history-modal-content,
+.modal-close-btn,
+.card-status-badge,
+.card-num,
+.site-nav-badge,
+.site-nav-subbadge,
+.site-card-tag,
+.form-badge,
+.results-badge,
+.outlook-badge,
+.plan-opt-btn,
+.timeline-legend-swatch,
+.modal-country-badge,
+.modal-strip-item,
+.windows-cand-row,
+.windows-pick-btn {
+    border-radius: 0 !important;
+}
+
+/* 2. ELEVATED INDUSTRIAL COLOR SCHEME: DEEP NAVY, DARK SLATE, CRISP CYAN, STATIC WHITE */
+.lunar-panel,
+.lunar-nav-sidebar,
+.mission-page-container,
+.site-nav-card,
+.compare-site-card,
+.compare-window-card,
+.history-card,
+.history-modal-content,
+.measure-info-panel,
+.cmp-tool-box,
+.cmp-tradeoff-panel,
+.plan-actions-card {
+    background: #17223B !important;
+    border: 1px solid rgba(0, 180, 216, 0.28) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* Subtle engineering grid background for mission pages overlay */
+.mission-pages-overlay {
+    background: rgba(11, 18, 41, 0.96) !important;
+    background-image: 
+        linear-gradient(rgba(0, 180, 216, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 180, 216, 0.035) 1px, transparent 1px) !important;
+    background-size: 24px 24px !important;
+}
+
+.mission-card,
+.cmp-metric-box,
+.results-state-card,
+.windows-preferred-card,
+.modal-replay-box,
+.replay-results-box,
+.plan-inline-tools-results {
+    background: #0D172E !important;
+    border: 1px solid rgba(148, 163, 184, 0.20) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 3. INPUT FIELDS: 1PX FLAT RECTANGULAR INSET FIELDS */
+.form-input,
+.site-form-input,
+.cmp-number-input,
+.cmp-date-input,
+.cmp-select-input {
+    background: #0B1229 !important;
+    border: 1px solid rgba(148, 163, 184, 0.32) !important;
+    color: #FFFFFF !important;
+    font-family: var(--font-telemetry) !important;
+    font-size: 13.5px !important;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+    outline: none !important;
+    transition: border-color 0.15s ease !important;
+}
+
+.form-input:focus,
+.site-form-input:focus,
+.cmp-number-input:focus,
+.cmp-date-input:focus,
+.cmp-select-input:focus {
+    border-color: #00B4D8 !important;
+    outline: 1px solid #00B4D8 !important;
+    box-shadow: none !important;
+}
+
+/* 4. HIGH CONTRAST TYPOGRAPHY & DATA SCANNABILITY (+25% TO +40% NUMERICAL READOUTS) */
+.coord-value,
+.primary-stat-value,
+.metric-big-val,
+.cmp-val-num,
+.stat-num,
+.delta-val,
+.strip-value,
+#val-lat,
+#val-lon,
+#hud-val-solar-elevation,
+#hud-val-solar-azimuth,
+#hud-val-solar-incidence,
+#hud-val-earth-elevation,
+#measure-val-terrain {
+    font-family: 'Orbitron', monospace !important;
+    font-size: 1.35em !important;
+    font-weight: 700 !important;
+    color: #FFFFFF !important;
+    letter-spacing: 0.8px !important;
+    text-shadow: none !important;
+}
+
+.cmp-val-num {
+    font-size: 26px !important;
+    font-weight: 800 !important;
+}
+
+.primary-stat-value {
+    font-size: 23px !important;
+}
+
+/* Desaturated Silver Slate labels for engineering scannability */
+.coord-label,
+.primary-stat-label,
+.grid-label,
+.cell-label,
+.cmp-val-label,
+.stat-lbl,
+.delta-label,
+.strip-label,
+.form-label,
+.nav-form-label,
+.cmp-field-label,
+.cmp-presets-label,
+.epoch-label,
+.site-epoch-text {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    letter-spacing: 1.2px !important;
+    color: #94A3B8 !important;
+    text-transform: uppercase !important;
+}
+
+/* Isolated desaturated unit indicators (° , N/S, E/W, km, m/s, %) */
+.form-unit,
+.nav-form-unit,
+.metric-unit,
+.coord-unit,
+.stat-unit,
+.unit-metric {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.72em !important;
+    font-weight: 600 !important;
+    color: #94A3B8 !important;
+    margin-left: 2px !important;
+    vertical-align: baseline !important;
+}
+
+/* 5. PRIMARY ACTION BUTTONS: SOLID FLAT RECTANGULAR IN SATURATED BLUE */
+.site-nav-submit-btn,
+.analyse-submit-btn,
+.cmp-submit-btn,
+.btn-today-prominent {
+    background: #1D4ED8 !important;
+    border: 1px solid #00B4D8 !important;
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
+    letter-spacing: 1px !important;
+    text-transform: uppercase !important;
+    box-shadow: none !important;
+    transition: background 0.15s ease, border-color 0.15s ease !important;
+}
+
+.site-nav-submit-btn:hover,
+.analyse-submit-btn:hover,
+.cmp-submit-btn:hover,
+.btn-today-prominent:hover {
+    background: #2563EB !important;
+    border-color: #38BDF8 !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* 6. LOW PRIORITY & RESET BUTTONS: STRICTLY OUTLINED / GHOST */
+.site-nav-reset-btn,
+.plan-reset-btn,
+.cmp-reset-btn,
+.hud-reset-btn,
+.btn-clear {
+    background: transparent !important;
+    border: 1px solid rgba(148, 163, 184, 0.35) !important;
+    color: #94A3B8 !important;
+    font-weight: 700 !important;
+    letter-spacing: 1px !important;
+    box-shadow: none !important;
+    transition: all 0.15s ease !important;
+}
+
+.site-nav-reset-btn:hover,
+.plan-reset-btn:hover,
+.cmp-reset-btn:hover,
+.hud-reset-btn:hover,
+.btn-clear:hover {
+    background: rgba(148, 163, 184, 0.12) !important;
+    border-color: #94A3B8 !important;
+    color: #FFFFFF !important;
+}
+
+/* 7. COMPARATIVE STUDY: SITE A (PRIMARY) IN WARNING GOLD & SITE B IN CYAN */
+#cmp-card-a {
+    border: 1px solid rgba(245, 158, 11, 0.55) !important;
+}
+
+#cmp-card-a .cmp-card-tag {
+    background: rgba(245, 158, 11, 0.15) !important;
+    border: 1px solid #F59E0B !important;
+    color: #F59E0B !important;
+    font-weight: 800 !important;
+    letter-spacing: 1.2px !important;
+}
+
+.col-a .cmp-val-label {
+    color: #F59E0B !important;
+}
+
+.col-a .cmp-val-num {
+    color: #FBBF24 !important;
+}
+
+#cmp-card-b {
+    border: 1px solid rgba(0, 180, 216, 0.40) !important;
+}
+
+#cmp-card-b .cmp-card-tag {
+    background: rgba(0, 180, 216, 0.12) !important;
+    border: 1px solid #00B4D8 !important;
+    color: #00B4D8 !important;
+    font-weight: 800 !important;
+    letter-spacing: 1.2px !important;
+}
+
+.col-b .cmp-val-label {
+    color: #00B4D8 !important;
+}
+
+.col-b .cmp-val-num {
+    color: #38BDF8 !important;
+}
+
+/* 8. PRESET BADGES AS SHARP RECTANGULAR TAG BLOCKS */
+.preset-card {
+    background: #0D172E !important;
+    border: 1px solid rgba(148, 163, 184, 0.22) !important;
+    box-shadow: none !important;
+    transition: border-color 0.15s ease, background 0.15s ease !important;
+}
+
+.preset-card:hover {
+    background: #17223B !important;
+    border-color: #00B4D8 !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.preset-badge {
+    font-family: var(--font-telemetry) !important;
+    font-size: 9px !important;
+    font-weight: 800 !important;
+    padding: 2px 6px !important;
+    letter-spacing: 0.8px !important;
+}
+
+.preset-badge.nasa {
+    border: 1px solid #3B82F6 !important;
+    color: #60A5FA !important;
+    background: rgba(59, 130, 246, 0.12) !important;
+}
+
+.preset-badge.isro {
+    border: 1px solid #F59E0B !important;
+    color: #FBBF24 !important;
+    background: rgba(245, 158, 11, 0.12) !important;
+}
+
+.preset-badge.cnsa {
+    border: 1px solid #EF4444 !important;
+    color: #F87171 !important;
+    background: rgba(239, 68, 68, 0.12) !important;
+}
+
+.preset-badge.crater,
+.preset-badge.iau,
+.preset-badge.polar {
+    border: 1px solid #00B4D8 !important;
+    color: #38BDF8 !important;
+    background: rgba(0, 180, 216, 0.12) !important;
+}
+
+/* Filter pills converted to sharp rectangular tags */
+.cmp-preset-pill,
+.history-filter-pill {
+    background: #0D172E !important;
+    border: 1px solid rgba(148, 163, 184, 0.25) !important;
+    color: #94A3B8 !important;
+    font-family: var(--font-telemetry) !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    padding: 5px 11px !important;
+    transition: all 0.15s ease !important;
+}
+
+.cmp-preset-pill:hover,
+.history-filter-pill:hover {
+    color: #FFFFFF !important;
+    border-color: #00B4D8 !important;
+}
+
+.cmp-preset-pill.active,
+.history-filter-pill.active {
+    background: #1D4ED8 !important;
+    border-color: #00B4D8 !important;
+    color: #FFFFFF !important;
+}
+
+/* 9. DATA VISUALIZATION: RECTANGULAR SEGMENTED GAUGES */
+.cmp-metric-box .cmp-metric-values {
+    background: #081022 !important;
+    border: 1px solid rgba(148, 163, 184, 0.20) !important;
+}
+
+.cmp-val-divider {
+    font-family: var(--font-telemetry) !important;
+    color: #94A3B8 !important;
+    font-weight: 800 !important;
+}
+
+/* ============================================================================
+   FEATURE A: FULLSCREEN PINPOINT MARKER CROSSHAIR RETICLE (THIN 1PX LINES)
+   ============================================================================ */
+.crosshair-reticle {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 45;
+}
+
+.crosshair-line {
+    position: absolute;
+    pointer-events: none;
+}
+
+.crosshair-h {
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 1px;
+    background: rgba(0, 180, 216, 0.55);
+    box-shadow: 0 0 2px rgba(0, 180, 216, 0.65);
+}
+
+.crosshair-v {
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 100vh;
+    background: rgba(0, 180, 216, 0.55);
+    box-shadow: 0 0 2px rgba(0, 180, 216, 0.65);
+}
+
+.crosshair-target-box {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.reticle-corner {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-color: #00B4D8;
+    border-style: solid;
+}
+
+.reticle-tl {
+    top: 0;
+    left: 0;
+    border-width: 1.5px 0 0 1.5px;
+}
+
+.reticle-tr {
+    top: 0;
+    right: 0;
+    border-width: 1.5px 1.5px 0 0;
+}
+
+.reticle-bl {
+    bottom: 0;
+    left: 0;
+    border-width: 0 0 1.5px 1.5px;
+}
+
+.reticle-br {
+    bottom: 0;
+    right: 0;
+    border-width: 0 1.5px 1.5px 0;
+}
+
+.reticle-coord-tag {
+    position: absolute;
+    top: 36px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-telemetry);
+    font-size: 9px;
+    font-weight: 700;
+    color: #00B4D8;
+    background: rgba(11, 18, 41, 0.85);
+    padding: 2px 6px;
+    border: 1px solid rgba(0, 180, 216, 0.4);
+    white-space: nowrap;
+}
+
+/* ============================================================================
+   FEATURE B: LAYER VISIBILITY TOGGLE BUTTON (IN VIEW SELECTOR)
+   ============================================================================ */
+.view-mode-selector {
+    display: flex;
+    gap: 6px;
+    z-index: 100;
+}
+
+.mode-btn {
+    border-radius: 0 !important;
+    background: rgba(23, 34, 59, 0.9) !important;
+    border: 1px solid rgba(0, 180, 216, 0.3) !important;
+    color: #94A3B8 !important;
+    transition: all 0.15s ease !important;
+}
+
+.mode-btn:hover {
+    color: #FFFFFF !important;
+    border-color: #00B4D8 !important;
+}
+
+.mode-btn.active {
+    background: #1D4ED8 !important;
+    border-color: #00B4D8 !important;
+    color: #FFFFFF !important;
+}
+
+#btn-toggle-overlays.mode-btn {
+    border-left: 2px solid #00B4D8 !important;
+}
+
+#btn-toggle-overlays.muted {
+    background: rgba(15, 23, 42, 0.8) !important;
+    border-color: rgba(148, 163, 184, 0.25) !important;
+    color: #64748B !important;
+}
+
+/* ============================================================================
+   FEATURE C: MONOCHROMATIC FLIGHT-CONTROL SCREEN TRANSITION WIPE
+   ============================================================================ */
+.flight-transition-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #0B1229;
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 36px 48px;
+    box-sizing: border-box;
+    transform: translateX(-100%);
+    pointer-events: none;
+    border-right: 3px solid #00B4D8;
+    overflow: hidden;
+}
+
+.flight-transition-overlay.anim-in {
+    pointer-events: auto;
+    animation: flightSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.flight-transition-overlay.anim-hold {
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+.flight-transition-overlay.anim-out {
+    pointer-events: auto;
+    animation: flightSlideOut 0.38s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+
+@keyframes flightSlideIn {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(0); }
+}
+
+@keyframes flightSlideOut {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(100%); }
+}
+
+.trans-grid-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(0, 180, 216, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 180, 216, 0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+}
+
+.trans-top-telemetry {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(0, 180, 216, 0.3);
+    padding-bottom: 14px;
+}
+
+.trans-telemetry-tag {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-telemetry);
+    font-size: 13px;
+    font-weight: 800;
+    color: #00B4D8;
+    letter-spacing: 1.5px;
+}
+
+.telemetry-dot {
+    width: 8px;
+    height: 8px;
+    background: #00B4D8;
+    border-radius: 50%;
+    animation: pulseGlow 1s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { opacity: 0.3; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.3); }
+}
+
+.trans-telemetry-meta {
+    display: flex;
+    gap: 20px;
+    font-family: var(--font-telemetry);
+    font-size: 11px;
+    color: #94A3B8;
+}
+
+.trans-frame-id {
+    color: #00B4D8;
+    font-weight: 700;
+}
+
+/* Arena containing Earth, Trajectory Arc, and Moon */
+.trans-stage-viewport {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    height: 280px;
+}
+
+.trans-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    transition: opacity 0.4s ease;
+}
+
+.trans-earth-node.faded {
+    opacity: 0.08 !important;
+}
+
+.trans-globe-ring {
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.trans-globe-svg {
+    width: 100%;
+    height: 100%;
+}
+
+.trans-node-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.trans-node-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: #FFFFFF;
+    letter-spacing: 1px;
+}
+
+.trans-node-title.moon-title {
+    color: #00B4D8;
+}
+
+.trans-node-sub {
+    font-family: var(--font-telemetry);
+    font-size: 10px;
+    color: #94A3B8;
+}
+
+/* Central Trajectory Arc */
+.trans-trajectory-arena {
+    position: relative;
+    flex: 1;
+    height: 180px;
+    margin: 0 30px;
+}
+
+.trans-trajectory-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.trans-path-beam {
+    stroke-dasharray: 600;
+    stroke-dashoffset: 600;
+    transition: stroke-dashoffset 0.8s ease-in-out;
+}
+
+.trans-path-beam.active {
+    stroke-dashoffset: 0;
+}
+
+/* Spacecraft vehicle */
+.trans-spacecraft-wrap {
+    position: absolute;
+    top: 140px;
+    left: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.85s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    pointer-events: none;
+}
+
+.trans-spacecraft-icon {
+    transform: rotate(65deg);
+    filter: drop-shadow(0 0 6px #00B4D8);
+}
+
+.trans-exhaust-plume {
+    width: 4px;
+    height: 14px;
+    background: linear-gradient(to top, rgba(0, 180, 216, 0.8), transparent);
+    margin-top: -3px;
+    animation: plumeFlicker 0.1s linear infinite;
+}
+
+@keyframes plumeFlicker {
+    0%, 100% { height: 14px; opacity: 0.9; }
+    50% { height: 9px; opacity: 0.5; }
+}
+
+.trans-spacecraft-callout {
+    margin-top: 8px;
+    font-family: var(--font-telemetry);
+    font-size: 9px;
+    font-weight: 700;
+    color: #00B4D8;
+    background: rgba(11, 18, 41, 0.9);
+    padding: 2px 6px;
+    border: 1px solid rgba(0, 180, 216, 0.4);
+    white-space: nowrap;
+}
+
+.trans-bottom-telemetry {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    border-top: 1px solid rgba(0, 180, 216, 0.3);
+    padding-top: 14px;
+}
+
+.trans-telemetry-col {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.trans-col-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #94A3B8;
+}
+
+.trans-col-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: #FFFFFF;
+}
+

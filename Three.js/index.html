@@ -5,12 +5,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lunar Compass - 3D Moon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/src/style.css">
 </head>
 
 <body>
     <!-- Main Three.js Lunar Canvas -->
     <canvas id="lunar-canvas"></canvas>
+
+    <!-- Fullscreen Reticle Tracking Crosshair Lines (Thin 1px aerospace telemetry lines) -->
+    <div id="crosshair-reticle" class="crosshair-reticle" style="display: none;">
+        <div id="crosshair-h" class="crosshair-line crosshair-h"></div>
+        <div id="crosshair-v" class="crosshair-line crosshair-v"></div>
+        <div id="crosshair-target-box" class="crosshair-target-box">
+            <div class="reticle-corner reticle-tl"></div>
+            <div class="reticle-corner reticle-tr"></div>
+            <div class="reticle-corner reticle-bl"></div>
+            <div class="reticle-corner reticle-br"></div>
+            <span class="reticle-coord-tag" id="reticle-coord-tag"></span>
+        </div>
+    </div>
 
     <!-- Left UI Stack (Navigation Sidebar + HUD + Manual Navigation) -->
     <div class="left-ui-container">
@@ -318,6 +334,14 @@
                 <line x1="12" y1="4" x2="12" y2="20"></line>
             </svg>
             <span class="mode-btn-label">2D MAP</span>
+        </button>
+        <button id="btn-toggle-overlays" class="mode-btn active" type="button" data-tooltip="Toggle Craters, Missions & Overlays" title="Toggle Craters, Missions & Overlays">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <span class="mode-btn-label" id="overlay-toggle-text">LAYERS: ON</span>
         </button>
     </div>
 
@@ -1401,6 +1425,103 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monochromatic Flight-Control Screen Transition Wipe -->
+    <div id="flight-transition-overlay" class="flight-transition-overlay" style="display: none;">
+        <div class="trans-grid-bg"></div>
+        <div class="trans-top-telemetry">
+            <div class="trans-telemetry-tag">
+                <span class="telemetry-dot"></span>
+                <span>FLIGHT TELEMETRY // TRANS-LUNAR INJECTION</span>
+            </div>
+            <div class="trans-telemetry-meta">
+                <span>EPOCH: UTC 12:00:00</span>
+                <span>DE440 EPHEMERIS</span>
+                <span class="trans-frame-id">FRM-094</span>
+            </div>
+        </div>
+
+        <div class="trans-stage-viewport">
+            <!-- Earth Station (Left) -->
+            <div class="trans-node trans-earth-node" id="trans-earth-node">
+                <div class="trans-globe-ring">
+                    <svg class="trans-globe-svg" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="48" fill="none" stroke="rgba(0, 180, 216, 0.4)" stroke-width="1.5" stroke-dasharray="3 3"/>
+                        <circle cx="60" cy="60" r="40" fill="rgba(11, 18, 41, 0.8)" stroke="#00B4D8" stroke-width="1.8"/>
+                        <ellipse cx="60" cy="60" rx="40" ry="16" fill="none" stroke="rgba(0, 180, 216, 0.5)" stroke-width="1"/>
+                        <ellipse cx="60" cy="60" rx="20" ry="40" fill="none" stroke="rgba(0, 180, 216, 0.3)" stroke-width="1"/>
+                        <line x1="20" y1="60" x2="100" y2="60" stroke="#00B4D8" stroke-width="1"/>
+                        <line x1="60" y1="20" x2="60" y2="100" stroke="#00B4D8" stroke-width="1"/>
+                        <circle cx="60" cy="40" r="3" fill="#38BDF8"/>
+                    </svg>
+                </div>
+                <div class="trans-node-details">
+                    <span class="trans-node-title">EARTH [LAUNCH PAD 39B]</span>
+                    <span class="trans-node-sub">28.572° N, 80.649° W · T-00:00</span>
+                </div>
+            </div>
+
+            <!-- Central Trajectory Arena -->
+            <div class="trans-trajectory-arena">
+                <svg class="trans-trajectory-svg" viewBox="0 0 600 200" preserveAspectRatio="none">
+                    <!-- Target Path -->
+                    <path id="trans-path-guide" class="trans-path-guide" d="M 60,140 C 220,10 380,20 540,90" fill="none" stroke="rgba(148, 163, 184, 0.25)" stroke-width="1.5" stroke-dasharray="4 4"/>
+                    <path id="trans-path-beam" class="trans-path-beam" d="M 60,140 C 220,10 380,20 540,90" fill="none" stroke="#00B4D8" stroke-width="2.5"/>
+                </svg>
+
+                <!-- Animated Spacecraft Lander -->
+                <div class="trans-spacecraft-wrap" id="trans-spacecraft-wrap">
+                    <div class="trans-spacecraft-icon">
+                        <svg viewBox="0 0 24 24" width="26" height="26" fill="#FFFFFF" stroke="#00B4D8" stroke-width="1.5">
+                            <polygon points="12,2 17,14 13,14 14,21 12,18 10,21 11,14 7,14"/>
+                        </svg>
+                    </div>
+                    <div class="trans-exhaust-plume" id="trans-exhaust-plume"></div>
+                    <span class="trans-spacecraft-callout">LUNAR LANDER // TLI ACTIVE</span>
+                </div>
+            </div>
+
+            <!-- Moon Target Station (Right) -->
+            <div class="trans-node trans-moon-node" id="trans-moon-node">
+                <div class="trans-globe-ring">
+                    <svg class="trans-globe-svg" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="44" fill="rgba(15, 23, 42, 0.9)" stroke="#FFFFFF" stroke-width="2"/>
+                        <circle cx="50" cy="46" r="7" fill="none" stroke="#94A3B8" stroke-width="1.2"/>
+                        <circle cx="74" cy="58" r="9" fill="none" stroke="#94A3B8" stroke-width="1.2"/>
+                        <circle cx="44" cy="76" r="5" fill="none" stroke="#94A3B8" stroke-width="1.2"/>
+                        <circle cx="68" cy="80" r="4" fill="none" stroke="#94A3B8" stroke-width="1"/>
+                        <line x1="60" y1="14" x2="60" y2="106" stroke="#F59E0B" stroke-width="1.2" stroke-dasharray="2 2"/>
+                        <line x1="14" y1="60" x2="106" y2="60" stroke="#F59E0B" stroke-width="1.2" stroke-dasharray="2 2"/>
+                        <circle cx="60" cy="60" r="14" fill="none" stroke="#F59E0B" stroke-width="1.5"/>
+                        <circle cx="60" cy="60" r="3" fill="#F59E0B"/>
+                    </svg>
+                </div>
+                <div class="trans-node-details">
+                    <span class="trans-node-title moon-title">MOON [PRIMARY TARGET]</span>
+                    <span class="trans-node-sub">DATUM R = 1737.4 KM · POLAR AXIS</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="trans-bottom-telemetry">
+            <div class="trans-telemetry-col">
+                <span class="trans-col-label">MISSION STATUS</span>
+                <span class="trans-col-val" id="trans-stat-status">LAUNCH & TLI INJECTION</span>
+            </div>
+            <div class="trans-telemetry-col">
+                <span class="trans-col-label">PROPULSION</span>
+                <span class="trans-col-val" id="trans-stat-thrust">NOMINAL THRUST // 100%</span>
+            </div>
+            <div class="trans-telemetry-col">
+                <span class="trans-col-label">DELTA-V</span>
+                <span class="trans-col-val" id="trans-stat-deltav">3,140 m/s</span>
+            </div>
+            <div class="trans-telemetry-col">
+                <span class="trans-col-label">DISTANCE TO MOON</span>
+                <span class="trans-col-val" id="trans-stat-dist">384,400 km</span>
             </div>
         </div>
     </div>
