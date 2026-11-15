@@ -5,6 +5,11 @@ const backendTarget = process.env.LUNAR_COMPASS_API_TARGET ?? "http://127.0.0.1:
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    // Three.js is intentionally loaded only when the coordinate globe mounts.
+    // Its isolated async bundle can exceed Vite's generic 500 kB advisory.
+    chunkSizeWarningLimit: 900,
+  },
   server: {
     proxy: {
       "/api": backendTarget,

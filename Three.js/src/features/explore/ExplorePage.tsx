@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { ApiError } from "../../api/client";
@@ -10,7 +10,8 @@ import { MissionWindowForm } from "../../components/MissionWindowForm";
 import { formatCoordinate } from "../../domain/coordinates";
 import { missionEndUtc } from "../../domain/missionWindow";
 import { AnalysisResults } from "./AnalysisResults";
-import { LunarGlobe } from "./LunarGlobe";
+
+const LunarGlobe = lazy(async () => ({ default: (await import("./LunarGlobe")).LunarGlobe }));
 
 type StoredAnalysis = { key: string; value: AnalysisResponse };
 type StoredError = { key: string; message: string };
@@ -78,7 +79,7 @@ export function ExplorePage() {
     <p className="lead">Click a visible point on the globe or enter a coordinate manually. Set a UTC mission window, then request Sun and Earth visibility from the shared backend.</p>
     <div className="explore-grid">
       <section className="moon-stage" aria-label="Moon coordinate selection">
-        <LunarGlobe selectedCoordinate={state.selectedSite} onSelect={selectCoordinate} />
+        <Suspense fallback={<p className="globe-loading">Loading interactive Moon…</p>}><LunarGlobe selectedCoordinate={state.selectedSite} onSelect={selectCoordinate} /></Suspense>
       </section>
       <section className="panel selection-panel">
         <h2>Selected lunar location</h2>
