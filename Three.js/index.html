@@ -222,7 +222,7 @@
         <div class="measure-panel-header">
             <div class="measure-header-title-row">
                 <span class="measure-title">LUNAR SURFACE DISTANCE</span>
-                <span class="measure-badge">NASA LOLA TOPOGRAPHY</span>
+                <span class="measure-badge">VISUAL HEIGHTMAP ESTIMATE</span>
             </div>
             <button id="btn-close-measure-panel" class="measure-close-btn" type="button" title="Close Panel">✕</button>
         </div>
@@ -234,7 +234,7 @@
                     <span id="measure-val-terrain" class="metric-big-val">--</span>
                     <span class="metric-unit">km</span>
                 </div>
-                <span class="metric-subtext">Integrated along LOLA elevation profile</span>
+                <span class="metric-subtext">Approximation from the display heightmap; not a rover route</span>
             </div>
 
             <div class="measure-divider"></div>
@@ -275,7 +275,7 @@
 
             <!-- Data Source & Reference Frame Citation -->
             <div class="measure-source-note">
-                <span>Ref: NASA LRO LOLA Altimetry (1024×512) • Datum R = 1737.4 km</span>
+                <span>Visual heightmap estimate • Mean radius = 1737.4 km • Not validated terrain measurements</span>
             </div>
 
             <!-- Action Controls -->
@@ -479,7 +479,7 @@
                     <div class="mission-results-panel">
                         <div class="results-panel-header">
                             <span class="results-badge" id="results-engine-badge">MISSION FEASIBILITY</span>
-                            <h3 class="results-title">SITE FEASIBILITY ASSESSMENT</h3>
+                            <h3 class="results-title">SITE ENVIRONMENTAL ASSESSMENT</h3>
                             <span class="results-coords-label" id="results-site-coords">Awaiting coordinates
                                 input...</span>
                         </div>
@@ -507,7 +507,7 @@
                             <div class="outlook-banner" id="plan-outlook-banner">
                                 <div class="outlook-header-row">
                                     <span class="outlook-badge" id="plan-outlook-badge">EVALUATING SUITABILITY</span>
-                                    <span class="outlook-meta" id="plan-outlook-meta">144H MODELED EPHEMERIS · JPL HORIZONS DE440</span>
+                                    <span class="outlook-meta" id="plan-outlook-meta">144H MODELED EPHEMERIS · JPL HORIZONS</span>
                                 </div>
                                 <p class="outlook-statement" id="plan-outlook-statement">Loading comprehensive visibility profile and scientific indicators...</p>
                             </div>
@@ -550,13 +550,13 @@
                                 <div class="card-header">
                                     <div class="card-header-left">
                                         <span class="card-num">B</span>
-                                        <span class="card-title">SOLAR ILLUMINATION & POWER AVAILABILITY</span>
+                                        <span class="card-title">SUN VISIBILITY</span>
                                     </div>
                                     <span class="card-status-badge" id="badge-solar-power">CALCULATING</span>
                                 </div>
                                 <div class="card-body">
                                     <div class="card-primary-stat">
-                                        <span class="primary-stat-label">SOLAR STATE ON ARRIVAL</span>
+                                        <span class="primary-stat-label">SUNLIT MISSION FRACTION</span>
                                         <span class="primary-stat-value" id="val-solar-state">--</span>
                                     </div>
                                     <p class="card-explanation" id="desc-solar-power">Evaluating Sun altitude and LOLA
@@ -583,13 +583,13 @@
                                 <div class="card-header">
                                     <div class="card-header-left">
                                         <span class="card-num">C</span>
-                                        <span class="card-title">DISTANCE FROM LUNAR WATER ICE</span>
+                                        <span class="card-title">ICE REFERENCE SITE PROXIMITY</span>
                                     </div>
                                     <span class="card-status-badge" id="badge-water-ice">CALCULATING</span>
                                 </div>
                                 <div class="card-body">
                                     <div class="card-primary-stat">
-                                        <span class="primary-stat-label">NEAREST ICE DEPOSIT</span>
+                                        <span class="primary-stat-label">NEAREST LISTED REFERENCE WITHIN 250 KM</span>
                                         <span class="primary-stat-value" id="val-ice-distance">-- km</span>
                                     </div>
                                     <p class="card-explanation" id="desc-water-ice">Evaluating proximity to documented
@@ -604,7 +604,7 @@
                                             <span class="cell-value" id="val-ice-feature-name">--</span>
                                         </div>
                                         <div class="grid-cell full-width">
-                                            <span class="cell-label">DEPOSIT LOCATION</span>
+                                            <span class="cell-label">REFERENCE LOCATION</span>
                                             <span class="cell-value" id="val-ice-coords">--</span>
                                         </div>
                                     </div>
@@ -660,7 +660,7 @@
                                     <div class="timeline-legend-row">
                                         <span class="timeline-legend-item"><span class="legend-swatch sun"></span> Sunlit (&gt;0° Elev)</span>
                                         <span class="timeline-legend-item"><span class="legend-swatch earth"></span> Direct Earth View (&gt;0° Elev)</span>
-                                        <span class="timeline-legend-item"><span class="legend-swatch dark"></span> Occulted / Night</span>
+                                        <span class="timeline-legend-item"><span class="legend-swatch dark"></span> Both below geometric horizon</span>
                                     </div>
                                     <div id="plan-timeline-track" class="plan-timeline-track">
                                         <!-- Populated with 6 days of hourly blocks -->
@@ -942,7 +942,7 @@
                     <div class="site-nav-header">
                         <div class="site-nav-badge-row">
                             <span class="site-nav-badge">MULTI-SITE SCIENTIFIC EVALUATION</span>
-                            <span class="site-nav-subbadge">SHARED UTC WINDOW · HORIZONS DE440</span>
+                            <span class="site-nav-subbadge">SHARED UTC WINDOW · HORIZONS</span>
                         </div>
                         <h2 class="site-nav-title">Lunar Site Comparative Study & Optimization</h2>
                         <p class="site-nav-subtitle">
@@ -1060,7 +1060,7 @@
                             <span class="cmp-status-dot"></span>
                             <span class="cmp-status-text" id="cmp-status-text">Verified NASA Horizons Comparison · 144
                                 Hourly Midpoints</span>
-                            <span class="cmp-provenance-badge" id="cmp-provenance-badge">JPL HORIZONS DE440</span>
+                            <span class="cmp-provenance-badge" id="cmp-provenance-badge">JPL HORIZONS</span>
                         </div>
 
                         <!-- Side-by-Side Comparison Grid -->

@@ -5137,6 +5137,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     z-index: 1;
 }
 
+button:disabled { cursor: wait; opacity: 0.6; }
+.timeline-block { padding: 0; border: 0; }
+.timeline-block:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+#val-ice-evidence, #desc-water-ice, #plan-inline-tools-results { overflow-wrap: anywhere; }
+
 .history-modal-header {
     display: flex;
     justify-content: space-between;

@@ -37,6 +37,8 @@ def moon_surface_distance_km(
         * math.cos(end_lat_rad)
         * math.sin(delta_longitude / 2) ** 2
     )
+    # Roundoff can put antipodal or coincident values just outside [0, 1].
+    haversine = max(0.0, min(1.0, haversine))
     central_angle = 2 * math.atan2(math.sqrt(haversine), math.sqrt(1 - haversine))
     return MOON_RADIUS_KM * central_angle
 
