@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { requestVisibilityAnalysis } from './backend.js';
 
 // 1. CREATE SCENE WITH AUTHENTIC BLACKISH-BLUE DEEP SPACE BACKGROUND
 const scene = new THREE.Scene();
@@ -2837,97 +2838,32 @@ function handleClearReset() {
 if (btnGoto) btnGoto.addEventListener('click', handleGoToSubmit);
 if (btnClear) btnClear.addEventListener('click', handleClearReset);
 
-// ============================================================================
-// 12E. LUNAR COMPASS HUD SOLAR ANALYSIS & SITE NAVIGATOR INTEGRATION
-// ============================================================================
-
-function updateHUDSolarAnalysis(latDeg, lonDeg, epochDate = new Date()) {
-    const hudSolarAnalysis = document.getElementById('hud-solar-analysis');
+async function fetchBackendMissionData(lat, lon, epochDate) {
     const hudValElevation = document.getElementById('hud-val-solar-elevation');
     const hudValAzimuth = document.getElementById('hud-val-solar-azimuth');
-    const hudValIncidence = document.getElementById('hud-val-solar-incidence');
     const hudSolarBadge = document.getElementById('hud-solar-badge');
-    const hudRowObstruction = document.getElementById('hud-row-terrain-obstruction');
-    const hudValObstruction = document.getElementById('hud-val-terrain-obstruction');
 
-    if (!hudSolarAnalysis) return;
-    hudSolarAnalysis.style.display = 'block';
-
-    const sunData = getSunInMoonFrame(epochDate);
-    const angles = calculateSolarAngles(latDeg, lonDeg, sunData.s_moon);
-    const obstruction = calculateTerrainHorizonObstruction(latDeg, lonDeg, angles.azimuth, angles.elevation);
-
-    if (hudValElevation) {
-        hudValElevation.textContent = `${angles.elevation >= 0 ? '+' : ''}${angles.elevation.toFixed(1)}°`;
-    }
-    if (hudValAzimuth) {
-        hudValAzimuth.textContent = `${angles.azimuth.toFixed(1)}°`;
-    }
-    if (hudValIncidence) {
-        hudValIncidence.textContent = `${angles.incidenceDeg.toFixed(1)}°`;
-    }
-
-    if (hudSolarBadge) {
-        hudSolarBadge.className = 'hud-solar-badge';
-        if (obstruction.status === 'SUNLIT') {
-            hudSolarBadge.classList.add('sunlit');
-            hudSolarBadge.textContent = '☀️ DIRECT SUNLIGHT';
-        } else if (obstruction.status === 'TERRAIN_SHADOW') {
-            hudSolarBadge.classList.add('blocked');
-            hudSolarBadge.textContent = '🌑 RIM SHADOWED';
-        } else {
-            hudSolarBadge.classList.add('shadowed');
-            hudSolarBadge.textContent = '🌑 NIGHT';
-        }
-    }
-
-    if (hudRowObstruction && hudValObstruction) {
-        if (obstruction.status === 'TERRAIN_SHADOW') {
-            hudRowObstruction.style.display = 'flex';
-            hudValObstruction.textContent = `Blocked by ${obstruction.horizonElevationDeg.toFixed(1)}° rim (${obstruction.obstructionSource || 'LOLA Rim'})`;
-        } else {
-            hudRowObstruction.style.display = 'none';
-        }
-    }
-}
-
-async function fetchBackendMissionData(lat, lon, epochDate) {
     try {
-        const payload = {
-            latitude: lat,
-            longitude: lon,
-            date: epochDate.toISOString().split('T')[0],
-            epochIso: epochDate.toISOString()
-        };
-        const res = await fetch('/api/mission-analysis', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+        const analysis = await requestVisibilityAnalysis({
+            latitude_deg: lat,
+            east_longitude_deg: lon,
+            start_utc: epochDate.toISOString(),
+            duration_hours: 1,
         });
-        if (res.ok) {
-            const data = await res.json();
-            if (data.solarIllumination) {
-                const si = data.solarIllumination;
-                const hudValElevation = document.getElementById('hud-val-solar-elevation');
-                const hudValAzimuth = document.getElementById('hud-val-solar-azimuth');
-                const hudSolarBadge = document.getElementById('hud-solar-badge');
-                if (si.elevationDeg != null && hudValElevation) {
-                    hudValElevation.textContent = `${si.elevationDeg >= 0 ? '+' : ''}${si.elevationDeg.toFixed(1)}°`;
-                }
-                if (si.azimuthDeg != null && hudValAzimuth) {
-                    hudValAzimuth.textContent = `${si.azimuthDeg.toFixed(1)}°`;
-                }
-                if (si.state && hudSolarBadge) {
-                    hudSolarBadge.textContent = si.state;
-                }
-            }
-            if (data.matchedSite) {
-                const valSite = document.getElementById('val-site');
-                if (valSite) valSite.textContent = data.matchedSite;
-            }
+        const sample = analysis.timeline[0];
+        if (hudValElevation) hudValElevation.textContent = `${sample.sun_elevation_deg >= 0 ? '+' : ''}${sample.sun_elevation_deg.toFixed(1)}°`;
+        if (hudValAzimuth) hudValAzimuth.textContent = `${sample.sun_azimuth_deg.toFixed(1)}°`;
+        if (hudSolarBadge) {
+            hudSolarBadge.textContent = sample.sun_visible ? '☀️ SUN VISIBLE' : '🌑 SUN BELOW HORIZON';
+            hudSolarBadge.className = `hud-solar-badge ${sample.sun_visible ? 'sunlit' : 'shadowed'}`;
         }
-    } catch (e) {
-        // Fallback astronomical ephemeris and LOLA data already active
+    } catch (error) {
+        if (hudValElevation) hudValElevation.textContent = 'Unavailable';
+        if (hudValAzimuth) hudValAzimuth.textContent = 'Unavailable';
+        if (hudSolarBadge) {
+            hudSolarBadge.textContent = 'BACKEND UNAVAILABLE';
+            hudSolarBadge.className = 'hud-solar-badge shadowed';
+        }
     }
 }
 
@@ -2952,8 +2888,15 @@ function pointAndAnalyzeSite(lat, lon, epochDate = new Date()) {
     // 4. Update HUD with coordinates and mission/crater info
     onLunarSurfacePointSelected(lat, lon);
 
-    // 5. Update HUD sunlight analysis section
-    updateHUDSolarAnalysis(lat, lon, epochDate);
+    // 5. Clear the old local estimate until NASA-backed values return.
+    const hudValElevation = document.getElementById('hud-val-solar-elevation');
+    const hudValAzimuth = document.getElementById('hud-val-solar-azimuth');
+    const hudValIncidence = document.getElementById('hud-val-solar-incidence');
+    const hudSolarBadge = document.getElementById('hud-solar-badge');
+    if (hudValElevation) hudValElevation.textContent = 'Loading…';
+    if (hudValAzimuth) hudValAzimuth.textContent = 'Loading…';
+    if (hudValIncidence) hudValIncidence.textContent = 'Not provided by the visibility engine';
+    if (hudSolarBadge) hudSolarBadge.textContent = 'QUERYING NASA DATA';
 
     // 6. Ensure HUD is displayed on Moon page
     const hud = document.getElementById('lunar-hud');
@@ -2962,7 +2905,7 @@ function pointAndAnalyzeSite(lat, lon, epochDate = new Date()) {
         hud.classList.add('active');
     }
 
-    // 7. Connect to backend POST /api/mission-analysis in background
+    // 7. Request actual apparent-airless Sun data from the shared backend.
     fetchBackendMissionData(lat, lon, epochDate);
 }
 
@@ -3820,7 +3763,7 @@ if (window.location.hash) {
 // ============================================================================
 // 13D. "PLAN YOUR MISSION" FORM & BACKEND INTEGRATION
 // Handles inputs (Lat -90..+90, Lon 0..360 E NASA ME, Date calendar)
-// Connects to POST /api/mission-analysis with transparent status display
+// Uses POST /api/analyze; the shared backend is the only source of visibility metrics.
 // Displays: (A) Earth Visibility, (B) Solar Power, (C) Lunar Water Ice Distance
 // ============================================================================
 
@@ -3902,291 +3845,111 @@ function computeLunarDistanceKm(lat1, lon1, lat2, lon2) {
     return 1737.4 * c;
 }
 
-async function runMissionAnalysis() {
-    if (!planLatInput || !planLonInput || !planDateInput) return;
+function setAnalysisElement(id, text) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = text;
+}
 
+function renderDocumentedIceDistance(latitude, eastLongitude) {
+    let closestSite = DOCUMENTED_LUNAR_ICE_SITES[0];
+    let minimumDistance = Infinity;
+    for (const site of DOCUMENTED_LUNAR_ICE_SITES) {
+        const distance = computeLunarDistanceKm(latitude, eastLongitude, site.lat, site.lon);
+        if (distance < minimumDistance) {
+            minimumDistance = distance;
+            closestSite = site;
+        }
+    }
+    setAnalysisElement('val-ice-distance', `${minimumDistance.toFixed(1)} km`);
+    setAnalysisElement('badge-water-ice', minimumDistance < 120 ? 'DOCUMENTED POLAR SITE' : 'DOCUMENTED CATALOGUE');
+    setAnalysisElement('desc-water-ice', `The nearest listed documented polar-volatile site is ${closestSite.name}. This catalogue distance is separate from the NASA Horizons visibility calculation.`);
+    setAnalysisElement('val-ice-evidence', closestSite.evidence);
+    setAnalysisElement('val-ice-feature-name', closestSite.name);
+    setAnalysisElement('val-ice-coords', `${Math.abs(closestSite.lat).toFixed(1)}° ${closestSite.lat >= 0 ? 'N' : 'S'}, ${closestSite.lon.toFixed(1)}° E`);
+}
+
+function renderVerifiedVisibilityResults(analysis) {
+    const firstSample = analysis.timeline[0];
+    const metrics = analysis.metrics;
+    const sunlight = metrics.sunlight_percent.toFixed(1);
+    const earth = metrics.earth_visibility_percent.toFixed(1);
+
+    if (backendStatusBanner) backendStatusBanner.className = 'backend-status-banner connected';
+    setAnalysisElement('backend-status-text', `NASA JPL Horizons response · ${analysis.duration_hours} hourly midpoint samples`);
+    setAnalysisElement('val-earth-los', `${earth}% VISIBLE`);
+    setAnalysisElement('badge-earth-comm', metrics.earth_visibility_percent > 0 ? 'DIRECT VIEW WINDOWS' : 'NO DIRECT VIEW');
+    setAnalysisElement('desc-earth-comm', `Earth elevation is strictly greater than 0° during ${earth}% of the requested ${analysis.duration_hours}-hour mission window.`);
+    setAnalysisElement('val-earth-elevation', `${firstSample.earth_elevation_deg.toFixed(1)}° at first midpoint`);
+    setAnalysisElement('val-earth-travel-dist', `${metrics.longest_earth_gap_hours} h`);
+    setAnalysisElement('val-earth-nearest-coords', `${analysis.timeline.length} hourly midpoint samples`);
+
+    setAnalysisElement('val-solar-state', `${sunlight}% SUNLIT`);
+    setAnalysisElement('badge-solar-power', metrics.sunlight_percent > 0 ? 'SUNLIGHT WINDOWS' : 'NO SUNLIGHT');
+    setAnalysisElement('desc-solar-power', `Sun elevation is strictly greater than 0° during ${sunlight}% of the requested mission. This is a simplified geometric-horizon result; terrain obstruction is not included.`);
+    setAnalysisElement('val-plan-solar-elevation', `${firstSample.sun_elevation_deg.toFixed(1)}° at first midpoint`);
+    setAnalysisElement('val-plan-sunlit-duration', `${sunlight}% of ${analysis.duration_hours} h`);
+    setAnalysisElement('val-plan-sun-dist', `${metrics.longest_darkness_hours} h`);
+}
+
+async function runVerifiedMissionAnalysis() {
+    if (!planLatInput || !planLonInput || !planDateInput) return;
     if (planFormError) {
         planFormError.style.display = 'none';
         planFormError.textContent = '';
     }
 
-    const latRaw = parseFloat(planLatInput.value);
-    const lonRaw = parseFloat(planLonInput.value);
-    const dateStr = planDateInput.value;
-
-    if (isNaN(latRaw) || latRaw < 0 || latRaw > 90) {
+    const latitudeMagnitude = Number(planLatInput.value);
+    const longitudeMagnitude = Number(planLonInput.value);
+    const date = planDateInput.value;
+    if (!Number.isFinite(latitudeMagnitude) || latitudeMagnitude < 0 || latitudeMagnitude > 90) {
         if (planFormError) {
-            planFormError.textContent = 'Please enter a valid latitude between 0° and 90°.';
+            planFormError.textContent = 'Please enter a latitude between 0° and 90°.';
             planFormError.style.display = 'block';
         }
         return;
     }
-    if (isNaN(lonRaw) || (planLonHemi === 'E' && (lonRaw < 0 || lonRaw > 360)) || (planLonHemi === 'W' && (lonRaw < 0 || lonRaw > 180))) {
+    if (!Number.isFinite(longitudeMagnitude) || longitudeMagnitude < 0 || (planLonHemi === 'E' && longitudeMagnitude > 360) || (planLonHemi === 'W' && longitudeMagnitude > 180) || !date) {
         if (planFormError) {
-            planFormError.textContent = 'Please enter a valid longitude.';
-            planFormError.style.display = 'block';
-        }
-        return;
-    }
-    if (!dateStr) {
-        if (planFormError) {
-            planFormError.textContent = 'Please select a valid landing date.';
+            planFormError.textContent = 'Please enter a valid longitude and landing date.';
             planFormError.style.display = 'block';
         }
         return;
     }
 
-    // Convert to signed latitude and 0..360 East NASA ME longitude
-    const signedLat = planLatHemi === 'S' ? -Math.abs(latRaw) : Math.abs(latRaw);
-    let eastLon360 = lonRaw;
-    if (planLonHemi === 'W') {
-        eastLon360 = (360 - (lonRaw % 360)) % 360;
-    } else {
-        eastLon360 = ((lonRaw % 360) + 360) % 360;
-    }
+    const latitude = planLatHemi === 'S' ? -latitudeMagnitude : latitudeMagnitude;
+    const eastLongitude = planLonHemi === 'W' ? (360 - longitudeMagnitude) % 360 : longitudeMagnitude % 360;
+    const startUtc = `${date}T00:00:00Z`;
+    const durationHours = 144;
 
-    const epochDate = new Date(`${dateStr}T12:00:00Z`);
-
-    // UI: switch to loading state
     if (resultsIdleState) resultsIdleState.style.display = 'none';
     if (resultsContentBox) resultsContentBox.style.display = 'none';
     if (resultsLoadingState) resultsLoadingState.style.display = 'block';
-
-    const coordsDisplay = `${Math.abs(signedLat).toFixed(4)}° ${planLatHemi}, ${eastLon360.toFixed(4)}° E (${dateStr})`;
-    if (resultsSiteCoords) resultsSiteCoords.textContent = coordsDisplay;
-
-    // Payload for backend endpoint POST /api/mission-analysis
-    const requestPayload = {
-        latitude: signedLat,
-        longitude: eastLon360,
-        date: epochDate.toISOString(),
-        referenceFrame: "MOON_ME"
-    };
-
-    let backendData = null;
-    let isLiveBackend = false;
+    if (resultsSiteCoords) resultsSiteCoords.textContent = `${Math.abs(latitude).toFixed(4)}° ${latitude >= 0 ? 'N' : 'S'}, ${eastLongitude.toFixed(4)}° E · ${startUtc} · ${durationHours} hours`;
 
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500);
-
-        const response = await fetch('/api/mission-analysis', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(requestPayload),
-            signal: controller.signal
+        const analysis = await requestVisibilityAnalysis({
+            latitude_deg: latitude,
+            east_longitude_deg: eastLongitude,
+            start_utc: startUtc,
+            duration_hours: durationHours,
         });
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-            backendData = await response.json();
-            isLiveBackend = true;
-        }
-    } catch (err) {
-        // Backend not deployed or unreachable
-        isLiveBackend = false;
-    }
-
-    // Render results
-    renderMissionAnalysisResults(signedLat, eastLon360, epochDate, backendData, isLiveBackend);
-}
-
-function renderMissionAnalysisResults(signedLat, lon360, epochDate, backendData, isLiveBackend) {
-    if (resultsLoadingState) resultsLoadingState.style.display = 'none';
-    if (resultsContentBox) resultsContentBox.style.display = 'block';
-
-    // Status Banner
-    if (backendStatusBanner && backendStatusText && backendStatusDot) {
-        if (isLiveBackend) {
-            backendStatusBanner.className = 'backend-status-banner connected';
-            backendStatusText.textContent = 'API Status: Connected to /api/mission-analysis (Live Backend Response)';
-        } else {
-            backendStatusBanner.className = 'backend-status-banner standalone';
-            backendStatusText.textContent = 'Awaiting Backend Service (/api/mission-analysis) Deployment — Displaying Verified Astronomical & LOLA Topography Data';
-        }
-    }
-
-    // 1. SECTION A: EARTH COMMUNICATION VISIBILITY
-    const latRad = signedLat * DEG2RAD;
-    const lonRad = lon360 * DEG2RAD;
-    const cosAngleFromEarth = Math.cos(latRad) * Math.cos(lonRad);
-    const angleFromSubEarthDeg = Math.acos(Math.max(-1.0, Math.min(1.0, cosAngleFromEarth))) * RAD2DEG;
-    const earthElevationDeg = 90.0 - angleFromSubEarthDeg;
-
-    const valEarthLOS = document.getElementById('val-earth-los');
-    const badgeEarthComm = document.getElementById('badge-earth-comm');
-    const descEarthComm = document.getElementById('desc-earth-comm');
-    const valEarthElevation = document.getElementById('val-earth-elevation');
-    const valEarthTravelDist = document.getElementById('val-earth-travel-dist');
-    const valEarthNearestCoords = document.getElementById('val-earth-nearest-coords');
-
-    if (backendData && backendData.earthCommunication) {
-        const ec = backendData.earthCommunication;
-        if (valEarthLOS) valEarthLOS.textContent = ec.status || (ec.visible ? 'DIRECT VISIBILITY' : 'NO DIRECT VISIBILITY');
-        if (badgeEarthComm) {
-            badgeEarthComm.textContent = ec.visible ? 'FAVORABLE' : 'UNFAVORABLE';
-            badgeEarthComm.className = `card-status-badge ${ec.visible ? 'status-good' : 'status-bad'}`;
-        }
-        if (descEarthComm) descEarthComm.textContent = ec.description || (ec.visible ? 'Continuous line-of-sight to Earth Deep Space Network ground stations.' : 'Obstructed by lunar body (Far Side / below local horizon). Lunar relay satellite required.');
-        if (valEarthElevation) valEarthElevation.textContent = ec.earthElevation != null ? `${ec.earthElevation.toFixed(1)}°` : `${earthElevationDeg.toFixed(1)}°`;
-        if (valEarthTravelDist) valEarthTravelDist.textContent = ec.travelDistanceKm != null ? `${ec.travelDistanceKm.toFixed(1)} km` : (earthElevationDeg >= 0 ? '0 km (In View)' : `${((angleFromSubEarthDeg - 90) * (Math.PI / 180) * 1737.4).toFixed(1)} km`);
-        if (valEarthNearestCoords) valEarthNearestCoords.textContent = ec.nearestVisibleSite || (earthElevationDeg >= 0 ? 'Current Location' : 'Lunar Limb Horizon');
-    } else {
-        const hasLOS = earthElevationDeg > 0;
-        if (valEarthLOS) {
-            valEarthLOS.textContent = hasLOS ? 'DIRECT VISIBILITY' : 'NO DIRECT VISIBILITY';
-            valEarthLOS.className = `primary-stat-value ${hasLOS ? 'stat-good' : 'stat-bad'}`;
-        }
-        if (badgeEarthComm) {
-            badgeEarthComm.textContent = hasLOS ? 'CONTINUOUS LOS' : 'RELAY REQUIRED';
-            badgeEarthComm.className = `card-status-badge ${hasLOS ? 'status-good' : 'status-bad'}`;
-        }
-        if (descEarthComm) {
-            if (hasLOS) {
-                descEarthComm.textContent = `Continuous direct line-of-sight to Earth Deep Space Network (DSN) stations. Earth sits at ${earthElevationDeg.toFixed(1)}° elevation above the horizon. No relay satellites needed for direct communication.`;
-            } else {
-                const distToLimbKm = (angleFromSubEarthDeg - 90.0) * DEG2RAD * 1737.4;
-                descEarthComm.textContent = `Located on the lunar Far Side or below the geometric horizon (${earthElevationDeg.toFixed(1)}° elevation). Direct radio transmission to Earth is fully blocked. A lunar communications orbiter relay (e.g. Queqiao / Gateway) is mandatory.`;
-                if (valEarthTravelDist) valEarthTravelDist.textContent = `${distToLimbKm.toFixed(1)} km`;
-                if (valEarthNearestCoords) valEarthNearestCoords.textContent = 'Traverse across Lunar Limb to Near Side';
-            }
-        }
-        if (valEarthElevation) valEarthElevation.textContent = `${earthElevationDeg.toFixed(1)}°`;
-        if (hasLOS) {
-            if (valEarthTravelDist) valEarthTravelDist.textContent = '0 km (Already in LOS)';
-            if (valEarthNearestCoords) valEarthNearestCoords.textContent = 'Current Site';
-        }
-    }
-
-    // 2. SECTION B: SOLAR ILLUMINATION & POWER AVAILABILITY
-    const valSolarState = document.getElementById('val-solar-state');
-    const badgeSolarPower = document.getElementById('badge-solar-power');
-    const descSolarPower = document.getElementById('desc-solar-power');
-    const valPlanSolarElevation = document.getElementById('val-plan-solar-elevation');
-    const valPlanSunlitDuration = document.getElementById('val-plan-sunlit-duration');
-    const valPlanSunDist = document.getElementById('val-plan-sun-dist');
-
-    if (backendData && backendData.solarIllumination) {
-        const si = backendData.solarIllumination;
-        if (valSolarState) valSolarState.textContent = si.state || (si.isSunlit ? 'SUNLIT' : 'SHADOWED');
-        if (badgeSolarPower) {
-            badgeSolarPower.textContent = si.isSunlit ? 'POWER OPTIMAL' : 'STORAGE / NIGHT';
-            badgeSolarPower.className = `card-status-badge ${si.isSunlit ? 'status-good' : 'status-warning'}`;
-        }
-        if (descSolarPower) descSolarPower.textContent = si.description || '';
-        if (valPlanSolarElevation) valPlanSolarElevation.textContent = si.solarElevation != null ? `${si.solarElevation.toFixed(1)}°` : '--';
-        if (valPlanSunlitDuration) valPlanSunlitDuration.textContent = si.sunlitDurationHours != null ? `${si.sunlitDurationHours.toFixed(1)} hours` : '--';
-        if (valPlanSunDist) valPlanSunDist.textContent = si.distToSunlightKm != null ? `${si.distToSunlightKm.toFixed(1)} km` : '0 km';
-    } else {
-        const sunData = getSunInMoonFrame(epochDate);
-        const angles = calculateSolarAngles(signedLat, lon360, sunData.s_moon);
-        const horizon = calculateTerrainHorizonObstruction(signedLat, lon360, angles.azimuth, angles.elevation);
-
-        const isSunlit = horizon.status === 'SUNLIT';
-        const isNight = horizon.status === 'LUNAR NIGHT';
-        const isTopoSadow = horizon.status === 'TERRAIN_SHADOW';
-
-        if (valSolarState) {
-            valSolarState.textContent = isSunlit ? 'SUNLIT' : (isTopoSadow ? 'CRATER SHADOWED' : 'LUNAR NIGHT');
-            valSolarState.className = `primary-stat-value ${isSunlit ? 'stat-good' : 'stat-bad'}`;
-        }
-        if (badgeSolarPower) {
-            badgeSolarPower.textContent = isSunlit ? 'POWER AVAILABLE' : (isTopoSadow ? 'SHADOW OBSTRUCTED' : 'BATTERY / RTG MODE');
-            badgeSolarPower.className = `card-status-badge ${isSunlit ? 'status-good' : (isTopoSadow ? 'status-warning' : 'status-bad')}`;
-        }
-        if (valPlanSolarElevation) valPlanSolarElevation.textContent = `${angles.elevation.toFixed(1)}° (${angles.azimuth.toFixed(1)}° Az)`;
-
-        let estDuration = '14 Earth Days (~354 hrs)';
-        if (Math.abs(signedLat) > 85) {
-            estDuration = 'Polar micro-illumination (~50-120 hrs per cycle)';
-        } else if (Math.abs(signedLat) > 75) {
-            estDuration = 'Low-angle periodic (~180-280 hrs)';
-        }
-        if (valPlanSunlitDuration) valPlanSunlitDuration.textContent = estDuration;
-
-        if (descSolarPower) {
-            if (isSunlit) {
-                descSolarPower.textContent = `Sun is at ${angles.elevation.toFixed(1)}° elevation (clearing local terrain by ${(angles.elevation - horizon.horizonElevationDeg).toFixed(1)}°). Solar arrays will generate direct electrical power on landing.`;
-                if (valPlanSunDist) valPlanSunDist.textContent = '0 km (Direct Sunlit Ground)';
-            } else if (isTopoSadow) {
-                descSolarPower.textContent = `Sun is geometrically above the horizon (${angles.elevation.toFixed(1)}°), but blocked by an elevated crater rim rising ${horizon.horizonElevationDeg.toFixed(1)}° along azimuth ${angles.azimuth.toFixed(0)}°. Moving to the crater rim or elevated ridge restores sunlight.`;
-                if (valPlanSunDist) valPlanSunDist.textContent = horizon.blockingDistKm ? `${horizon.blockingDistKm.toFixed(1)} km to rim` : 'Elevated ridge nearby';
-            } else {
-                descSolarPower.textContent = `Sun is below the lunar horizon (${angles.elevation.toFixed(1)}°). The landing site is currently in Lunar Night. Operations require onboard batteries, fuel cells, or Radioisotope Thermoelectric Generators (RTG).`;
-                if (valPlanSunDist) valPlanSunDist.textContent = 'Sunlit hemisphere across terminator';
-            }
-        }
-    }
-
-    // 3. SECTION C: DISTANCE FROM LUNAR WATER ICE
-    const valIceDistance = document.getElementById('val-ice-distance');
-    const badgeWaterIce = document.getElementById('badge-water-ice');
-    const descWaterIce = document.getElementById('desc-water-ice');
-    const valIceEvidence = document.getElementById('val-ice-evidence');
-    const valIceFeatureName = document.getElementById('val-ice-feature-name');
-    const valIceCoords = document.getElementById('val-ice-coords');
-
-    if (backendData && backendData.waterIceProximity) {
-        const wi = backendData.waterIceProximity;
-        if (valIceDistance) valIceDistance.textContent = `${wi.distanceKm != null ? wi.distanceKm.toFixed(1) : '--'} km`;
-        if (badgeWaterIce) {
-            badgeWaterIce.textContent = wi.proximityClass || (wi.distanceKm < 50 ? 'HIGH PROXIMITY' : 'DISTANT');
-            badgeWaterIce.className = `card-status-badge ${wi.distanceKm < 50 ? 'status-good' : 'status-neutral'}`;
-        }
-        if (descWaterIce) descWaterIce.textContent = wi.description || '';
-        if (valIceEvidence) valIceEvidence.textContent = wi.evidenceType || 'LRO LAMP / LCROSS / Mini-RF';
-        if (valIceFeatureName) valIceFeatureName.textContent = wi.nearestFeatureName || '--';
-        if (valIceCoords) valIceCoords.textContent = wi.depositCoords || '--';
-    } else {
-        let closestSite = DOCUMENTED_LUNAR_ICE_SITES[0];
-        let minDistance = Infinity;
-
-        for (const site of DOCUMENTED_LUNAR_ICE_SITES) {
-            const dist = computeLunarDistanceKm(signedLat, lon360, site.lat, site.lon);
-            if (dist < minDistance) {
-                minDistance = dist;
-                closestSite = site;
-            }
-        }
-
-        if (valIceDistance) {
-            valIceDistance.textContent = `${minDistance.toFixed(1)} km`;
-            valIceDistance.className = `primary-stat-value ${minDistance < 35 ? 'stat-good' : ''}`;
-        }
-        if (badgeWaterIce) {
-            if (minDistance < 25) {
-                badgeWaterIce.textContent = 'IMMEDIATE ISRU PROXIMITY';
-                badgeWaterIce.className = 'card-status-badge status-good';
-            } else if (minDistance < 120) {
-                badgeWaterIce.textContent = 'ROVER ACCESSIBLE';
-                badgeWaterIce.className = 'card-status-badge status-warning';
-            } else {
-                badgeWaterIce.textContent = 'DISTANT DEPOSIT';
-                badgeWaterIce.className = 'card-status-badge status-neutral';
-            }
-        }
-        if (valIceFeatureName) valIceFeatureName.textContent = closestSite.name;
-        if (valIceEvidence) valIceEvidence.textContent = closestSite.evidence;
-        const depositLatHemi = closestSite.lat >= 0 ? 'N' : 'S';
-        if (valIceCoords) valIceCoords.textContent = `${Math.abs(closestSite.lat).toFixed(1)}° ${depositLatHemi}, ${closestSite.lon.toFixed(1)}° E`;
-
-        if (descWaterIce) {
-            if (minDistance < 25) {
-                descWaterIce.textContent = `High-value location for In-Situ Resource Utilization (ISRU). Only ${minDistance.toFixed(1)} km from ${closestSite.name}, allowing short-range surface traverses into permanently shadowed cold traps.`;
-            } else if (minDistance < 120) {
-                descWaterIce.textContent = `Located ${minDistance.toFixed(1)} km from ${closestSite.name}. Reachable via pressurized or robotic long-range exploration rover (similar to NASA VIPER class mission profiles).`;
-            } else {
-                descWaterIce.textContent = `Nearest documented water ice deposit is ${minDistance.toFixed(1)} km away at ${closestSite.name}. The landing site is outside immediate polar volatile collection range.`;
-            }
+        if (resultsLoadingState) resultsLoadingState.style.display = 'none';
+        if (resultsContentBox) resultsContentBox.style.display = 'block';
+        renderVerifiedVisibilityResults(analysis);
+        renderDocumentedIceDistance(latitude, eastLongitude);
+    } catch (error) {
+        if (resultsLoadingState) resultsLoadingState.style.display = 'none';
+        if (resultsContentBox) resultsContentBox.style.display = 'none';
+        if (resultsIdleState) resultsIdleState.style.display = 'block';
+        if (planFormError) {
+            planFormError.textContent = error instanceof Error ? error.message : 'NASA visibility analysis could not be completed.';
+            planFormError.style.display = 'block';
         }
     }
 }
 
 if (btnAnalyseLandingSite) {
-    btnAnalyseLandingSite.addEventListener('click', runMissionAnalysis);
+    btnAnalyseLandingSite.addEventListener('click', runVerifiedMissionAnalysis);
 }
 
 

@@ -7,7 +7,8 @@ support prototype, not a flight-safety or landing-certification system.
 
 ## Project layout
 
-- [`Three.js/`](Three.js/) — Vite, React and Three.js browser interface.
+- [`Three.js/`](Three.js/) — Aanchal's original Vite and Three.js lunar
+  interface, connected to the backend through its mission-planning panel.
 - [`backend/`](backend/) — FastAPI API, NASA Horizons client, terrain service,
   historical records and offline tests.
 - [`docs/architecture.md`](docs/architecture.md) — request, scientific and

@@ -1,97 +1,63 @@
 # Lunar Compass architecture
 
-## Current application boundary
+## Application boundary
 
-The frontend is a Vite, React and TypeScript application in `Three.js/`. It has
-three primary routes: Explore & Analyze, Compare & Improve, and Historical
-Missions. `src/app/PlanProvider.tsx` preserves selected sites, a UTC mission
-window and comparison sites in session storage while visitors navigate. The
-Explore route has a focused Three.js lunar globe that turns a click on the
-visible surface into the same planetocentric latitude and east-positive
-longitude contract used by the backend. Its conversion is unit-tested in
-`src/domain/globeCoordinates.test.ts`.
+The browser interface in `Three.js/` is the original Vite and vanilla Three.js
+Lunar Site Coordinator interface. Its 3D Moon, HUD, navigation controls,
+mission-planning overlay and visual styling are preserved. It does not use a
+separate React application.
 
-All browser network access belongs in `Three.js/src/api/`. Components must not
-construct alternate astronomy or terrain calculations. The FastAPI backend is
-the sole source for visibility metrics, timeline positions, terrain screening,
-comparison and historical records.
+The **Plan Your Mission** panel is the scientific backend boundary. It converts
+the UI's latitude hemisphere and 0–360° east-positive longitude into the
+backend contract, then posts:
 
-The Explore page submits an explicit request to `/api/analyze` only after a
-user selects a coordinate and presses its analysis button. It aborts an
-in-flight request when the plan changes, validates the returned analysis
-contract before display, and renders the four visibility metrics, UTC window,
-hourly midpoint timeline, and backend-provided limitations. No placeholder
-scientific result is displayed before a successful response.
+```json
+{
+  "latitude_deg": -85.2,
+  "longitude_deg": 32.5,
+  "start_utc": "2026-11-20T00:00:00Z",
+  "duration_hours": 144
+}
+```
 
-The visibility presentation derives its sky dial and chart only from the
-returned hourly `sun_*` and `earth_*` fields. The horizon ring and chart line
-both mean the backend's zero-degree geometric horizon. The timeline selector
-changes which returned midpoint is visualised; it never calculates an
-independent Sun or Earth position in the browser.
+to `POST /api/analyze`. The selected date becomes the UTC mission start at
+`00:00:00Z`; the fixed 144-hour window produces exactly 144 hourly midpoint
+samples. The interface displays the returned Sun and Earth visibility
+percentages, first midpoint elevations, longest darkness, and longest
+Earth-view gap. Visibility is defined by the backend as elevation strictly
+greater than zero.
 
-Terrain screening is a separate, explicit request to `/api/terrain/analyze`.
-It uses the selected response location and a user-selected regional radius.
-The UI differentiates service failure from `terrain_available: false`, exposes
-coverage and dataset warnings, and never substitutes missing terrain values or
-uses terrain data to alter visibility output.
+`Three.js/src/backend.js` is the only browser request adapter. It validates the
+minimum response shape, uses a 100-second timeout suitable for the serialized
+NASA request gate, and surfaces backend failures to the mission form. It does
+not substitute local astronomical estimates when the backend fails.
 
-The Compare route sends two or three selected sites through `/api/compare` for
-the same stored UTC window. It renders site-specific failures, backend trade-off
-text, optional terrain availability, and backend provenance rather than making
-a browser-side score. Mission Stress Test uses `/api/stress-test` for one
-explicit variant; Other dates uses `/api/mission-windows` for the bounded
-offsets -6, -3, 0, +3, +6 days. Neither result is presented as globally optimal
-or as a safety prediction.
+The Site Coordinator HUD requests a one-hour visibility analysis for its chosen
+point and shows the returned first midpoint Sun azimuth/elevation. The
+interface's original texture, lighting and navigation exist only for visual
+coordinate selection; they are not terrain, line-of-sight, or visibility
+analysis.
 
-Historical Missions loads cards and detail solely from `/api/missions` and
-`/api/missions/{id}`. A documented actual location can replace comparison Site
-A while retaining the source's coordinate-quality note. Replay is available
-only when the backend marks a record eligible and uses `/replay`; it visibly
-separates historical facts from the modern simplified-horizon model.
-
-During development, `vite.config.ts` proxies `/api` and `/health` to
-`http://127.0.0.1:8000` by default. Set `LUNAR_COMPASS_API_TARGET` only for a
-deliberately configured local backend. Production must route the same paths
-through its reverse proxy or explicitly configured API origin.
-
-The application root uses a narrow error boundary. An unexpected rendering
-failure shows a recovery link instead of a blank document and does not expose
-exception contents, selected coordinates, or scientific values. The boundary
-does not turn API or calculation failures into success: those remain explicit
-screen-level error states. The WebGL globe is imported only when the Explore
-route renders; its `three` dependency is intentionally an asynchronous bundle
-so it does not delay the initial navigation shell.
+During local development `Three.js/vite.config.js` proxies `/api` and `/health`
+to `http://127.0.0.1:8000`. Production must route those paths to FastAPI through
+a reverse proxy or an explicitly configured API origin.
 
 ## Scientific result policy
 
-No frontend fallback may present a local approximation as NASA-derived data.
-If `/api/analyze` fails, preserve the selected site and UTC window, report the
-error and offer retry. Do not fill metric cards, timelines, terrain fields or
-operational recommendations with estimates.
-
-The retired prototype is held in `Three.js/src/legacy/` as a migration
-reference. It is not imported by `main.tsx` and must not be shipped as an
-alternate results interface. The production globe selects a coordinate only;
-its display texture is not terrain, lighting, or scientific analysis data.
-
-## Contract maintenance
-
-`backend/openapi.json` is a checked-in snapshot of `create_app().openapi()`.
-After intentionally changing a public backend route, run:
-
-```powershell
-cd backend
-.\.venv\Scripts\python.exe scripts\export_openapi.py
-```
-
-Then update the typed frontend boundary and its tests in the same pull request.
-`backend/tests/test_openapi_contract.py` rejects stale snapshots.
+No frontend fallback may present local geometry, visual lighting, or terrain
+texture data as NASA Horizons-derived data. A failed backend request leaves the
+visibility results hidden and displays a clear error. The water-ice card is a
+separate static documented-site catalogue distance; it is labelled separately
+and is not a visibility-engine result.
 
 ## Release verification
 
-From the repository root, `npm run verify` runs the frontend type check, unit
-tests and production build. From `backend/`, run
-`python -B -m pytest -q -p no:cacheprovider` with its virtual environment.
-The offline suite is the release baseline. The NASA live suite remains opt-in:
-it needs network access plus the configured real application contact, and it
-must never be replaced with generated or fallback scientific data.
+Run `npm run verify` from the repository root to build the original frontend.
+From `backend/`, run:
+
+```powershell
+.\.venv\Scripts\python.exe -B -m pytest -q -p no:cacheprovider
+```
+
+The backend's NASA live suite requires network access plus a real configured
+application contact; no simulated result may replace it.
