@@ -11,4 +11,9 @@ describe("plan reducer", () => {
     const first = planReducer(INITIAL_PLAN_STATE, { type: "add-comparison-site", site });
     expect(planReducer(first, { type: "add-comparison-site", site }).comparisonSites).toHaveLength(1);
   });
+  it("replaces comparison sites while retaining canonical unique coordinates", () => {
+    const site = { latitude_deg: 1, longitude_deg: 222, label: "Historical site", source: "historical" as const };
+    const next = planReducer(INITIAL_PLAN_STATE, { type: "set-comparison-sites", sites: [site, site] });
+    expect(next.comparisonSites).toEqual([{ ...site, longitude_deg: -138 }]);
+  });
 });

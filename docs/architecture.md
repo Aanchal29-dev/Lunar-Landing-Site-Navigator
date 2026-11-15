@@ -35,6 +35,20 @@ The UI differentiates service failure from `terrain_available: false`, exposes
 coverage and dataset warnings, and never substitutes missing terrain values or
 uses terrain data to alter visibility output.
 
+The Compare route sends two or three selected sites through `/api/compare` for
+the same stored UTC window. It renders site-specific failures, backend trade-off
+text, optional terrain availability, and backend provenance rather than making
+a browser-side score. Mission Stress Test uses `/api/stress-test` for one
+explicit variant; Other dates uses `/api/mission-windows` for the bounded
+offsets -6, -3, 0, +3, +6 days. Neither result is presented as globally optimal
+or as a safety prediction.
+
+Historical Missions loads cards and detail solely from `/api/missions` and
+`/api/missions/{id}`. A documented actual location can replace comparison Site
+A while retaining the source's coordinate-quality note. Replay is available
+only when the backend marks a record eligible and uses `/replay`; it visibly
+separates historical facts from the modern simplified-horizon model.
+
 During development, `vite.config.ts` proxies `/api` and `/health` to
 `http://127.0.0.1:8000` by default. Set `LUNAR_COMPASS_API_TARGET` only for a
 deliberately configured local backend. Production must route the same paths
