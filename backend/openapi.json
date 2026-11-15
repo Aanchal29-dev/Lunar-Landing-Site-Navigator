@@ -92,6 +92,102 @@
         "title": "AnalysisResponse",
         "type": "object"
       },
+      "AnalyzeSiteRequest": {
+        "additionalProperties": false,
+        "description": "User-selected landing coordinates and a bounded nearby-site search.",
+        "properties": {
+          "lat": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "maximum": 360.0,
+            "minimum": -180.0,
+            "title": "Lon",
+            "type": "number"
+          },
+          "path_segments": {
+            "default": 16,
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Path Segments",
+            "type": "integer"
+          },
+          "search_radius_km": {
+            "default": 250.0,
+            "exclusiveMinimum": 0.0,
+            "maximum": 1000.0,
+            "title": "Search Radius Km",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lon"
+        ],
+        "title": "AnalyzeSiteRequest",
+        "type": "object"
+      },
+      "AnalyzeSiteResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "landing_coordinates": {
+            "$ref": "#/components/schemas/Coordinate"
+          },
+          "navigation_path": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NavigationPath"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nearby_water_ice_sites": {
+            "items": {
+              "$ref": "#/components/schemas/NearbyWaterIceSite"
+            },
+            "title": "Nearby Water Ice Sites",
+            "type": "array"
+          },
+          "nearest_water_ice_site": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NearbyWaterIceSite"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "search_radius_km": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 1000.0,
+            "title": "Search Radius Km",
+            "type": "number"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "landing_coordinates",
+          "search_radius_km",
+          "nearby_water_ice_sites",
+          "nearest_water_ice_site",
+          "navigation_path",
+          "warnings"
+        ],
+        "title": "AnalyzeSiteResponse",
+        "type": "object"
+      },
       "CompareRequest": {
         "additionalProperties": false,
         "properties": {
@@ -244,6 +340,29 @@
           "status"
         ],
         "title": "ComparedLocationItem",
+        "type": "object"
+      },
+      "Coordinate": {
+        "additionalProperties": false,
+        "properties": {
+          "latitude": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude",
+            "type": "number"
+          },
+          "longitude": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude",
+            "type": "number"
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude"
+        ],
+        "title": "Coordinate",
         "type": "object"
       },
       "CoordinateCandidate": {
@@ -915,6 +1034,94 @@
           "lunar_radii_km"
         ],
         "title": "ModelMetadata",
+        "type": "object"
+      },
+      "NavigationPath": {
+        "additionalProperties": false,
+        "properties": {
+          "coordinates": {
+            "items": {
+              "$ref": "#/components/schemas/Coordinate"
+            },
+            "minItems": 2,
+            "title": "Coordinates",
+            "type": "array"
+          },
+          "disclaimer": {
+            "default": "This is a great-circle planning line for map rendering only; it is not a terrain-aware, hazard-safe, or operational rover route.",
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "type": {
+            "const": "great_circle_planning_line",
+            "default": "great_circle_planning_line",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "coordinates"
+        ],
+        "title": "NavigationPath",
+        "type": "object"
+      },
+      "NearbyWaterIceSite": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "distance_km": {
+            "minimum": 0.0,
+            "title": "Distance Km",
+            "type": "number"
+          },
+          "evidence_source": {
+            "minLength": 1,
+            "title": "Evidence Source",
+            "type": "string"
+          },
+          "ice_probability": {
+            "minLength": 1,
+            "title": "Ice Probability",
+            "type": "string"
+          },
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "latitude": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude",
+            "type": "number"
+          },
+          "longitude": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude",
+            "type": "number"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "latitude",
+          "longitude",
+          "ice_probability",
+          "evidence_source",
+          "description",
+          "distance_km"
+        ],
+        "title": "NearbyWaterIceSite",
         "type": "object"
       },
       "PixelMetrics": {
@@ -1682,6 +1889,48 @@
           }
         },
         "summary": "Analyze"
+      }
+    },
+    "/api/analyze-site": {
+      "post": {
+        "description": "Find nearby source-backed ice evidence and return a map planning line.",
+        "operationId": "analyze_landing_site_api_analyze_site_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyzeSiteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyzeSiteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analyze Landing Site",
+        "tags": [
+          "Water Ice Navigation"
+        ]
       }
     },
     "/api/compare": {

@@ -18,6 +18,7 @@ from app.services.horizons import HorizonsError, TIMEOUT, _user_agent
 from app.services.visibility import analyze_visibility
 from app.terrain_service import terrain_dataset_is_ready
 from app.terrain_router import router as terrain_router
+from app.water_ice_router import router as water_ice_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -108,6 +109,7 @@ def create_app() -> FastAPI:
     app.include_router(terrain_router)
     app.include_router(historical_router)
     app.include_router(comparison_router)
+    app.include_router(water_ice_router)
 
     return app
 
