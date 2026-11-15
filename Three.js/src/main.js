@@ -5527,11 +5527,13 @@ function readCompareInputs() {
         return value;
     };
     const window = missionWindow(document.getElementById('cmp-start-date').value, '00:00', document.getElementById('cmp-duration').value);
-    return { window, locations: ['a', 'b'].map(side => ({
-        latitude_deg: read(`cmp-${side}-lat`, -90, 90),
-        longitude_deg: toVisibilityLongitude(read(`cmp-${side}-lon`, -180, 360)),
-        label: document.getElementById(`cmp-site-${side}-label`).textContent.trim().slice(0, 80),
-    })) };
+    return {
+        window, locations: ['a', 'b'].map(side => ({
+            latitude_deg: read(`cmp-${side}-lat`, -90, 90),
+            longitude_deg: toVisibilityLongitude(read(`cmp-${side}-lon`, -180, 360)),
+            label: document.getElementById(`cmp-site-${side}-label`).textContent.trim().slice(0, 80),
+        }))
+    };
 }
 function setupComparativeStudy() {
     const error = document.getElementById('cmp-form-error');
