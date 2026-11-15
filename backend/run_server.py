@@ -6,8 +6,8 @@ backend_dir = os.path.dirname(os.path.abspath(__file__))
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
-os.environ["LUNAR_COMPASS_CONTACT"] = "aanchal9ipsvig@gmail.com"
-os.environ["ALLOWED_ORIGINS"] = "http://localhost:3000,http://localhost:5173,http://localhost:5174,http://127.0.0.1:3000,http://127.0.0.1:5173,http://127.0.0.1:5174,http://localhost:5500,http://127.0.0.1:5500,http://localhost:8000,http://127.0.0.1:8000"
+# Respect deployment configuration. Set LUNAR_COMPASS_CONTACT in the environment;
+# an absent contact produces a clear API error before any NASA request is sent.
 
 # pyrefly: ignore[missing-import]
 import uvicorn

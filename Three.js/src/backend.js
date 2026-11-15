@@ -12,94 +12,52 @@
  * - /health & /health/ready (Backend Health Checks)
  */
 
-const API_TIMEOUT_MS = 60_000;
+import { toVisibilityLongitude, assertAnalysisResponse } from './contracts.js';
+export { toVisibilityLongitude } from './contracts.js';
 
-export function toVisibilityLongitude(eastLongitudeDegrees) {
-    const normalized = ((eastLongitudeDegrees % 360) + 360) % 360;
-    return normalized > 180 ? normalized - 360 : normalized;
-}
+const API_TIMEOUT_MS = 300_000;
 
-function readErrorDetail(payload, status) {
-    if (payload && typeof payload.detail === 'string') return payload.detail;
-    if (payload && Array.isArray(payload.detail)) {
-        return payload.detail.map(d => d.msg || JSON.stringify(d)).join('; ');
-    }
-    return `Service request failed (HTTP ${status}).`;
-}
-
-const DIRECT_BACKEND_URL = 'http://127.0.0.1:8000';
-
-async function apiFetch(endpoint, options = {}, timeoutMs = API_TIMEOUT_MS) {
-    // 1. Try relative URL (works through Vite proxy or same-origin)
-    let primaryError = null;
+// A single request through the configured same-origin proxy. Never retry POSTs
+// against the visitor's localhost or replace an API error with a second request.
+export async function apiFetch(endpoint, options = {}, timeoutMs = API_TIMEOUT_MS) {
+    const controller = new AbortController();
+    const signal = options.signal;
+    const abort = () => controller.abort();
+    signal?.addEventListener('abort', abort, { once: true });
+    if (signal?.aborted) controller.abort();
+    const timeout = setTimeout(abort, timeoutMs);
     try {
-        const controller = new AbortController();
-        const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
-
-        try {
-            const response = await fetch(endpoint, {
-                ...options,
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    ...(options.headers || {})
-                },
-                signal: controller.signal
-            });
-
-            if (response.ok) {
-                const payload = await response.json().catch(() => null);
-                return payload;
-            }
-
-            // If 404 on relative path, the frontend dev server may not have the /api proxy configured
-            if (response.status === 404 && !endpoint.startsWith('http')) {
-                primaryError = new Error(`404 from ${endpoint}`);
-            } else {
-                const payload = await response.json().catch(() => null);
-                throw new Error(readErrorDetail(payload, response.status));
-            }
-        } finally {
-            window.clearTimeout(timeoutId);
+        const response = await fetch(endpoint, {
+            ...options,
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...options.headers },
+            signal: controller.signal,
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok) {
+            const detail = payload?.detail;
+            const message = typeof detail === 'string' ? detail : Array.isArray(detail)
+                ? detail.map(item => `${(item.loc || []).join('.')}: ${item.msg || 'Invalid value'}`).join('; ')
+                : `Backend request failed (HTTP ${response.status}). Check the API and proxy configuration.`;
+            throw new Error(message);
         }
-    } catch (err) {
-        primaryError = err;
+        if (!payload) throw new Error('The API returned no JSON. Check that the backend and /api proxy are running.');
+        return payload;
+    } catch (error) {
+        if (error.name === 'AbortError' && !signal?.aborted) throw new Error('The backend request timed out. No result has been assumed; please retry.');
+        if (error instanceof TypeError) throw new Error('Cannot reach the backend. Check the API service and frontend proxy.');
+        throw error;
+    } finally {
+        clearTimeout(timeout);
+        signal?.removeEventListener('abort', abort);
     }
-
-    // 2. Fallback to direct backend URL on port 8000 if relative URL gave 404 or connection failed
-    if (primaryError && !endpoint.startsWith('http')) {
-        const directUrl = `${DIRECT_BACKEND_URL}${endpoint}`;
-        const fallbackController = new AbortController();
-        const fallbackTimeoutId = window.setTimeout(() => fallbackController.abort(), timeoutMs);
-
-        try {
-            const response = await fetch(directUrl, {
-                ...options,
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    ...(options.headers || {})
-                },
-                signal: fallbackController.signal
-            });
-
-            const payload = await response.json().catch(() => null);
-            if (!response.ok) {
-                throw new Error(readErrorDetail(payload, response.status));
-            }
-            return payload;
-        } catch (directErr) {
-            if (directErr instanceof DOMException && directErr.name === 'AbortError') {
-                throw new Error(`Request to ${endpoint} timed out. Please try again.`);
-            }
-            throw directErr;
-        } finally {
-            window.clearTimeout(fallbackTimeoutId);
-        }
-    }
-
-    if (primaryError) throw primaryError;
 }
+
+function coordinate(value, name, minimum, maximum) {
+    if (value == null || String(value).trim() === '' || !Number.isFinite(Number(value)) || Number(value) < minimum || Number(value) > maximum) throw new Error(`Invalid ${name}.`);
+    return Number(value);
+}
+const latitude = value => coordinate(value, 'latitude (−90 to 90)', -90, 90);
+const longitude = value => toVisibilityLongitude(coordinate(value, 'longitude (−180 to 360 east)', -180, 360));
 
 /**
  * Check backend health and readiness
@@ -116,20 +74,20 @@ export async function checkBackendHealth() {
 /**
  * Request apparent-airless visibility analysis from JPL Horizons ephemeris
  */
-export async function requestVisibilityAnalysis({ latitude_deg, longitude_deg, start_utc, duration_hours = 144 }) {
+export async function requestVisibilityAnalysis({ latitude_deg, longitude_deg, start_utc, duration_hours = 144 }, signal) {
     const payload = await apiFetch('/api/analyze', {
         method: 'POST',
+        signal,
         body: JSON.stringify({
-            latitude_deg: Number(latitude_deg),
-            longitude_deg: toVisibilityLongitude(Number(longitude_deg)),
+            latitude_deg: latitude(latitude_deg),
+            longitude_deg: longitude(longitude_deg),
             start_utc,
             duration_hours: Number(duration_hours)
         })
     });
 
-    if (!payload || !payload.metrics || !Array.isArray(payload.timeline)) {
-        throw new Error('The visibility service returned an incomplete analysis.');
-    }
+    assertAnalysisResponse(payload);
+    if (Math.abs(payload.location.latitude_deg - latitude(latitude_deg)) > 1e-8 || Math.abs(payload.location.longitude_deg - longitude(longitude_deg)) > 1e-8 || Date.parse(payload.start_utc) !== Date.parse(start_utc) || payload.duration_hours !== Number(duration_hours)) throw new Error('The response does not match the requested mission.');
     return payload;
 }
 
@@ -141,8 +99,8 @@ export async function requestTerrainAnalysis({ latitude_deg, longitude_deg, anal
         const payload = await apiFetch('/api/terrain/analyze', {
             method: 'POST',
             body: JSON.stringify({
-                latitude_deg: Number(latitude_deg),
-                longitude_deg: Number(longitude_deg),
+                latitude_deg: latitude(latitude_deg),
+                longitude_deg: longitude(longitude_deg),
                 analysis_radius_m: Number(analysis_radius_m)
             })
         }, 15000);
@@ -161,8 +119,8 @@ export async function requestTerrainAnalysis({ latitude_deg, longitude_deg, anal
 export async function requestComparison({ locations, start_utc, duration_hours = 144, include_terrain = false }) {
     const formattedLocations = locations.map(loc => ({
         label: loc.label || 'Candidate Site',
-        latitude_deg: Number(loc.latitude_deg),
-        longitude_deg: Number(loc.longitude_deg)
+        latitude_deg: latitude(loc.latitude_deg),
+        longitude_deg: longitude(loc.longitude_deg)
     }));
 
     const payload = await apiFetch('/api/compare', {
@@ -184,8 +142,8 @@ export async function requestStressTest({ latitude_deg, longitude_deg, baseline,
     const payload = await apiFetch('/api/stress-test', {
         method: 'POST',
         body: JSON.stringify({
-            latitude_deg: Number(latitude_deg),
-            longitude_deg: Number(longitude_deg),
+            latitude_deg: latitude(latitude_deg),
+            longitude_deg: longitude(longitude_deg),
             baseline: {
                 start_utc: baseline.start_utc,
                 duration_hours: Number(baseline.duration_hours)
@@ -213,8 +171,8 @@ export async function requestMissionWindows({
     const payload = await apiFetch('/api/mission-windows', {
         method: 'POST',
         body: JSON.stringify({
-            latitude_deg: Number(latitude_deg),
-            longitude_deg: Number(longitude_deg),
+            latitude_deg: latitude(latitude_deg),
+            longitude_deg: longitude(longitude_deg),
             target_start_utc,
             duration_hours: Number(duration_hours),
             candidate_offsets_days,
@@ -229,7 +187,8 @@ export async function requestMissionWindows({
  */
 export async function fetchHistoricalMissions() {
     const payload = await apiFetch('/api/missions', { method: 'GET' }, 10000);
-    return Array.isArray(payload) ? payload : [];
+    if (!Array.isArray(payload)) throw new Error('The mission service returned an invalid catalogue.');
+    return payload;
 }
 
 /**
@@ -251,4 +210,13 @@ export async function requestHistoricalReplay(missionId, duration_hours = 144) {
         })
     });
     return payload;
+}
+
+
+/** Source-backed ice reference sites; no terrain-safe route is implied. */
+export async function requestWaterIce({ latitude_deg, longitude_deg }) {
+    return apiFetch('/api/analyze-site', {
+        method: 'POST',
+        body: JSON.stringify({ lat: latitude(latitude_deg), lon: longitude(longitude_deg), search_radius_km: 250, path_segments: 16 }),
+    }, 15000);
 }
