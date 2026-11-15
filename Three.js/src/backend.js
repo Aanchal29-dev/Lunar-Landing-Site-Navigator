@@ -220,3 +220,16 @@ export async function requestWaterIce({ latitude_deg, longitude_deg }) {
         body: JSON.stringify({ lat: latitude(latitude_deg), lon: longitude(longitude_deg), search_radius_km: 250, path_segments: 16 }),
     }, 15000);
 }
+
+/** Read optional assistant availability without exposing provider configuration. */
+export function requestAssistantStatus() {
+    return apiFetch('/api/assistant/status', { method: 'GET' }, 5000);
+}
+
+/** Ask the server-side assistant. Numerical visibility answers remain engine-backed. */
+export function requestAssistantChat({ message, context }) {
+    return apiFetch('/api/assistant/chat', {
+        method: 'POST',
+        body: JSON.stringify({ message, context })
+    }, 60_000);
+}

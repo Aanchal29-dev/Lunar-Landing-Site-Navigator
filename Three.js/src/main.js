@@ -11,7 +11,9 @@ import {
     fetchHistoricalMissionDetail,
     requestHistoricalReplay,
     requestWaterIce,
-    checkBackendHealth
+    checkBackendHealth,
+    requestAssistantStatus,
+    requestAssistantChat
 } from './backend.js';
 import { missionWindow, parseCoordinate } from './contracts.js';
 import { renderMissionResults, text, escapeHtml } from './results.js';
@@ -6178,3 +6180,53 @@ function renderReplayResults(replayRes) {
 // Initialize Comparative Study & Historical Missions controllers after definitions
 setupComparativeStudy();
 setupHistoricalMissions();
+
+function setupExplorationAssistant() {
+    const panel = document.getElementById('assistant-panel');
+    const open = document.getElementById('btn-open-assistant');
+    const close = document.getElementById('btn-close-assistant');
+    const form = document.getElementById('assistant-form');
+    const input = document.getElementById('assistant-input');
+    const messages = document.getElementById('assistant-messages');
+    const contextLine = document.getElementById('assistant-context');
+    const send = document.getElementById('assistant-send');
+    if (!panel || !open || !close || !form || !input || !messages || !contextLine || !send) return;
+
+    const addMessage = (kind, value) => {
+        const item = document.createElement('p'); item.className = `assistant-message ${kind}`; item.textContent = value;
+        messages.append(item); messages.scrollTop = messages.scrollHeight;
+    };
+    const activeContext = () => {
+        if (!selectedCoords) return {};
+        const date = document.getElementById('site-nav-date')?.value || document.getElementById('plan-date')?.value;
+        const result = { latitude_deg: Number(selectedCoords.lat), longitude_deg: toVisibilityLongitude(Number(selectedCoords.lon)) };
+        if (date) Object.assign(result, { start_utc: `${date}T00:00:00Z`, duration_hours: 144 });
+        return result;
+    };
+    const show = async () => {
+        panel.hidden = false; open.setAttribute('aria-expanded', 'true');
+        const context = activeContext();
+        contextLine.textContent = context.latitude_deg == null ? 'Choose a Moon location to include it as context.' :
+            `${context.latitude_deg.toFixed(4)}°, ${context.longitude_deg.toFixed(4)}° E${context.start_utc ? ` · ${context.start_utc} · 144 h window` : ' · choose a date for visibility calculations'}`;
+        if (!messages.childElementCount) {
+            addMessage('assistant', 'I can explain the project and use the selected mission window for Sun/Earth visibility. I will not invent calculated results.');
+            try { const state = await requestAssistantStatus(); if (!state.configured) addMessage('system', state.detail); } catch (error) { addMessage('system', error.message); }
+        }
+        input.focus();
+    };
+    open.addEventListener('click', show);
+    close.addEventListener('click', () => { panel.hidden = true; open.setAttribute('aria-expanded', 'false'); });
+    form.addEventListener('submit', async event => {
+        event.preventDefault(); const message = input.value.trim(); if (!message) return;
+        addMessage('user', message); input.value = ''; send.disabled = true; addMessage('system', 'Checking the project services…');
+        const pending = messages.lastElementChild;
+        try {
+            const response = await requestAssistantChat({ message, context: activeContext() });
+            pending.remove(); addMessage(response.status === 'ok' ? 'assistant' : 'system', response.answer);
+            for (const citation of response.citations || []) addMessage('citation', `Source: ${citation.title} — ${citation.url}`);
+        } catch (error) { pending.textContent = error.message; }
+        finally { send.disabled = false; input.focus(); }
+    });
+}
+
+setupExplorationAssistant();

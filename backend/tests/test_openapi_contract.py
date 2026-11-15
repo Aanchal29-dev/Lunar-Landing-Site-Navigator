@@ -10,6 +10,8 @@ def test_checked_in_openapi_contract_matches_application():
     assert checked_in == create_app().openapi()
     assert set(checked_in["paths"]) == {
         "/api/analyze",
+        "/api/assistant/chat",
+        "/api/assistant/status",
         "/api/analyze-site",
         "/api/compare",
         "/api/mission-windows",

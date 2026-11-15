@@ -1,0 +1,26 @@
+name: Frontend tests
+
+on:
+  pull_request:
+    paths: ["Three.js/**", "package.json", ".github/workflows/frontend-tests.yml"]
+  push:
+    branches: [main]
+    paths: ["Three.js/**", "package.json", ".github/workflows/frontend-tests.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Three.js/package-lock.json
+      - run: npm ci --prefix Three.js
+      - run: npm --prefix Three.js test
+      - run: npm --prefix Three.js run build

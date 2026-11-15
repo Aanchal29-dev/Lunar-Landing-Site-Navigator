@@ -67,6 +67,28 @@ $env:ALLOWED_ORIGINS = "http://localhost:5173,https://your-frontend.example"
 
 An empty list disables cross-origin access. Wildcards are rejected.
 
+## Optional exploration assistant
+
+`GET /api/assistant/status` reports whether the optional natural-language
+assistant is configured. `POST /api/assistant/chat` accepts a message and,
+for a visibility question, optional selected `latitude_deg`, `longitude_deg`,
+`start_utc`, and `duration_hours` context. Visibility answers only run the same
+shared `/api/analyze` engine; the assistant has no independent Horizons client,
+no demo dates, and no fabricated numerical fallback.
+
+To enable general lunar-science questions, configure a server-side Groq key
+outside Git before starting the backend:
+
+```powershell
+$env:GROQ_API_KEY = Read-Host "Groq API key"
+$env:GROQ_MODEL = "openai/gpt-oss-20b" # optional override
+```
+
+The browser never receives this key. If it is absent or the provider fails,
+the assistant returns an explicit unavailable state and the scientific tools
+continue to work normally. Provider prose is guidance, not a scientific
+calculation or operational safety decision.
+
 ## Analyze
 
 `POST /api/analyze`, `Content-Type: application/json`:

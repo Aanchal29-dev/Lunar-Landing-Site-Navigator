@@ -188,6 +188,175 @@
         "title": "AnalyzeSiteResponse",
         "type": "object"
       },
+      "AssistantChatRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "context": {
+            "$ref": "#/components/schemas/AssistantContext"
+          },
+          "message": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "AssistantChatRequest",
+        "type": "object"
+      },
+      "AssistantChatResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Answer",
+            "type": "string"
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/AssistantCitation"
+            },
+            "maxItems": 5,
+            "title": "Citations",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "needs_input",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "used_visibility_engine": {
+            "default": false,
+            "title": "Used Visibility Engine",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "answer"
+        ],
+        "title": "AssistantChatResponse",
+        "type": "object"
+      },
+      "AssistantCitation": {
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "url"
+        ],
+        "title": "AssistantCitation",
+        "type": "object"
+      },
+      "AssistantContext": {
+        "additionalProperties": false,
+        "properties": {
+          "duration_hours": {
+            "anyOf": [
+              {
+                "maximum": 336.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Hours"
+          },
+          "latitude_deg": {
+            "anyOf": [
+              {
+                "maximum": 90.0,
+                "minimum": -90.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude Deg"
+          },
+          "longitude_deg": {
+            "anyOf": [
+              {
+                "maximum": 180.0,
+                "minimum": -180.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude Deg"
+          },
+          "start_utc": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Utc"
+          }
+        },
+        "title": "AssistantContext",
+        "type": "object"
+      },
+      "AssistantStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          }
+        },
+        "required": [
+          "configured",
+          "detail"
+        ],
+        "title": "AssistantStatus",
+        "type": "object"
+      },
       "CompareRequest": {
         "additionalProperties": false,
         "properties": {
@@ -1930,6 +2099,68 @@
         "summary": "Analyze Landing Site",
         "tags": [
           "Water Ice Navigation"
+        ]
+      }
+    },
+    "/api/assistant/chat": {
+      "post": {
+        "operationId": "chat_api_assistant_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistantChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantChatResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Chat",
+        "tags": [
+          "assistant"
+        ]
+      }
+    },
+    "/api/assistant/status": {
+      "get": {
+        "operationId": "read_status_api_assistant_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Read Status",
+        "tags": [
+          "assistant"
         ]
       }
     },
