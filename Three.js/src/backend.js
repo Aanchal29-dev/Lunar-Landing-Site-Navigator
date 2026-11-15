@@ -87,7 +87,7 @@ export async function requestVisibilityAnalysis({ latitude_deg, longitude_deg, s
     });
 
     assertAnalysisResponse(payload);
-    if (Math.abs(payload.location.latitude_deg - latitude(latitude_deg)) > 1e-8 || Math.abs(payload.location.longitude_deg - longitude(longitude_deg)) > 1e-8 || Date.parse(payload.start_utc) !== Date.parse(start_utc) || payload.duration_hours !== Number(duration_hours)) throw new Error('The response does not match the requested mission.');
+    if (Math.abs(payload.location.latitude_deg - latitude(latitude_deg)) > 1e-4 || Math.abs(payload.location.longitude_deg - longitude(longitude_deg)) > 1e-4 || Date.parse(payload.start_utc) !== Date.parse(start_utc) || payload.duration_hours !== Number(duration_hours)) throw new Error('The response does not match the requested mission.');
     return payload;
 }
 

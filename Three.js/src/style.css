@@ -31,7 +31,7 @@ body {
     height: 100%;
     overflow: hidden;
     background: #0B1229;
-    background-image: 
+    background-image:
         linear-gradient(rgba(0, 180, 216, 0.035) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0, 180, 216, 0.035) 1px, transparent 1px);
     background-size: 24px 24px;
@@ -873,7 +873,8 @@ body {
 }
 
 .view-mode-selector.bottom-left .mode-btn .mode-btn-label {
-    display: none; /* Icon-only by default */
+    display: none;
+    /* Icon-only by default */
 }
 
 /* Tooltip on hover */
@@ -1481,6 +1482,7 @@ body {
         opacity: 0;
         transform: translateY(-8px) scale(0.98);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1.0);
@@ -2212,9 +2214,17 @@ body {
     border-radius: 2px;
 }
 
-.legend-swatch.swatch-sunlit { background: #facc15; }
-.legend-swatch.swatch-terrain { background: #fb923c; }
-.legend-swatch.swatch-night { background: #334155; }
+.legend-swatch.swatch-sunlit {
+    background: #facc15;
+}
+
+.legend-swatch.swatch-terrain {
+    background: #fb923c;
+}
+
+.legend-swatch.swatch-night {
+    background: #334155;
+}
 
 .legend-hint {
     margin-left: auto;
@@ -2416,9 +2426,11 @@ body {
         width: auto;
         max-width: none;
     }
+
     .solar-metrics-grid {
         grid-template-columns: 1fr;
     }
+
     .timeline-stats-row {
         grid-template-columns: 1fr 1fr;
     }
@@ -2625,7 +2637,7 @@ details[open] .tech-toggle-chevron {
     width: 100vw;
     height: 100vh;
     background-color: #02050e;
-    background-image: 
+    background-image:
         radial-gradient(circle at 80% 20%, rgba(56, 189, 248, 0.16) 0%, transparent 45%),
         radial-gradient(circle at 20% 80%, rgba(30, 58, 138, 0.22) 0%, transparent 55%),
         linear-gradient(180deg, rgba(2, 6, 18, 0.82) 0%, rgba(3, 7, 24, 0.88) 100%),
@@ -2677,7 +2689,7 @@ details[open] .tech-toggle-chevron {
     max-width: 680px;
     max-height: 680px;
     border-radius: 50%;
-    background: 
+    background:
         radial-gradient(circle at 35% 35%, rgba(240, 246, 252, 0.14) 0%, rgba(148, 163, 184, 0.06) 55%, transparent 72%),
         url('/moon.jpg') center/cover no-repeat;
     opacity: 0.38;
@@ -2696,27 +2708,27 @@ details[open] .tech-toggle-chevron {
     height: 100vh;
     pointer-events: none;
     z-index: 0;
-    background-image: 
-        radial-gradient(1.5px 1.5px at 5% 15%, #ffffff, rgba(0,0,0,0)),
-        radial-gradient(1px 1px at 12% 40%, #7dd3fc, rgba(0,0,0,0)),
-        radial-gradient(2px 2px at 22% 10%, #ffffff, rgba(0,0,0,0)),
-        radial-gradient(1px 1px at 32% 30%, #bae6fd, rgba(0,0,0,0)),
-        radial-gradient(2.5px 2.5px at 45% 12%, #ffffff, rgba(0,0,0,0)),
-        radial-gradient(1px 1px at 58% 22%, #e0f2fe, rgba(0,0,0,0)),
-        radial-gradient(2px 2px at 70% 8%, #7dd3fc, rgba(0,0,0,0)),
-        radial-gradient(1.5px 1.5px at 82% 28%, #ffffff, rgba(0,0,0,0)),
-        radial-gradient(2px 2px at 92% 18%, #bae6fd, rgba(0,0,0,0)),
-        radial-gradient(2px 2px at 7% 70%, #ffffff, rgba(0,0,0,0)),
-        radial-gradient(1px 1px at 18% 85%, #e0f2fe, rgba(0,0,0,0)),
-        radial-gradient(1.5px 1.5px at 28% 62%, #ffffff, rgba(0,0,0,0)),
-        radial-gradient(2px 2px at 42% 80%, #7dd3fc, rgba(0,0,0,0)),
-        radial-gradient(1px 1px at 54% 65%, #ffffff, rgba(0,0,0,0)),
-        radial-gradient(2.5px 2.5px at 68% 75%, #bae6fd, rgba(0,0,0,0)),
-        radial-gradient(1.5px 1.5px at 80% 90%, #ffffff, rgba(0,0,0,0)),
-        radial-gradient(1px 1px at 94% 68%, #7dd3fc, rgba(0,0,0,0)),
-        radial-gradient(1.5px 1.5px at 15% 52%, #ffffff, rgba(0,0,0,0)),
-        radial-gradient(2px 2px at 48% 48%, #bae6fd, rgba(0,0,0,0)),
-        radial-gradient(1.5px 1.5px at 85% 45%, #ffffff, rgba(0,0,0,0));
+    background-image:
+        radial-gradient(1.5px 1.5px at 5% 15%, #ffffff, rgba(0, 0, 0, 0)),
+        radial-gradient(1px 1px at 12% 40%, #7dd3fc, rgba(0, 0, 0, 0)),
+        radial-gradient(2px 2px at 22% 10%, #ffffff, rgba(0, 0, 0, 0)),
+        radial-gradient(1px 1px at 32% 30%, #bae6fd, rgba(0, 0, 0, 0)),
+        radial-gradient(2.5px 2.5px at 45% 12%, #ffffff, rgba(0, 0, 0, 0)),
+        radial-gradient(1px 1px at 58% 22%, #e0f2fe, rgba(0, 0, 0, 0)),
+        radial-gradient(2px 2px at 70% 8%, #7dd3fc, rgba(0, 0, 0, 0)),
+        radial-gradient(1.5px 1.5px at 82% 28%, #ffffff, rgba(0, 0, 0, 0)),
+        radial-gradient(2px 2px at 92% 18%, #bae6fd, rgba(0, 0, 0, 0)),
+        radial-gradient(2px 2px at 7% 70%, #ffffff, rgba(0, 0, 0, 0)),
+        radial-gradient(1px 1px at 18% 85%, #e0f2fe, rgba(0, 0, 0, 0)),
+        radial-gradient(1.5px 1.5px at 28% 62%, #ffffff, rgba(0, 0, 0, 0)),
+        radial-gradient(2px 2px at 42% 80%, #7dd3fc, rgba(0, 0, 0, 0)),
+        radial-gradient(1px 1px at 54% 65%, #ffffff, rgba(0, 0, 0, 0)),
+        radial-gradient(2.5px 2.5px at 68% 75%, #bae6fd, rgba(0, 0, 0, 0)),
+        radial-gradient(1.5px 1.5px at 80% 90%, #ffffff, rgba(0, 0, 0, 0)),
+        radial-gradient(1px 1px at 94% 68%, #7dd3fc, rgba(0, 0, 0, 0)),
+        radial-gradient(1.5px 1.5px at 15% 52%, #ffffff, rgba(0, 0, 0, 0)),
+        radial-gradient(2px 2px at 48% 48%, #bae6fd, rgba(0, 0, 0, 0)),
+        radial-gradient(1.5px 1.5px at 85% 45%, #ffffff, rgba(0, 0, 0, 0));
     background-size: 100% 100%;
 }
 
@@ -2727,7 +2739,7 @@ details[open] .tech-toggle-chevron {
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: 
+    background-image:
         radial-gradient(1px 1px at 20px 30px, #ffffff, transparent),
         radial-gradient(1.5px 1.5px at 90px 140px, #7dd3fc, transparent),
         radial-gradient(2px 2px at 180px 60px, #ffffff, transparent),
@@ -3284,7 +3296,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .backend-status-banner {
@@ -3556,9 +3570,18 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     display: inline-block;
 }
 
-.legend-swatch.sun { background: #f59e0b; }
-.legend-swatch.earth { background: #38bdf8; }
-.legend-swatch.dark { background: #1e293b; border: 1px solid #334155; }
+.legend-swatch.sun {
+    background: #f59e0b;
+}
+
+.legend-swatch.earth {
+    background: #38bdf8;
+}
+
+.legend-swatch.dark {
+    background: #1e293b;
+    border: 1px solid #334155;
+}
 
 .plan-timeline-track {
     display: grid;
@@ -4267,6 +4290,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .warn-val {
     color: #fbbf24 !important;
 }
+
 /* ============================================================================
    COMPARATIVE STUDY & MISSION OPTIMIZATION (PAGE 3) STYLING
    ============================================================================ */
@@ -4520,7 +4544,9 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .loading-title {
@@ -5140,6 +5166,11 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     padding: 20px;
 }
 
+button:disabled { cursor: wait; opacity: 0.6; }
+.timeline-block { padding: 0; border: 0; }
+.timeline-block:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+#val-ice-evidence, #desc-water-ice, #plan-inline-tools-results { overflow-wrap: anywhere; }
+
 .history-modal-backdrop {
     position: absolute;
     top: 0;
@@ -5162,11 +5193,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
     z-index: 1;
 }
-
-button:disabled { cursor: wait; opacity: 0.6; }
-.timeline-block { padding: 0; border: 0; }
-.timeline-block:focus-visible { outline: 2px solid white; outline-offset: 2px; }
-#val-ice-evidence, #desc-water-ice, #plan-inline-tools-results { overflow-wrap: anywhere; }
 
 .history-modal-header {
     display: flex;
@@ -5505,7 +5531,7 @@ button:disabled { cursor: wait; opacity: 0.6; }
 /* Subtle engineering grid background for mission pages overlay */
 .mission-pages-overlay {
     background: rgba(11, 18, 41, 0.96) !important;
-    background-image: 
+    background-image:
         linear-gradient(rgba(0, 180, 216, 0.035) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0, 180, 216, 0.035) 1px, transparent 1px) !important;
     background-size: 24px 24px !important;
@@ -5965,13 +5991,23 @@ button:disabled { cursor: wait; opacity: 0.6; }
 }
 
 @keyframes flightSlideIn {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(0); }
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
 }
 
 @keyframes flightSlideOut {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(100%); }
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
 }
 
 .trans-grid-bg {
@@ -5980,7 +6016,7 @@ button:disabled { cursor: wait; opacity: 0.6; }
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: 
+    background-image:
         linear-gradient(rgba(0, 180, 216, 0.05) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0, 180, 216, 0.05) 1px, transparent 1px);
     background-size: 24px 24px;
@@ -6017,8 +6053,17 @@ button:disabled { cursor: wait; opacity: 0.6; }
 }
 
 @keyframes pulseGlow {
-    0%, 100% { opacity: 0.3; transform: scale(0.9); }
-    50% { opacity: 1; transform: scale(1.3); }
+
+    0%,
+    100% {
+        opacity: 0.3;
+        transform: scale(0.9);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.3);
+    }
 }
 
 .trans-telemetry-meta {
@@ -6147,8 +6192,17 @@ button:disabled { cursor: wait; opacity: 0.6; }
 }
 
 @keyframes plumeFlicker {
-    0%, 100% { height: 14px; opacity: 0.9; }
-    50% { height: 9px; opacity: 0.5; }
+
+    0%,
+    100% {
+        height: 14px;
+        opacity: 0.9;
+    }
+
+    50% {
+        height: 9px;
+        opacity: 0.5;
+    }
 }
 
 .trans-spacecraft-callout {
@@ -6193,4 +6247,3 @@ button:disabled { cursor: wait; opacity: 0.6; }
     font-weight: 700;
     color: #FFFFFF;
 }
-
