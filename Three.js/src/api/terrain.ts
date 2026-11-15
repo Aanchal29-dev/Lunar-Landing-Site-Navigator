@@ -1,6 +1,7 @@
 import { postJson } from "./client";
 import type { TerrainRequest, TerrainResponse } from "./types";
+import { assertTerrainResponse } from "./validateTerrain";
 
-export function analyzeTerrain(body: TerrainRequest, signal?: AbortSignal): Promise<TerrainResponse> {
-  return postJson<TerrainResponse>("/api/terrain/analyze", body, signal);
+export async function analyzeTerrain(body: TerrainRequest, signal?: AbortSignal): Promise<TerrainResponse> {
+  return assertTerrainResponse(await postJson<unknown>("/api/terrain/analyze", body, signal));
 }
