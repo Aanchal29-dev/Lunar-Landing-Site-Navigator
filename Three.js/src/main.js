@@ -3065,6 +3065,19 @@ function setupSiteNavigator() {
     if (btnOpenSiteNav) {
         btnOpenSiteNav.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (selectedCoords) {
+                const { lat, lon } = selectedCoords;
+                siteNavLat.value = Math.abs(lat).toFixed(4);
+                siteNavLon.value = (((lon % 360) + 360) % 360).toFixed(4);
+
+                siteLatHemi = lat < 0 ? 'S' : 'N';
+                siteBtnHemiN.classList.toggle('active', siteLatHemi === 'N');
+                siteBtnHemiS.classList.toggle('active', siteLatHemi === 'S');
+                siteLonHemi = 'E';
+                siteBtnHemiE.classList.add('active');
+                siteBtnHemiW.classList.remove('active');
+                if (siteNavError) siteNavError.style.display = 'none';
+            }
             navigateToRoute('site-navigator');
         });
     }
