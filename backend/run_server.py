@@ -6,10 +6,8 @@ backend_dir = os.path.dirname(os.path.abspath(__file__))
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
-# Respect deployment configuration. Set LUNAR_COMPASS_CONTACT in the environment;
-# an absent contact produces a clear API error before any NASA request is sent.
-if not os.getenv("LUNAR_COMPASS_CONTACT"):
-    os.environ["LUNAR_COMPASS_CONTACT"] = "mission-control@lunarcompass.internal"
+# Set LUNAR_COMPASS_CONTACT to a real monitored team email or public contact URL
+# before starting the server. The API returns a clear 503 if it is absent or invalid.
 
 # pyrefly: ignore[missing-import]
 import uvicorn
