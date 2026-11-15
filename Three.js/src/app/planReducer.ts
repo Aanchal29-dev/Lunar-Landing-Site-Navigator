@@ -17,6 +17,7 @@ export type PlanAction =
   | { type: "select-site"; site: SelectedSite }
   | { type: "set-window"; window: MissionWindow }
   | { type: "add-comparison-site"; site: SelectedSite }
+  | { type: "set-comparison-sites"; sites: SelectedSite[] }
   | { type: "remove-comparison-site"; index: number }
   | { type: "reset-plan" };
 
@@ -27,7 +28,12 @@ export const INITIAL_PLAN_STATE: PlanState = {
 };
 
 function validSite(site: SelectedSite): SelectedSite {
-  return { ...assertCoordinate(site), label: site.label.trim() || "Selected lunar location" };
+  return {
+    ...assertCoordinate(site),
+    label: site.label.trim() || "Selected lunar location",
+    source: site.source,
+    sourceNote: site.sourceNote,
+  };
 }
 
 export function planReducer(state: PlanState, action: PlanAction): PlanState {
@@ -41,6 +47,14 @@ export function planReducer(state: PlanState, action: PlanAction): PlanState {
       if (state.comparisonSites.length >= 3) return state;
       if (state.comparisonSites.some((item) => item.latitude_deg === site.latitude_deg && item.longitude_deg === site.longitude_deg)) return state;
       return { ...state, comparisonSites: [...state.comparisonSites, site] };
+    }
+    case "set-comparison-sites": {
+      const sites: SelectedSite[] = [];
+      for (const candidate of action.sites) {
+        const site = validSite(candidate);
+        if (sites.length < 3 && !sites.some((item) => item.latitude_deg === site.latitude_deg && item.longitude_deg === site.longitude_deg)) sites.push(site);
+      }
+      return { ...state, comparisonSites: sites };
     }
     case "remove-comparison-site":
       return { ...state, comparisonSites: state.comparisonSites.filter((_, index) => index !== action.index) };
