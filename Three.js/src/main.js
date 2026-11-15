@@ -1542,18 +1542,38 @@ function pan2DMapTo(targetX, targetY, targetZ = 1.8) {
     is2DNavigating = true;
 }
 
-// 5. Silky-Smooth Cinematic Physical Unrolling / Wrapping Morph Transition State
-let isModeTransitioning = false;
-let modeTransitionStart = 0;
-const modeTransitionDuration = 1400; // 1.4s smooth physical morph
 // ============================================================================
 // 12B. VIEW MODE SWITCHER (3D GLOBE <-> 2D FLAT MAP)
-// Clean, instant toggle between 3D Globe and 2D Flat Map modes
+// Silky-Smooth Cinematic Physical Unrolling / Wrapping Morph Transition
 // ============================================================================
 
+let isModeTransitioning = false;
+let modeTransitionStart = 0;
+const modeTransitionDuration = 1100; // 1.1s smooth cinematic physical morph matching sample video
+let modeTransitionTo = '2d';
+
+// Transition interpolation state snapshots
+let transStartMorph = 0.0;
+let transEndMorph = 1.0;
+let transStartRotY = -Math.PI / 2;
+let transEndRotY = 0.0;
+const transStartCamPos = new THREE.Vector3();
+const transEndCamPos = new THREE.Vector3();
+const transStartControlsTarget = new THREE.Vector3();
+const transEndControlsTarget = new THREE.Vector3();
+
+let transStartAmbient = 0.40;
+let transEndAmbient = 0.45;
+let transStartSun = 4.2;
+let transEndSun = 2.4;
+const transStartSunPos = new THREE.Vector3();
+const transEndSunPos = new THREE.Vector3();
+let transStartStarsOpacity = 0.85;
+let transEndStarsOpacity = 0.0;
+
 function setViewMode(mode) {
-    if (mode === currentViewMode) return;
-    currentViewMode = mode;
+    if (mode === currentViewMode && !isModeTransitioning) return;
+    if (isModeTransitioning && mode === modeTransitionTo) return;
 
     const btn3d = document.getElementById('btn-mode-3d');
     const btn2d = document.getElementById('btn-mode-2d');
@@ -1561,6 +1581,26 @@ function setViewMode(mode) {
 
     isNavigating = false;
     is2DNavigating = false;
+    if (typeof markerDropActive !== 'undefined') markerDropActive = false;
+    if (surfaceMarker) surfaceMarker.scale.set(1.0, 1.0, 1.0);
+
+    modeTransitionTo = mode;
+    isModeTransitioning = true;
+    modeTransitionStart = performance.now();
+
+    // Snapshot current state for seamless interpolation from wherever it currently is
+    transStartMorph = (moon && moon.morphTargetInfluences) ? (moon.morphTargetInfluences[0] || 0.0) : 0.0;
+    transStartRotY = moon ? moon.rotation.y : (mode === '2d' ? -Math.PI / 2 : 0);
+    transStartCamPos.copy(camera.position);
+    transStartControlsTarget.copy(controls.target);
+
+    transStartAmbient = ambientLight.intensity;
+    transStartSun = sunLight.intensity;
+    transStartSunPos.copy(sunLight.position);
+    transStartStarsOpacity = starsMaterial.opacity;
+
+    // Temporarily disable OrbitControls during active transition so inputs do not fight animation
+    controls.enabled = false;
 
     if (mode === '2d') {
         if (btn3d) btn3d.classList.remove('active');
@@ -1568,48 +1608,24 @@ function setViewMode(mode) {
         if (toolbar2D) toolbar2D.style.display = 'inline-flex';
         hudPanel.classList.add('mode-2d-hud');
 
-        // Instant 2D configuration: flat equirectangular projection
-        moon.morphTargetInfluences[0] = 1.0;
-        moon.rotation.set(0, 0, 0);
-
-        graticuleMesh.visible = true;
-        graticuleMat.opacity = 0.95;
-
-        starsMaterial.opacity = 0.0;
-        ambientLight.intensity = 0.45;
-        sunLight.intensity = 2.4;
-        sunLight.position.set(0, 0, 5);
-
-        // Position POI markers on 2D map
-        for (const item of poiEntries) {
-            item.pinGroup.position.copy(item.pos2D);
-            item.pinGroup.quaternion.copy(item.quat2D);
-        }
-
-        // Set controls for 2D pan/zoom
-        controls.enableRotate = false;
-        controls.screenSpacePanning = true;
-        controls.mouseButtons = {
-            LEFT: THREE.MOUSE.PAN,
-            MIDDLE: THREE.MOUSE.DOLLY,
-            RIGHT: THREE.MOUSE.PAN
-        };
-        controls.minDistance = 0.5;
-        controls.maxDistance = 6.0;
+        transEndMorph = 1.0;
+        transEndRotY = 0.0;
 
         if (selectedCoords) {
             const mx = lonToMapX(selectedCoords.lon);
             const my = latToMapY(selectedCoords.lat);
-            surfaceMarker.position.copy(markerPos2D);
-            surfaceMarker.quaternion.copy(markerQuat2D);
-            surfaceMarker.visible = true;
-            camera.position.set(mx, my, 2.0);
-            controls.target.set(mx, my, 0);
+            transEndCamPos.set(mx, my, 2.0);
+            transEndControlsTarget.set(mx, my, 0);
         } else {
-            camera.position.set(0.25, 0, 2.9);
-            controls.target.set(0.25, 0, 0);
+            transEndCamPos.set(0.25, 0, 2.9);
+            transEndControlsTarget.set(0.25, 0, 0);
         }
-        controls.update();
+
+        transEndAmbient = 0.45;
+        transEndSun = 2.4;
+        transEndSunPos.set(0, 0, 5);
+        transEndStarsOpacity = 0.0;
+
         if (typeof poleGroup !== 'undefined') poleGroup.visible = false;
     } else {
         // Exit any active 2D distance measurement
@@ -1620,51 +1636,23 @@ function setViewMode(mode) {
         if (toolbar2D) toolbar2D.style.display = 'none';
         hudPanel.classList.remove('mode-2d-hud');
 
-        // Instant 3D configuration: spherical Moon globe
-        moon.morphTargetInfluences[0] = 0.0;
-        moon.rotation.set(0, -Math.PI / 2, 0);
-
-        graticuleMesh.visible = false;
-        graticuleMat.opacity = 0.0;
-
-        starsMaterial.opacity = 0.85;
-        ambientLight.intensity = 0.40;
-        sunLight.intensity = 4.2;
-        sunLight.position.set(3.5, 1.8, 2.6);
-
-        // Position POI markers on 3D sphere
-        for (const item of poiEntries) {
-            item.pinGroup.position.copy(item.pos3D);
-            item.pinGroup.quaternion.copy(item.quat3D);
-        }
-
-        // Restore 3D OrbitControls
-        controls.enableRotate = true;
-        controls.screenSpacePanning = false;
-        controls.mouseButtons = {
-            LEFT: THREE.MOUSE.ROTATE,
-            MIDDLE: THREE.MOUSE.DOLLY,
-            RIGHT: THREE.MOUSE.PAN
-        };
-        controls.minDistance = 1.4;
-        controls.maxDistance = 10.0;
+        transEndMorph = 0.0;
+        transEndRotY = -Math.PI / 2;
 
         if (selectedCoords) {
             const localNorm = latLonToLocalPosition(selectedCoords.lat, selectedCoords.lon, 1.0).normalize();
-            surfaceMarker.position.copy(markerPos3D);
-            surfaceMarker.quaternion.copy(markerQuat3D);
-            surfaceMarker.visible = true;
-
             const worldDir = localNorm.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
-            camera.position.copy(worldDir.multiplyScalar(3.0));
-            controls.target.set(0, 0, 0);
+            transEndCamPos.copy(worldDir.multiplyScalar(3.0));
+            transEndControlsTarget.set(0, 0, 0);
         } else {
-            camera.position.set(0, 0, 3.2);
-            camera.lookAt(0, 0, 0);
-            controls.target.set(0, 0, 0);
+            transEndCamPos.set(0, 0, 3.2);
+            transEndControlsTarget.set(0, 0, 0);
         }
-        controls.update();
-        if (typeof poleGroup !== 'undefined') poleGroup.visible = true;
+
+        transEndAmbient = 0.40;
+        transEndSun = 4.2;
+        transEndSunPos.set(3.5, 1.8, 2.6);
+        transEndStarsOpacity = 0.85;
     }
 }
 
@@ -2169,6 +2157,7 @@ let pointerDownPos = { x: 0, y: 0 };
 let pointerDownTime = 0;
 
 renderer.domElement.addEventListener('pointerdown', (e) => {
+    if (isModeTransitioning) return;
     isNavigating = false; // User took manual control
     is2DNavigating = false;
     pointerDownPos = { x: e.clientX, y: e.clientY };
@@ -2324,6 +2313,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
 });
 
 renderer.domElement.addEventListener('pointerup', (e) => {
+    if (isModeTransitioning) return;
     // Only primary button (left click)
     if (e.button !== 0 && e.pointerType === 'mouse') return;
 
@@ -3201,15 +3191,6 @@ function setupSiteNavigator() {
             navigateToRoute('site-navigator');
         });
     }
-
-    const btnCloseHud = document.getElementById('btn-close-hud');
-    if (btnCloseHud) {
-        btnCloseHud.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const hud = document.getElementById('lunar-hud');
-            if (hud) hud.style.display = 'none';
-        });
-    }
 }
 
 // Coordinate Copy Feature in Lunar Compass HUD
@@ -3282,9 +3263,50 @@ function setupCoordinateCopy() {
     });
 }
 
-// Initialize Site Navigator & Coordinate Copy
+// Interactive Calendar Symbol Triggers for Date Inputs
+function setupCalendarPickers() {
+    function openDateInputPicker(input) {
+        if (!input) return;
+        try {
+            if (typeof input.showPicker === 'function') {
+                input.showPicker();
+            } else {
+                input.focus();
+            }
+        } catch (_) {
+            input.focus();
+        }
+    }
+
+    // Left embedded calendar symbol click
+    document.querySelectorAll('.date-wrapper').forEach(wrapper => {
+        const icon = wrapper.querySelector('.calendar-symbol-icon');
+        const input = wrapper.querySelector('input[type="date"]');
+        if (icon && input) {
+            icon.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openDateInputPicker(input);
+            });
+        }
+    });
+
+    // Dedicated cyan calendar pick buttons
+    document.querySelectorAll('.calendar-pick-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const group = btn.closest('.form-input-group, .nav-form-input-group');
+            const input = group ? group.querySelector('input[type="date"]') : null;
+            openDateInputPicker(input);
+        });
+    });
+}
+
+// Initialize Site Navigator, Coordinate Copy & Calendar Pickers
 setupSiteNavigator();
 setupCoordinateCopy();
+setupCalendarPickers();
 
 
 // ============================================================================
@@ -3842,9 +3864,7 @@ const resultsIdleState = document.getElementById('results-idle-state');
 const resultsLoadingState = document.getElementById('results-loading-state');
 const resultsContentBox = document.getElementById('results-content-box');
 const resultsSiteCoords = document.getElementById('results-site-coords');
-const backendStatusBanner = document.getElementById('backend-status-banner');
-const backendStatusDot = document.getElementById('backend-status-dot');
-const backendStatusText = document.getElementById('backend-status-text');
+const btnPlanReset = document.getElementById('btn-plan-reset');
 
 // Set default date to today
 if (planDateInput) {
@@ -3997,17 +4017,6 @@ async function runMissionAnalysis() {
 function renderMissionAnalysisResults(signedLat, lon360, epochDate, backendData, isLiveBackend) {
     if (resultsLoadingState) resultsLoadingState.style.display = 'none';
     if (resultsContentBox) resultsContentBox.style.display = 'block';
-
-    // Status Banner
-    if (backendStatusBanner && backendStatusText && backendStatusDot) {
-        if (isLiveBackend) {
-            backendStatusBanner.className = 'backend-status-banner connected';
-            backendStatusText.textContent = 'API Status: Connected to /api/mission-analysis (Live Backend Response)';
-        } else {
-            backendStatusBanner.className = 'backend-status-banner standalone';
-            backendStatusText.textContent = 'Awaiting Backend Service (/api/mission-analysis) Deployment — Displaying Verified Astronomical & LOLA Topography Data';
-        }
-    }
 
     // 1. SECTION A: EARTH COMMUNICATION VISIBILITY
     const latRad = signedLat * DEG2RAD;
@@ -4187,6 +4196,24 @@ function renderMissionAnalysisResults(signedLat, lon360, epochDate, backendData,
 
 if (btnAnalyseLandingSite) {
     btnAnalyseLandingSite.addEventListener('click', runMissionAnalysis);
+}
+
+if (btnPlanReset) {
+    btnPlanReset.addEventListener('click', () => {
+        if (planLatInput) planLatInput.value = '';
+        if (planLonInput) planLonInput.value = '';
+        if (planDateInput) planDateInput.value = new Date().toISOString().slice(0, 10);
+        setPlanLatHemi('N');
+        setPlanLonHemi('E');
+        if (planFormError) {
+            planFormError.style.display = 'none';
+            planFormError.textContent = '';
+        }
+        if (resultsLoadingState) resultsLoadingState.style.display = 'none';
+        if (resultsContentBox) resultsContentBox.style.display = 'none';
+        if (resultsIdleState) resultsIdleState.style.display = 'flex';
+        if (resultsSiteCoords) resultsSiteCoords.textContent = 'Awaiting coordinates input...';
+    });
 }
 
 
@@ -5328,6 +5355,135 @@ function animate() {
         }
     }
 
+    // 0. Smooth cinematic physical unrolling / wrapping between 3D Globe and 2D Flat Map
+    if (isModeTransitioning) {
+        const elapsed = performance.now() - modeTransitionStart;
+        const rawT = Math.min(1.0, elapsed / modeTransitionDuration);
+        // Silky smooth cubic ease in-out
+        const t = rawT < 0.5 
+            ? 4 * rawT * rawT * rawT 
+            : 1 - Math.pow(-2 * rawT + 2, 3) / 2;
+
+        const currentMorph = THREE.MathUtils.lerp(transStartMorph, transEndMorph, t);
+        moon.morphTargetInfluences[0] = currentMorph;
+        moon.rotation.y = THREE.MathUtils.lerp(transStartRotY, transEndRotY, t);
+
+        camera.position.lerpVectors(transStartCamPos, transEndCamPos, t);
+        controls.target.lerpVectors(transStartControlsTarget, transEndControlsTarget, t);
+        camera.lookAt(controls.target);
+
+        // Smoothly unroll / wrap all POI pins with the lunar surface
+        for (const item of poiEntries) {
+            item.pinGroup.position.lerpVectors(item.pos3D, item.pos2D, currentMorph);
+            item.pinGroup.quaternion.slerpQuaternions(item.quat3D, item.quat2D, currentMorph);
+        }
+
+        // Smoothly position and orient surfaceMarker if visible
+        if (surfaceMarker && surfaceMarker.visible) {
+            surfaceMarker.position.lerpVectors(markerPos3D, markerPos2D, currentMorph);
+            surfaceMarker.quaternion.slerpQuaternions(markerQuat3D, markerQuat2D, currentMorph);
+        }
+
+        // Smooth lighting and background stars transition
+        ambientLight.intensity = THREE.MathUtils.lerp(transStartAmbient, transEndAmbient, t);
+        sunLight.intensity = THREE.MathUtils.lerp(transStartSun, transEndSun, t);
+        sunLight.position.lerpVectors(transStartSunPos, transEndSunPos, t);
+        starsMaterial.opacity = THREE.MathUtils.lerp(transStartStarsOpacity, transEndStarsOpacity, t);
+
+        // Graticule grid opacity
+        if (modeTransitionTo === '2d') {
+            if (currentMorph > 0.82) {
+                graticuleMesh.visible = true;
+                graticuleMat.opacity = ((currentMorph - 0.82) / 0.18) * 0.95;
+            } else {
+                graticuleMesh.visible = false;
+                graticuleMat.opacity = 0.0;
+            }
+        } else {
+            if (currentMorph < 0.88) {
+                graticuleMesh.visible = false;
+                graticuleMat.opacity = 0.0;
+            } else {
+                graticuleMesh.visible = true;
+                graticuleMat.opacity = ((currentMorph - 0.88) / 0.12) * 0.95;
+            }
+        }
+
+        if (rawT >= 1.0) {
+            isModeTransitioning = false;
+            currentViewMode = modeTransitionTo;
+            controls.enabled = true;
+
+            if (modeTransitionTo === '2d') {
+                moon.morphTargetInfluences[0] = 1.0;
+                moon.rotation.set(0, 0, 0);
+
+                graticuleMesh.visible = true;
+                graticuleMat.opacity = 0.95;
+
+                starsMaterial.opacity = 0.0;
+                ambientLight.intensity = 0.45;
+                sunLight.intensity = 2.4;
+                sunLight.position.set(0, 0, 5);
+
+                for (const item of poiEntries) {
+                    item.pinGroup.position.copy(item.pos2D);
+                    item.pinGroup.quaternion.copy(item.quat2D);
+                }
+
+                if (surfaceMarker && surfaceMarker.visible) {
+                    surfaceMarker.position.copy(markerPos2D);
+                    surfaceMarker.quaternion.copy(markerQuat2D);
+                }
+
+                controls.enableRotate = false;
+                controls.screenSpacePanning = true;
+                controls.mouseButtons = {
+                    LEFT: THREE.MOUSE.PAN,
+                    MIDDLE: THREE.MOUSE.DOLLY,
+                    RIGHT: THREE.MOUSE.PAN
+                };
+                controls.minDistance = 0.5;
+                controls.maxDistance = 6.0;
+                controls.update();
+                if (typeof poleGroup !== 'undefined') poleGroup.visible = false;
+            } else {
+                moon.morphTargetInfluences[0] = 0.0;
+                moon.rotation.set(0, -Math.PI / 2, 0);
+
+                graticuleMesh.visible = false;
+                graticuleMat.opacity = 0.0;
+
+                starsMaterial.opacity = 0.85;
+                ambientLight.intensity = 0.40;
+                sunLight.intensity = 4.2;
+                sunLight.position.set(3.5, 1.8, 2.6);
+
+                for (const item of poiEntries) {
+                    item.pinGroup.position.copy(item.pos3D);
+                    item.pinGroup.quaternion.copy(item.quat3D);
+                }
+
+                if (surfaceMarker && surfaceMarker.visible) {
+                    surfaceMarker.position.copy(markerPos3D);
+                    surfaceMarker.quaternion.copy(markerQuat3D);
+                }
+
+                controls.enableRotate = true;
+                controls.screenSpacePanning = false;
+                controls.mouseButtons = {
+                    LEFT: THREE.MOUSE.ROTATE,
+                    MIDDLE: THREE.MOUSE.DOLLY,
+                    RIGHT: THREE.MOUSE.PAN
+                };
+                controls.minDistance = 1.4;
+                controls.maxDistance = 10.0;
+                controls.update();
+                if (typeof poleGroup !== 'undefined') poleGroup.visible = true;
+            }
+        }
+    }
+
     // 1. Smooth 3D camera arc navigation during "Go to Coordinates"
     if (isNavigating && currentViewMode === '3d') {
         const elapsed = performance.now() - navStartTime;
@@ -5364,8 +5520,10 @@ function animate() {
         }
     }
 
-    // Updates camera position based on user mouse / touch drag
-    controls.update();
+    // Updates camera position based on user mouse / touch drag when not transitioning
+    if (!isModeTransitioning) {
+        controls.update();
+    }
 
     // 3. Pulse red pointer (📍) base ring, beacon ripples, and pin-drop bounce across surface
     if (surfaceMarker.visible) {
