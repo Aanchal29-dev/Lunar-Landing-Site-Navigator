@@ -1,5 +1,9 @@
+import { useEffect, useState } from "react";
+
 import type { AnalysisResponse, TimelineEntry } from "../../api/types";
 import { formatCoordinate } from "../../domain/coordinates";
+import { TerrainScreening } from "./TerrainScreening";
+import { VisibilityExplorer } from "./VisibilityExplorer";
 
 function percentage(value: number): string {
   return `${value.toFixed(1)}%`;
@@ -17,6 +21,8 @@ function timelineStatus(entry: TimelineEntry): string {
 }
 
 export function AnalysisResults({ analysis }: { analysis: AnalysisResponse }) {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  useEffect(() => setSelectedIndex(0), [analysis]);
   const metrics = [
     ["Sunlight", percentage(analysis.metrics.sunlight_percent)],
     ["Earth visibility", percentage(analysis.metrics.earth_visibility_percent)],
@@ -42,6 +48,8 @@ export function AnalysisResults({ analysis }: { analysis: AnalysisResponse }) {
       <p><strong>Model:</strong> apparent airless angles above a {analysis.model.horizon_degrees}° geometric horizon. Terrain obstruction is not included.</p>
     </div>
 
+    <VisibilityExplorer timeline={analysis.timeline} selectedIndex={selectedIndex} onSelectIndex={setSelectedIndex} />
+
     <details className="timeline-details">
       <summary>View hourly timeline ({analysis.timeline.length} samples)</summary>
       <div className="timeline-table-wrap">
@@ -61,5 +69,7 @@ export function AnalysisResults({ analysis }: { analysis: AnalysisResponse }) {
       <summary>Scientific limitations</summary>
       <ul>{analysis.model.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul>
     </details>
+
+    <TerrainScreening coordinate={analysis.location} />
   </section>;
 }

@@ -23,6 +23,18 @@ contract before display, and renders the four visibility metrics, UTC window,
 hourly midpoint timeline, and backend-provided limitations. No placeholder
 scientific result is displayed before a successful response.
 
+The visibility presentation derives its sky dial and chart only from the
+returned hourly `sun_*` and `earth_*` fields. The horizon ring and chart line
+both mean the backend's zero-degree geometric horizon. The timeline selector
+changes which returned midpoint is visualised; it never calculates an
+independent Sun or Earth position in the browser.
+
+Terrain screening is a separate, explicit request to `/api/terrain/analyze`.
+It uses the selected response location and a user-selected regional radius.
+The UI differentiates service failure from `terrain_available: false`, exposes
+coverage and dataset warnings, and never substitutes missing terrain values or
+uses terrain data to alter visibility output.
+
 During development, `vite.config.ts` proxies `/api` and `/health` to
 `http://127.0.0.1:8000` by default. Set `LUNAR_COMPASS_API_TARGET` only for a
 deliberately configured local backend. Production must route the same paths
