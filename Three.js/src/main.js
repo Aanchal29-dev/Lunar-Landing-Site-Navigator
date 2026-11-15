@@ -3653,6 +3653,10 @@ function triggerFlightTransition(onMidpoint = null) {
         if (typeof onMidpoint === 'function') onMidpoint();
         return;
     }
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+        if (typeof onMidpoint === 'function') onMidpoint();
+        return;
+    }
 
     if (isFlightTransitionActive) {
         if (typeof onMidpoint === 'function') onMidpoint();

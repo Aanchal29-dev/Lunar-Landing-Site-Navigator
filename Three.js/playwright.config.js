@@ -10,6 +10,7 @@ export default defineConfig({
     use: {
         baseURL,
         viewport: { width: 1440, height: 1000 },
+        reducedMotion: 'reduce',
         trace: 'retain-on-failure',
         launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] },
     },
