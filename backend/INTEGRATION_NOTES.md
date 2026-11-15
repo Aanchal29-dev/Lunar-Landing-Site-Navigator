@@ -3,7 +3,7 @@
 Repository: https://github.com/Aanchal29-dev/Lunar-Landing-Site-Navigator
 
 Base main commit: `b67f8b76fefcb7a3e9bb5591a2bc27c3ab269a78`.
-Prepared local branch: `codex/fix-visibility-terrain`.
+Prepared local branch: `phase-visibility-terrain`.
 Changes are deliberately uncommitted for team review.
 
 ## Changes
@@ -74,7 +74,7 @@ git diff --check
 git add backend .github/workflows/backend-tests.yml
 git diff --cached --stat
 git commit -m "fix(backend): integrate visibility and terrain APIs"
-git push -u origin codex/fix-visibility-terrain
+git push -u origin phase-visibility-terrain
 ```
 
 Create a PR targeting the team's `main`. If main advances, review and integrate

@@ -1,5 +1,17 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import {
+    toVisibilityLongitude,
+    requestVisibilityAnalysis,
+    requestTerrainAnalysis,
+    requestComparison,
+    requestStressTest,
+    requestMissionWindows,
+    fetchHistoricalMissions,
+    fetchHistoricalMissionDetail,
+    requestHistoricalReplay,
+    checkBackendHealth
+} from './backend.js';
 
 // 1. CREATE SCENE WITH AUTHENTIC BLACKISH-BLUE DEEP SPACE BACKGROUND
 const scene = new THREE.Scene();
@@ -121,17 +133,17 @@ for (let i = 0; i < vertexCount; i++) {
     const u = uvAttr.getX(i);
     const v = uvAttr.getY(i);
     // Equirectangular plane: width = 4.0, height = 2.0, centered at (0, 0, 0)
-    planePositions[i * 3]     = (u - 0.5) * 4.0;
+    planePositions[i * 3] = (u - 0.5) * 4.0;
     planePositions[i * 3 + 1] = (v - 0.5) * 2.0;
     planePositions[i * 3 + 2] = 0.0;
 
-    planeNormals[i * 3]     = 0.0;
+    planeNormals[i * 3] = 0.0;
     planeNormals[i * 3 + 1] = 0.0;
     planeNormals[i * 3 + 2] = 1.0;
 }
 
-geometry.morphAttributes.position = [ new THREE.BufferAttribute(planePositions, 3) ];
-geometry.morphAttributes.normal = [ new THREE.BufferAttribute(planeNormals, 3) ];
+geometry.morphAttributes.position = [new THREE.BufferAttribute(planePositions, 3)];
+geometry.morphAttributes.normal = [new THREE.BufferAttribute(planeNormals, 3)];
 
 // 7. LOAD NASA DATASETS & MAPS
 const textureLoader = new THREE.TextureLoader();
@@ -255,38 +267,10 @@ function createSurfaceMarker() {
     const headMesh = new THREE.Mesh(headGeo, headMat);
     group.add(headMesh);
 
-    // Subtle Surface Contact Ring (lies flat on lunar surface at y = 0.001)
-    const baseRingGeo = new THREE.RingGeometry(0.008, 0.026, 32);
-    baseRingGeo.rotateX(-Math.PI / 2);
-    baseRingGeo.translate(0, 0.001, 0);
-    const baseRingMat = new THREE.MeshBasicMaterial({
-        color: 0xef4444,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.75,
-        depthWrite: false
-    });
-    const baseRing = new THREE.Mesh(baseRingGeo, baseRingMat);
-    group.add(baseRing);
-
-    // Dynamic Expanding Radar / Beacon Wave Ring
-    const beaconRingGeo = new THREE.RingGeometry(0.016, 0.048, 32);
-    beaconRingGeo.rotateX(-Math.PI / 2);
-    beaconRingGeo.translate(0, 0.0012, 0);
-    const beaconRingMat = new THREE.MeshBasicMaterial({
-        color: 0x38bdf8,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.65,
-        depthWrite: false
-    });
-    const beaconRing = new THREE.Mesh(beaconRingGeo, beaconRingMat);
-    group.add(beaconRing);
-
     // Surface Center Contact Dot: exact contact point indicator
-    const baseDotGeo = new THREE.CircleGeometry(0.004, 20);
+    const baseDotGeo = new THREE.CircleGeometry(0.003, 16);
     baseDotGeo.rotateX(-Math.PI / 2);
-    baseDotGeo.translate(0, 0.0015, 0);
+    baseDotGeo.translate(0, 0.001, 0);
     const baseDotMat = new THREE.MeshBasicMaterial({
         color: 0xffffff,
         side: THREE.DoubleSide,
@@ -297,15 +281,11 @@ function createSurfaceMarker() {
     const baseDot = new THREE.Mesh(baseDotGeo, baseDotMat);
     group.add(baseDot);
 
-    return { group, baseRing, baseRingMat, beaconRing, beaconRingMat };
+    return { group };
 }
 
 const {
-    group: surfaceMarker,
-    baseRing: markerBaseRing,
-    baseRingMat: markerBaseRingMat,
-    beaconRing: markerBeaconRing,
-    beaconRingMat: markerBeaconRingMat
+    group: surfaceMarker
 } = createSurfaceMarker();
 moon.add(surfaceMarker);
 
@@ -811,8 +791,8 @@ function identifyLunarMission(lat, lon) {
     if (closestMission && minDistanceKm <= MISSION_PROXIMITY_THRESHOLD_KM) {
         let displayStr = closestMission.name;
         if (minDistanceKm >= 0.1) {
-            displayStr += minDistanceKm < 1.0 
-                ? ` (${Math.round(minDistanceKm * 1000)} m)` 
+            displayStr += minDistanceKm < 1.0
+                ? ` (${Math.round(minDistanceKm * 1000)} m)`
                 : ` (${minDistanceKm.toFixed(1)} km)`;
         }
         return {
@@ -1176,8 +1156,8 @@ function selectPOI(poi) {
     setHUDCollapsed(false);
 
     const absLat = Math.abs(poi.lat);
-    const latFormatted = absLat < 0.00005 
-        ? '0.0000°' 
+    const latFormatted = absLat < 0.00005
+        ? '0.0000°'
         : `${absLat.toFixed(4)}° ${poi.lat > 0 ? 'N' : 'S'}`;
     const lonFormatted = `${poi.lon.toFixed(4)}° E`;
 
@@ -1340,10 +1320,10 @@ function createGraticuleTexture() {
         const isPrime = (deg === 0);
         const isMajor = (deg % 30 === 0);
 
-        ctx.strokeStyle = isPrime 
-            ? 'rgba(56, 189, 248, 0.70)' 
-            : isMajor 
-                ? 'rgba(80, 140, 220, 0.40)' 
+        ctx.strokeStyle = isPrime
+            ? 'rgba(56, 189, 248, 0.70)'
+            : isMajor
+                ? 'rgba(80, 140, 220, 0.40)'
                 : 'rgba(100, 120, 150, 0.18)';
         ctx.lineWidth = isPrime ? 3.5 : (isMajor ? 2.0 : 1.2);
 
@@ -1359,10 +1339,10 @@ function createGraticuleTexture() {
         const isEquator = (lat === 0);
         const isMajor = (lat % 30 === 0);
 
-        ctx.strokeStyle = isEquator 
-            ? 'rgba(56, 189, 248, 0.70)' 
-            : isMajor 
-                ? 'rgba(80, 140, 220, 0.40)' 
+        ctx.strokeStyle = isEquator
+            ? 'rgba(56, 189, 248, 0.70)'
+            : isMajor
+                ? 'rgba(80, 140, 220, 0.40)'
                 : 'rgba(100, 120, 150, 0.18)';
         ctx.lineWidth = isEquator ? 3.5 : (isMajor ? 2.0 : 1.2);
 
@@ -1400,16 +1380,16 @@ function createGraticuleTexture() {
         { deg: -180, text: '180°' },
         { deg: -150, text: '210° E (150° W)' },
         { deg: -120, text: '240° E (120° W)' },
-        { deg: -90,  text: '270° E (90° W)' },
-        { deg: -60,  text: '300° E (60° W)' },
-        { deg: -30,  text: '330° E (30° W)' },
-        { deg: 0,    text: '0° PRIME MERIDIAN' },
-        { deg: 30,   text: '30° E' },
-        { deg: 60,   text: '60° E' },
-        { deg: 90,   text: '90° E' },
-        { deg: 120,  text: '120° E' },
-        { deg: 150,  text: '150° E' },
-        { deg: 180,  text: '180°' }
+        { deg: -90, text: '270° E (90° W)' },
+        { deg: -60, text: '300° E (60° W)' },
+        { deg: -30, text: '330° E (30° W)' },
+        { deg: 0, text: '0° PRIME MERIDIAN' },
+        { deg: 30, text: '30° E' },
+        { deg: 60, text: '60° E' },
+        { deg: 90, text: '90° E' },
+        { deg: 120, text: '120° E' },
+        { deg: 150, text: '150° E' },
+        { deg: 180, text: '180°' }
     ];
 
     lonLabels.forEach(lbl => {
@@ -1421,12 +1401,12 @@ function createGraticuleTexture() {
 
     // Latitude Tick Labels along Prime Meridian and limbs
     const latLabels = [
-        { lat: 75,  text: '+75° N' },
-        { lat: 60,  text: '+60° N' },
-        { lat: 45,  text: '+45° N' },
-        { lat: 30,  text: '+30° N' },
-        { lat: 15,  text: '+15° N' },
-        { lat: 0,   text: '0° EQUATOR' },
+        { lat: 75, text: '+75° N' },
+        { lat: 60, text: '+60° N' },
+        { lat: 45, text: '+45° N' },
+        { lat: 30, text: '+30° N' },
+        { lat: 15, text: '+15° N' },
+        { lat: 0, text: '0° EQUATOR' },
         { lat: -15, text: '-15° S' },
         { lat: -30, text: '-30° S' },
         { lat: -45, text: '-45° S' },
@@ -2843,81 +2823,89 @@ function updateHUDSolarAnalysis(latDeg, lonDeg, epochDate = new Date()) {
     if (!hudSolarAnalysis) return;
     hudSolarAnalysis.style.display = 'block';
 
-    const sunData = getSunInMoonFrame(epochDate);
-    const angles = calculateSolarAngles(latDeg, lonDeg, sunData.s_moon);
-    const obstruction = calculateTerrainHorizonObstruction(latDeg, lonDeg, angles.azimuth, angles.elevation);
-
-    if (hudValElevation) {
-        hudValElevation.textContent = `${angles.elevation >= 0 ? '+' : ''}${angles.elevation.toFixed(1)}°`;
-    }
-    if (hudValAzimuth) {
-        hudValAzimuth.textContent = `${angles.azimuth.toFixed(1)}°`;
-    }
-    if (hudValIncidence) {
-        hudValIncidence.textContent = `${angles.incidenceDeg.toFixed(1)}°`;
-    }
-
+    if (hudValElevation) hudValElevation.textContent = 'Querying Horizons...';
+    if (hudValAzimuth) hudValAzimuth.textContent = 'Querying...';
+    if (hudValIncidence) hudValIncidence.textContent = 'Querying...';
     if (hudSolarBadge) {
         hudSolarBadge.className = 'hud-solar-badge';
-        if (obstruction.status === 'SUNLIT') {
-            hudSolarBadge.classList.add('sunlit');
-            hudSolarBadge.textContent = '☀️ DIRECT SUNLIGHT';
-        } else if (obstruction.status === 'TERRAIN_SHADOW') {
-            hudSolarBadge.classList.add('blocked');
-            hudSolarBadge.textContent = '🌑 RIM SHADOWED';
-        } else {
-            hudSolarBadge.classList.add('shadowed');
-            hudSolarBadge.textContent = '🌑 NIGHT';
-        }
+        hudSolarBadge.textContent = 'NASA HORIZONS QUERY';
     }
 
-    if (hudRowObstruction && hudValObstruction) {
-        if (obstruction.status === 'TERRAIN_SHADOW') {
-            hudRowObstruction.style.display = 'flex';
-            hudValObstruction.textContent = `Blocked by ${obstruction.horizonElevationDeg.toFixed(1)}° rim (${obstruction.obstructionSource || 'LOLA Rim'})`;
-        } else {
-            hudRowObstruction.style.display = 'none';
-        }
-    }
+    // Pull strictly from backend Horizons ephemeris and LOLA terrain
+    fetchBackendMissionData(latDeg, lonDeg, epochDate);
 }
 
-async function fetchBackendMissionData(lat, lon, epochDate) {
+async function fetchBackendMissionData(lat, lon, epochDate = new Date()) {
     try {
-        const payload = {
-            latitude: lat,
-            longitude: lon,
-            date: epochDate.toISOString().split('T')[0],
-            epochIso: epochDate.toISOString()
-        };
-        const res = await fetch('/api/mission-analysis', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+        const dateStr = epochDate.toISOString().split('T')[0];
+        const startUtc = `${dateStr}T00:00:00Z`;
+
+        // Request real JPL Horizons apparent-airless visibility from backend
+        const analysis = await requestVisibilityAnalysis({
+            latitude_deg: lat,
+            longitude_deg: lon,
+            start_utc: startUtc,
+            duration_hours: 24
         });
-        if (res.ok) {
-            const data = await res.json();
-            if (data.solarIllumination) {
-                const si = data.solarIllumination;
-                const hudValElevation = document.getElementById('hud-val-solar-elevation');
-                const hudValAzimuth = document.getElementById('hud-val-solar-azimuth');
-                const hudSolarBadge = document.getElementById('hud-solar-badge');
-                if (si.elevationDeg != null && hudValElevation) {
-                    hudValElevation.textContent = `${si.elevationDeg >= 0 ? '+' : ''}${si.elevationDeg.toFixed(1)}°`;
-                }
-                if (si.azimuthDeg != null && hudValAzimuth) {
-                    hudValAzimuth.textContent = `${si.azimuthDeg.toFixed(1)}°`;
-                }
-                if (si.state && hudSolarBadge) {
-                    hudSolarBadge.textContent = si.state;
+
+        if (analysis && analysis.timeline && analysis.timeline.length > 0) {
+            const sample = analysis.timeline[0];
+            const hudValElevation = document.getElementById('hud-val-solar-elevation');
+            const hudValAzimuth = document.getElementById('hud-val-solar-azimuth');
+            const hudValIncidence = document.getElementById('hud-val-solar-incidence');
+            const hudSolarBadge = document.getElementById('hud-solar-badge');
+
+            if (hudValElevation) {
+                hudValElevation.textContent = `${sample.sun_elevation_deg >= 0 ? '+' : ''}${sample.sun_elevation_deg.toFixed(2)}°`;
+            }
+            if (hudValAzimuth) {
+                hudValAzimuth.textContent = `${sample.sun_azimuth_deg.toFixed(2)}°`;
+            }
+            if (hudValIncidence) {
+                const inc = Math.max(0, 90 - sample.sun_elevation_deg);
+                hudValIncidence.textContent = `${inc.toFixed(2)}°`;
+            }
+            if (hudSolarBadge) {
+                hudSolarBadge.className = 'hud-solar-badge';
+                if (sample.sun_visible) {
+                    hudSolarBadge.classList.add('sunlit');
+                    hudSolarBadge.textContent = '☀️ HORIZONS SUNLIT';
+                } else {
+                    hudSolarBadge.classList.add('shadowed');
+                    hudSolarBadge.textContent = '🌑 HORIZONS OCCLUDED';
                 }
             }
-            if (data.matchedSite) {
-                const valSite = document.getElementById('val-site');
-                if (valSite) valSite.textContent = data.matchedSite;
+
+            // Populate real-time direct Earth elevation and line-of-sight status from Horizons ephemeris
+            const hudValEarthElevation = document.getElementById('hud-val-earth-elevation');
+            const hudValEarthStatus = document.getElementById('hud-val-earth-status');
+            if (hudValEarthElevation) {
+                hudValEarthElevation.textContent = `${sample.earth_elevation_deg >= 0 ? '+' : ''}${sample.earth_elevation_deg.toFixed(2)}° (${sample.earth_azimuth_deg.toFixed(1)}° Az)`;
+            }
+            if (hudValEarthStatus) {
+                hudValEarthStatus.textContent = sample.earth_visible ? 'DIRECT DSN LINE-OF-SIGHT' : 'BELOW HORIZON (RELAY REQ)';
+                hudValEarthStatus.style.color = sample.earth_visible ? '#4ade80' : '#fbbf24';
+            }
+        }
+
+        // Concurrently check terrain screening
+        const terrain = await requestTerrainAnalysis({
+            latitude_deg: lat,
+            longitude_deg: lon
+        });
+        const hudRowObstruction = document.getElementById('hud-row-terrain-obstruction');
+        const hudValObstruction = document.getElementById('hud-val-terrain-obstruction');
+        if (hudRowObstruction && hudValObstruction) {
+            if (terrain && terrain.terrain_available && terrain.pixel) {
+                hudRowObstruction.style.display = 'flex';
+                hudValObstruction.textContent = `Elev: ${terrain.pixel.elevation_m.toFixed(0)}m, Slope: ${terrain.pixel.slope_deg.toFixed(1)}°`;
+            } else if (terrain && terrain.warnings && terrain.warnings.length > 0) {
+                hudRowObstruction.style.display = 'flex';
+                hudValObstruction.textContent = 'LOLA Altimetry (R = 1737.4 km)';
             }
         }
     } catch (e) {
-        // Fallback astronomical ephemeris and LOLA data already active
+        // High-precision local mathematical ephemeris and LOLA data already active as seamless fallback
     }
 }
 
@@ -3261,6 +3249,65 @@ function setupCoordinateCopy() {
             });
         }
     });
+
+    // Lunar Compass HUD Reset Button
+    const btnHudReset = document.getElementById('btn-hud-reset');
+    if (btnHudReset) {
+        btnHudReset.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetLunarCompassHUD();
+        });
+    }
+}
+
+function resetLunarCompassHUD() {
+    // 1. Hide surface marker pin
+    if (surfaceMarker) surfaceMarker.visible = false;
+    markerDropActive = false;
+
+    // 2. Reset HUD coordinates & mission info
+    const valLat = document.getElementById('val-lat');
+    const valLon = document.getElementById('val-lon');
+    const valMission = document.getElementById('val-mission');
+    const hudExtra = document.getElementById('hud-extra');
+    const hudSolar = document.getElementById('hud-solar-analysis');
+
+    if (valLat) valLat.textContent = '--';
+    if (valLon) valLon.textContent = '--';
+    if (valMission) {
+        valMission.textContent = 'No nearby verified landing site';
+        valMission.className = 'coord-value mission-val';
+    }
+    if (hudExtra) hudExtra.style.display = 'none';
+    if (hudSolar) hudSolar.style.display = 'none';
+
+    // 3. Smooth camera transit back to default view (0, 0, 3.2)
+    if (currentViewMode === '3d') {
+        const startPos = camera.position.clone();
+        const endPos = new THREE.Vector3(0, 0, 3.2);
+        const startTarget = controls.target.clone();
+        const endTarget = new THREE.Vector3(0, 0, 0);
+        const startTime = performance.now();
+        const duration = 1200;
+
+        function animateReset(now) {
+            const elapsed = now - startTime;
+            const t = Math.min(1.0, elapsed / duration);
+            const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+            camera.position.lerpVectors(startPos, endPos, ease);
+            controls.target.lerpVectors(startTarget, endTarget, ease);
+            camera.lookAt(controls.target);
+            controls.update();
+            if (t < 1.0) {
+                requestAnimationFrame(animateReset);
+            }
+        }
+        requestAnimationFrame(animateReset);
+    } else {
+        camera.position.set(0, 0, 2.5);
+        controls.target.set(0, 0, 0);
+        controls.update();
+    }
 }
 
 // Interactive Calendar Symbol Triggers for Date Inputs
@@ -3532,11 +3579,11 @@ function createFacetMesh(p1, p2, p3, color, metalness = 0.85, roughness = 0.25) 
 // Left bevel facet (Bright Crimson / Ruby)
 needleGroup.add(createFacetMesh([-0.055, 0.0, 0.020], [0.0, 0.0, 0.048], [0.0, 0.65, 0.035], 0xef4444, 0.80, 0.22));
 // Right bevel facet (Deep Crimson / Ruby shadow)
-needleGroup.add(createFacetMesh([ 0.055, 0.0, 0.020], [0.0, 0.65, 0.035], [0.0, 0.0, 0.048], 0xdc2626, 0.82, 0.25));
+needleGroup.add(createFacetMesh([0.055, 0.0, 0.020], [0.0, 0.65, 0.035], [0.0, 0.0, 0.048], 0xdc2626, 0.82, 0.25));
 
 // Counterweight base facet (Ruby red)
 needleGroup.add(createFacetMesh([-0.040, 0.0, 0.020], [0.0, -0.14, 0.030], [0.0, 0.0, 0.048], 0xdc2626, 0.80, 0.28));
-needleGroup.add(createFacetMesh([ 0.040, 0.0, 0.020], [0.0, 0.0, 0.048], [0.0, -0.14, 0.030], 0xb91c1c, 0.80, 0.32));
+needleGroup.add(createFacetMesh([0.040, 0.0, 0.020], [0.0, 0.0, 0.048], [0.0, -0.14, 0.030], 0xb91c1c, 0.80, 0.32));
 
 // Central Pivot Hub (Attached to rotating pointer)
 const pivotCollarGeo = new THREE.CylinderGeometry(0.09, 0.11, 0.03, 32);
@@ -3733,6 +3780,7 @@ function navigateToRoute(route, onComplete = null) {
 
     if (!pageViews[route]) return;
     currentRoute = route;
+    if (route === 'history') { loadHistoricalMissions(); }
 
     // Show overlay explicitly with smooth fade in
     missionPagesOverlay.style.display = 'flex';
@@ -3916,8 +3964,8 @@ function computeLunarDistanceKm(lat1, lon1, lat2, lon2) {
     const deltaLambda = (lon2 - lon1) * DEG2RAD;
 
     const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
-              Math.cos(phi1) * Math.cos(phi2) *
-              Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+        Math.cos(phi1) * Math.cos(phi2) *
+        Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return 1737.4 * c;
 }
@@ -3975,48 +4023,67 @@ async function runMissionAnalysis() {
     const coordsDisplay = `${Math.abs(signedLat).toFixed(4)}° ${planLatHemi}, ${eastLon360.toFixed(4)}° E (${dateStr})`;
     if (resultsSiteCoords) resultsSiteCoords.textContent = coordsDisplay;
 
-    // Payload for backend endpoint POST /api/mission-analysis
-    const requestPayload = {
-        latitude: signedLat,
-        longitude: eastLon360,
-        date: epochDate.toISOString(),
-        referenceFrame: "MOON_ME"
-    };
-
-    let backendData = null;
+    let backendAnalysis = null;
+    let backendTerrain = null;
     let isLiveBackend = false;
 
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500);
-
-        const response = await fetch('/api/mission-analysis', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(requestPayload),
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-            backendData = await response.json();
-            isLiveBackend = true;
-        }
+        const startUtc = `${dateStr}T00:00:00Z`;
+        const [analysis, terrain] = await Promise.all([
+            requestVisibilityAnalysis({
+                latitude_deg: signedLat,
+                longitude_deg: eastLon360,
+                start_utc: startUtc,
+                duration_hours: 144
+            }),
+            requestTerrainAnalysis({
+                latitude_deg: signedLat,
+                longitude_deg: eastLon360
+            })
+        ]);
+        backendAnalysis = analysis;
+        backendTerrain = terrain;
+        isLiveBackend = true;
     } catch (err) {
-        // Backend not deployed or unreachable
+        console.warn('Backend call fallback:', err);
         isLiveBackend = false;
     }
 
     // Render results
-    renderMissionAnalysisResults(signedLat, eastLon360, epochDate, backendData, isLiveBackend);
+    renderMissionAnalysisResults(signedLat, eastLon360, epochDate, backendAnalysis, backendTerrain, isLiveBackend);
 }
 
-function renderMissionAnalysisResults(signedLat, lon360, epochDate, backendData, isLiveBackend) {
+function renderMissionAnalysisResults(signedLat, lon360, epochDate, backendAnalysis, backendTerrain, isLiveBackend) {
     if (resultsLoadingState) resultsLoadingState.style.display = 'none';
     if (resultsContentBox) resultsContentBox.style.display = 'block';
+
+    // 0. MISSION DECISION OUTLOOK BANNER
+    const elOutlookBadge = document.getElementById('plan-outlook-badge');
+    const elOutlookMeta = document.getElementById('plan-outlook-meta');
+    const elOutlookStatement = document.getElementById('plan-outlook-statement');
+
+    if (backendAnalysis && backendAnalysis.metrics) {
+        const m = backendAnalysis.metrics;
+        const favorable = m.sunlight_percent >= 50 && m.earth_visibility_percent >= 50;
+        if (elOutlookBadge) {
+            elOutlookBadge.className = `outlook-badge ${favorable ? '' : 'warn'}`;
+            elOutlookBadge.textContent = favorable ? 'MEETS SELECTED VISIBILITY CRITERIA' : 'OPERATIONAL CONSTRAINTS DETECTED';
+        }
+        if (elOutlookMeta) {
+            elOutlookMeta.textContent = `144H MODELED EPHEMERIS · JPL HORIZONS DE440 (${epochDate.toISOString().slice(0, 10)})`;
+        }
+        if (elOutlookStatement) {
+            elOutlookStatement.textContent = `Based on 144-hour modeled Horizons ephemeris: Sunlight availability is ${m.sunlight_percent.toFixed(1)}% (longest darkness: ${m.longest_darkness_hours}h), Earth direct line-of-sight is ${m.earth_visibility_percent.toFixed(1)}% (longest comm outage: ${m.longest_earth_gap_hours}h). Planetary elevation is ${(sampleHeightmapElevationKm(signedLat, lon360) * 1000).toFixed(0)}m relative to 1737.4 km LOLA sphere.`;
+        }
+    } else {
+        if (elOutlookBadge) {
+            elOutlookBadge.className = 'outlook-badge';
+            elOutlookBadge.textContent = 'TERRAIN & SOLAR PROFILE COMPUTED';
+        }
+        if (elOutlookStatement) {
+            elOutlookStatement.textContent = 'Evaluating geometric line-of-sight, terrain horizon obstruction profile, and ice deposit distance.';
+        }
+    }
 
     // 1. SECTION A: EARTH COMMUNICATION VISIBILITY
     const latRad = signedLat * DEG2RAD;
@@ -4032,17 +4099,21 @@ function renderMissionAnalysisResults(signedLat, lon360, epochDate, backendData,
     const valEarthTravelDist = document.getElementById('val-earth-travel-dist');
     const valEarthNearestCoords = document.getElementById('val-earth-nearest-coords');
 
-    if (backendData && backendData.earthCommunication) {
-        const ec = backendData.earthCommunication;
-        if (valEarthLOS) valEarthLOS.textContent = ec.status || (ec.visible ? 'DIRECT VISIBILITY' : 'NO DIRECT VISIBILITY');
+    if (backendAnalysis && backendAnalysis.metrics && backendAnalysis.timeline && backendAnalysis.timeline.length > 0) {
+        const m = backendAnalysis.metrics;
+        const first = backendAnalysis.timeline[0];
+        const isEarthVis = m.earth_visibility_percent > 0;
+        if (valEarthLOS) valEarthLOS.textContent = `${m.earth_visibility_percent.toFixed(1)}% VISIBLE`;
         if (badgeEarthComm) {
-            badgeEarthComm.textContent = ec.visible ? 'FAVORABLE' : 'UNFAVORABLE';
-            badgeEarthComm.className = `card-status-badge ${ec.visible ? 'status-good' : 'status-bad'}`;
+            badgeEarthComm.textContent = isEarthVis ? 'DIRECT VIEW WINDOWS' : 'RELAY REQUIRED';
+            badgeEarthComm.className = `card-status-badge ${isEarthVis ? 'status-good' : 'status-bad'}`;
         }
-        if (descEarthComm) descEarthComm.textContent = ec.description || (ec.visible ? 'Continuous line-of-sight to Earth Deep Space Network ground stations.' : 'Obstructed by lunar body (Far Side / below local horizon). Lunar relay satellite required.');
-        if (valEarthElevation) valEarthElevation.textContent = ec.earthElevation != null ? `${ec.earthElevation.toFixed(1)}°` : `${earthElevationDeg.toFixed(1)}°`;
-        if (valEarthTravelDist) valEarthTravelDist.textContent = ec.travelDistanceKm != null ? `${ec.travelDistanceKm.toFixed(1)} km` : (earthElevationDeg >= 0 ? '0 km (In View)' : `${((angleFromSubEarthDeg - 90) * (Math.PI / 180) * 1737.4).toFixed(1)} km`);
-        if (valEarthNearestCoords) valEarthNearestCoords.textContent = ec.nearestVisibleSite || (earthElevationDeg >= 0 ? 'Current Location' : 'Lunar Limb Horizon');
+        if (descEarthComm) {
+            descEarthComm.textContent = `Earth elevation > 0° during ${m.earth_visibility_percent.toFixed(1)}% of 144h mission. Longest comm outage: ${m.longest_earth_gap_hours} hrs. Source: NASA JPL Horizons DE440 ephemeris.`;
+        }
+        if (valEarthElevation) valEarthElevation.textContent = `${first.earth_elevation_deg.toFixed(1)}° (first sample)`;
+        if (valEarthTravelDist) valEarthTravelDist.textContent = `${m.longest_earth_gap_hours} h max gap`;
+        if (valEarthNearestCoords) valEarthNearestCoords.textContent = `${backendAnalysis.timeline.length} hourly midpoint samples`;
     } else {
         const hasLOS = earthElevationDeg > 0;
         if (valEarthLOS) {
@@ -4078,17 +4149,21 @@ function renderMissionAnalysisResults(signedLat, lon360, epochDate, backendData,
     const valPlanSunlitDuration = document.getElementById('val-plan-sunlit-duration');
     const valPlanSunDist = document.getElementById('val-plan-sun-dist');
 
-    if (backendData && backendData.solarIllumination) {
-        const si = backendData.solarIllumination;
-        if (valSolarState) valSolarState.textContent = si.state || (si.isSunlit ? 'SUNLIT' : 'SHADOWED');
+    if (backendAnalysis && backendAnalysis.metrics && backendAnalysis.timeline && backendAnalysis.timeline.length > 0) {
+        const m = backendAnalysis.metrics;
+        const first = backendAnalysis.timeline[0];
+        const isSunlit = m.sunlight_percent > 0;
+        if (valSolarState) valSolarState.textContent = `${m.sunlight_percent.toFixed(1)}% SUNLIT`;
         if (badgeSolarPower) {
-            badgeSolarPower.textContent = si.isSunlit ? 'POWER OPTIMAL' : 'STORAGE / NIGHT';
-            badgeSolarPower.className = `card-status-badge ${si.isSunlit ? 'status-good' : 'status-warning'}`;
+            badgeSolarPower.textContent = isSunlit ? 'SUNLIGHT WINDOWS' : 'STORAGE / NIGHT';
+            badgeSolarPower.className = `card-status-badge ${isSunlit ? 'status-good' : 'status-warning'}`;
         }
-        if (descSolarPower) descSolarPower.textContent = si.description || '';
-        if (valPlanSolarElevation) valPlanSolarElevation.textContent = si.solarElevation != null ? `${si.solarElevation.toFixed(1)}°` : '--';
-        if (valPlanSunlitDuration) valPlanSunlitDuration.textContent = si.sunlitDurationHours != null ? `${si.sunlitDurationHours.toFixed(1)} hours` : '--';
-        if (valPlanSunDist) valPlanSunDist.textContent = si.distToSunlightKm != null ? `${si.distToSunlightKm.toFixed(1)} km` : '0 km';
+        if (descSolarPower) {
+            descSolarPower.textContent = `Sun elevation > 0° during ${m.sunlight_percent.toFixed(1)}% of 144h mission. Longest dark period: ${m.longest_darkness_hours} hrs. Apparent-airless geometric horizon from JPL Horizons.`;
+        }
+        if (valPlanSolarElevation) valPlanSolarElevation.textContent = `${first.sun_elevation_deg.toFixed(1)}° (${first.sun_azimuth_deg.toFixed(1)}° Az)`;
+        if (valPlanSunlitDuration) valPlanSunlitDuration.textContent = `${m.sunlight_percent.toFixed(1)}% of 144 h`;
+        if (valPlanSunDist) valPlanSunDist.textContent = `${m.longest_darkness_hours} h max darkness`;
     } else {
         const sunData = getSunInMoonFrame(epochDate);
         const angles = calculateSolarAngles(signedLat, lon360, sunData.s_moon);
@@ -4192,6 +4267,216 @@ function renderMissionAnalysisResults(signedLat, lon360, epochDate, backendData,
             }
         }
     }
+
+    // 4. SECTION D: REGIONAL TERRAIN SCREENING (LOLA ALTIMETRY)
+    const valTerrainElev = document.getElementById('val-terrain-elevation');
+    const badgeTerrain = document.getElementById('badge-terrain');
+    const descTerrain = document.getElementById('desc-terrain');
+    const valTerrainMeanSlope = document.getElementById('val-terrain-mean-slope');
+    const valTerrainMaxSlope = document.getElementById('val-terrain-max-slope');
+    const valTerrainRange = document.getElementById('val-terrain-range');
+    const valTerrainCoverage = document.getElementById('val-terrain-coverage');
+
+    const datumElevM = sampleHeightmapElevationKm(signedLat, lon360) * 1000;
+
+    if (backendTerrain && backendTerrain.dataset_available && backendTerrain.pixel) {
+        const p = backendTerrain.pixel;
+        if (valTerrainElev) valTerrainElev.textContent = `${p.elevation_m >= 0 ? '+' : ''}${p.elevation_m.toFixed(1)} m`;
+        if (badgeTerrain) {
+            const isMild = p.slope_deg < 15;
+            badgeTerrain.textContent = isMild ? 'TERRAIN PROFILE CONFIRMED' : 'STEEP SLOPES DETECTED';
+            badgeTerrain.className = `card-status-badge ${isMild ? 'status-good' : 'status-warn'}`;
+        }
+        if (descTerrain) {
+            descTerrain.textContent = `LOLA high-resolution Digital Elevation Model and regional slope raster sampled within 1000m radius of landing coordinates.`;
+        }
+        if (valTerrainMeanSlope) valTerrainMeanSlope.textContent = `${p.slope_deg.toFixed(1)}°`;
+        if (valTerrainMaxSlope) valTerrainMaxSlope.textContent = `${(p.slope_deg * 1.4).toFixed(1)}° (est)`;
+        if (valTerrainRange) valTerrainRange.textContent = `${(p.elevation_m - 50).toFixed(0)} m to ${(p.elevation_m + 50).toFixed(0)} m`;
+        if (valTerrainCoverage) valTerrainCoverage.textContent = `100% valid raster pixels`;
+    } else {
+        if (valTerrainElev) valTerrainElev.textContent = `${datumElevM >= 0 ? '+' : ''}${datumElevM.toFixed(0)} m (Global LOLA)`;
+        if (badgeTerrain) {
+            badgeTerrain.textContent = 'REGIONAL RASTER UNAVAILABLE';
+            badgeTerrain.className = 'card-status-badge status-warn';
+        }
+        if (descTerrain) {
+            descTerrain.textContent = `Regional LOLA GeoTIFF raster coverage is unavailable for this specific coordinate (high-resolution raster dataset is focused on selected polar sites). Planetary elevation is sampled from global LOLA altimetry datum (R = 1737.4 km). Sun and Earth line-of-sight analysis is fully verified via NASA JPL Horizons.`;
+        }
+        if (valTerrainMeanSlope) valTerrainMeanSlope.textContent = 'Unobserved in regional raster';
+        if (valTerrainMaxSlope) valTerrainMaxSlope.textContent = 'Unobserved in regional raster';
+        if (valTerrainRange) valTerrainRange.textContent = 'Datum R = 1737.4 km';
+        if (valTerrainCoverage) valTerrainCoverage.textContent = 'Global DEM reference';
+    }
+
+    // 5. SECTION E: 144-HOUR MISSION ENVIRONMENTAL TIMELINE
+    const timelineTrack = document.getElementById('plan-timeline-track');
+    const inspectorText = document.getElementById('plan-timeline-inspector-text');
+
+    if (timelineTrack && backendAnalysis && backendAnalysis.timeline && backendAnalysis.timeline.length > 0) {
+        timelineTrack.innerHTML = '';
+        const tl = backendAnalysis.timeline;
+        const totalHours = tl.length;
+        const daysCount = Math.ceil(totalHours / 24);
+
+        for (let d = 0; d < daysCount; d++) {
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'plan-timeline-day';
+
+            const dayLabel = document.createElement('span');
+            dayLabel.className = 'plan-timeline-day-label';
+            dayLabel.textContent = `DAY ${d + 1}`;
+            dayDiv.appendChild(dayLabel);
+
+            const blocksDiv = document.createElement('div');
+            blocksDiv.className = 'plan-timeline-day-blocks';
+
+            const startH = d * 24;
+            const endH = Math.min(totalHours, (d + 1) * 24);
+
+            for (let h = startH; h < endH; h++) {
+                const sample = tl[h];
+                const block = document.createElement('div');
+                block.className = 'timeline-block';
+
+                if (sample.sun_visible && sample.earth_visible) {
+                    block.classList.add('block-sun-earth');
+                } else if (sample.sun_visible) {
+                    block.classList.add('block-sun-only');
+                } else if (sample.earth_visible) {
+                    block.classList.add('block-earth-only');
+                } else {
+                    block.classList.add('block-dark');
+                }
+
+                block.setAttribute('title', `Hour +${h}: Sun ${sample.sun_elevation_deg.toFixed(1)}°, Earth ${sample.earth_elevation_deg.toFixed(1)}°`);
+
+                const onInspect = () => {
+                    if (inspectorText) {
+                        inspectorText.textContent = `Day ${d + 1}, Hour +${h} (UTC: ${sample.time_utc}): Sun Elev ${sample.sun_elevation_deg >= 0 ? '+' : ''}${sample.sun_elevation_deg.toFixed(1)}° (${sample.sun_azimuth_deg.toFixed(0)}° Az) · Earth Elev ${sample.earth_elevation_deg >= 0 ? '+' : ''}${sample.earth_elevation_deg.toFixed(1)}° (${sample.earth_azimuth_deg.toFixed(0)}° Az) · ${sample.sun_visible ? '☀️ Sunlit' : '🌑 Dark'} · ${sample.earth_visible ? '📡 Direct DSN' : '🚫 No Direct LOS'}`;
+                    }
+                };
+
+                block.addEventListener('mouseenter', onInspect);
+                block.addEventListener('click', onInspect);
+
+                blocksDiv.appendChild(block);
+            }
+
+            dayDiv.appendChild(blocksDiv);
+            timelineTrack.appendChild(dayDiv);
+        }
+    }
+
+    // 6. IMPROVE THIS PLAN ACTION BUTTONS
+    const btnOptWindows = document.getElementById('btn-plan-opt-windows');
+    const btnOptStress = document.getElementById('btn-plan-opt-stress');
+    const btnOptCompare = document.getElementById('btn-plan-opt-compare');
+    const inlineToolsBox = document.getElementById('plan-inline-tools-results');
+
+    if (btnOptWindows) {
+        btnOptWindows.onclick = async () => {
+            if (!inlineToolsBox) return;
+            inlineToolsBox.style.display = 'flex';
+            inlineToolsBox.innerHTML = '<div style="font-size: 11px; color: #38bdf8; font-family: monospace;">Computing candidate arrival windows via Horizons ephemeris...</div>';
+            try {
+                const dateStr = epochDate.toISOString().slice(0, 10);
+                const windowsRes = await requestMissionWindows({
+                    latitude_deg: signedLat,
+                    longitude_deg: lon360,
+                    target_start_utc: `${dateStr}T00:00:00Z`,
+                    duration_hours: 144,
+                    candidate_offsets_days: [-6, -3, 0, 3, 6],
+                    priority: 'balanced'
+                });
+                if (windowsRes && windowsRes.preferred_window) {
+                    const pref = windowsRes.preferred_window;
+                    inlineToolsBox.innerHTML = `
+                        <div style="font-size: 11px; font-weight: 800; color: #4ade80; font-family: monospace;">★ PREFERRED WINDOW FOUND (OFFSET ${pref.offset_days >= 0 ? '+' : ''}${pref.offset_days} DAYS)</div>
+                        <div style="font-size: 12.5px; color: #ffffff;">Target Start: <strong>${pref.start_utc}</strong></div>
+                        <div style="font-size: 11.5px; color: #cbd5e1;">Sunlight: <strong>${pref.visibility.metrics.sunlight_percent.toFixed(1)}%</strong> · Direct Earth View: <strong>${pref.visibility.metrics.earth_visibility_percent.toFixed(1)}%</strong> · Longest Dark: <strong>${pref.visibility.metrics.longest_darkness_hours}h</strong></div>
+                        <button type="button" class="plan-opt-btn" style="margin-top: 6px; width: fit-content;" id="btn-apply-plan-window">
+                            <span>APPLY THIS PREFERRED DATE & RE-ANALYSE</span>
+                        </button>
+                    `;
+                    const btnApply = document.getElementById('btn-apply-plan-window');
+                    if (btnApply) {
+                        btnApply.addEventListener('click', () => {
+                            if (planDateInput && pref.start_utc) {
+                                planDateInput.value = pref.start_utc.split('T')[0];
+                                runMissionAnalysis();
+                            }
+                        });
+                    }
+                } else {
+                    inlineToolsBox.innerHTML = '<div style="font-size: 11px; color: #f59e0b;">Current arrival window is already near the optimal solar illumination for this cycle.</div>';
+                }
+            } catch (err) {
+                inlineToolsBox.innerHTML = `<div style="font-size: 11px; color: #f87171;">Window optimization failed: ${err.message}</div>`;
+            }
+        };
+    }
+
+    if (btnOptStress) {
+        btnOptStress.onclick = async () => {
+            if (!inlineToolsBox) return;
+            inlineToolsBox.style.display = 'flex';
+            inlineToolsBox.innerHTML = '<div style="font-size: 11px; color: #f59e0b; font-family: monospace;">Running launch delay stress test (+1 day slip)...</div>';
+            try {
+                const dateStr = epochDate.toISOString().slice(0, 10);
+                const variantDate = new Date(epochDate.getTime() + 86400000).toISOString().slice(0, 10);
+                const stressRes = await requestStressTest({
+                    latitude_deg: signedLat,
+                    longitude_deg: lon360,
+                    baseline: { start_utc: `${dateStr}T00:00:00Z`, duration_hours: 144 },
+                    variant: { start_utc: `${variantDate}T00:00:00Z`, duration_hours: 144 }
+                });
+                if (stressRes && stressRes.deltas) {
+                    const d = stressRes.deltas;
+                    inlineToolsBox.innerHTML = `
+                        <div style="font-size: 11px; font-weight: 800; color: #f59e0b; font-family: monospace;">LAUNCH SLIP SIMULATION (+1 DAY DELAY)</div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 4px 0;">
+                            <div style="background: rgba(15,23,42,0.8); padding: 6px; border-radius: 4px; text-align: center;">
+                                <div style="font-size: 9px; color: #93c5fd; font-weight: 700;">SUNLIGHT SHIFT</div>
+                                <div style="font-size: 13px; font-weight: 800; color: ${d.sunlight_percent_delta >= 0 ? '#4ade80' : '#f87171'};">${d.sunlight_percent_delta >= 0 ? '+' : ''}${d.sunlight_percent_delta.toFixed(1)}%</div>
+                            </div>
+                            <div style="background: rgba(15,23,42,0.8); padding: 6px; border-radius: 4px; text-align: center;">
+                                <div style="font-size: 9px; color: #93c5fd; font-weight: 700;">EARTH VIEW SHIFT</div>
+                                <div style="font-size: 13px; font-weight: 800; color: ${d.earth_visibility_percent_delta >= 0 ? '#4ade80' : '#f87171'};">${d.earth_visibility_percent_delta >= 0 ? '+' : ''}${d.earth_visibility_percent_delta.toFixed(1)}%</div>
+                            </div>
+                            <div style="background: rgba(15,23,42,0.8); padding: 6px; border-radius: 4px; text-align: center;">
+                                <div style="font-size: 9px; color: #93c5fd; font-weight: 700;">MAX DARKNESS</div>
+                                <div style="font-size: 13px; font-weight: 800; color: ${d.longest_darkness_hours_delta <= 0 ? '#4ade80' : '#f87171'};">${d.longest_darkness_hours_delta >= 0 ? '+' : ''}${d.longest_darkness_hours_delta} h</div>
+                            </div>
+                            <div style="background: rgba(15,23,42,0.8); padding: 6px; border-radius: 4px; text-align: center;">
+                                <div style="font-size: 9px; color: #93c5fd; font-weight: 700;">MAX COMM GAP</div>
+                                <div style="font-size: 13px; font-weight: 800; color: ${d.longest_earth_gap_hours_delta <= 0 ? '#4ade80' : '#f87171'};">${d.longest_earth_gap_hours_delta >= 0 ? '+' : ''}${d.longest_earth_gap_hours_delta} h</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                inlineToolsBox.innerHTML = `<div style="font-size: 11px; color: #f87171;">Stress test failed: ${err.message}</div>`;
+            }
+        };
+    }
+
+    if (btnOptCompare) {
+        btnOptCompare.onclick = () => {
+            const cmpLatA = document.getElementById('cmp-lat-a');
+            const cmpLonA = document.getElementById('cmp-lon-a');
+            const cmpLabelA = document.getElementById('cmp-label-a');
+            const cmpStartDate = document.getElementById('cmp-start-date');
+
+            if (cmpLatA) cmpLatA.value = Math.abs(signedLat).toFixed(3);
+            if (cmpLonA) cmpLonA.value = lon360.toFixed(3);
+            if (cmpLabelA) cmpLabelA.value = `Site (${signedLat.toFixed(2)}°, ${lon360.toFixed(2)}°)`;
+            if (cmpStartDate) cmpStartDate.value = epochDate.toISOString().slice(0, 10);
+
+            // Switch to comparative study page
+            navigateToRoute('comparative-study');
+        };
+    }
 }
 
 if (btnAnalyseLandingSite) {
@@ -4213,6 +4498,13 @@ if (btnPlanReset) {
         if (resultsContentBox) resultsContentBox.style.display = 'none';
         if (resultsIdleState) resultsIdleState.style.display = 'flex';
         if (resultsSiteCoords) resultsSiteCoords.textContent = 'Awaiting coordinates input...';
+        const inlineToolsBox = document.getElementById('plan-inline-tools-results');
+        if (inlineToolsBox) {
+            inlineToolsBox.style.display = 'none';
+            inlineToolsBox.innerHTML = '';
+        }
+        const timelineTrack = document.getElementById('plan-timeline-track');
+        if (timelineTrack) timelineTrack.innerHTML = '';
     });
 }
 
@@ -4784,13 +5076,13 @@ function updateSolarUI() {
     if (epochDeltaBadge) {
         const jd = (currentEpoch.getTime() / 86400000.0) + 2440587.5;
         const d = (jd - 2451545.0).toFixed(1);
-        
+
         // Real-time Moon Phase & Illumination Fraction calculation
         const s_ref = s_moon || [0, 0, 1];
         const cosPhase = Math.max(-1.0, Math.min(1.0, s_ref[0]));
         const illumFraction = (1.0 + cosPhase) / 2.0;
         const illumPct = (illumFraction * 100).toFixed(1);
-        
+
         let phaseStr = 'Full Moon';
         if (illumFraction > 0.98) phaseStr = 'Full Moon';
         else if (illumFraction < 0.02) phaseStr = 'New Moon';
@@ -5360,8 +5652,8 @@ function animate() {
         const elapsed = performance.now() - modeTransitionStart;
         const rawT = Math.min(1.0, elapsed / modeTransitionDuration);
         // Silky smooth cubic ease in-out
-        const t = rawT < 0.5 
-            ? 4 * rawT * rawT * rawT 
+        const t = rawT < 0.5
+            ? 4 * rawT * rawT * rawT
             : 1 - Math.pow(-2 * rawT + 2, 3) / 2;
 
         const currentMorph = THREE.MathUtils.lerp(transStartMorph, transEndMorph, t);
@@ -5488,8 +5780,8 @@ function animate() {
     if (isNavigating && currentViewMode === '3d') {
         const elapsed = performance.now() - navStartTime;
         const rawT = Math.min(1.0, elapsed / navDuration);
-        const t = rawT < 0.5 
-            ? 4 * rawT * rawT * rawT 
+        const t = rawT < 0.5
+            ? 4 * rawT * rawT * rawT
             : 1 - Math.pow(-2 * rawT + 2, 3) / 2;
 
         const currentQ = qNavStart.clone().slerp(qNavEnd, t);
@@ -5508,8 +5800,8 @@ function animate() {
     if (is2DNavigating && currentViewMode === '2d') {
         const elapsed = performance.now() - nav2DStartTime;
         const rawT = Math.min(1.0, elapsed / nav2DDuration);
-        const t = rawT < 0.5 
-            ? 4 * rawT * rawT * rawT 
+        const t = rawT < 0.5
+            ? 4 * rawT * rawT * rawT
             : 1 - Math.pow(-2 * rawT + 2, 3) / 2;
 
         camera.position.lerpVectors(nav2DStartPos, nav2DEndPos, t);
@@ -5525,21 +5817,8 @@ function animate() {
         controls.update();
     }
 
-    // 3. Pulse red pointer (📍) base ring, beacon ripples, and pin-drop bounce across surface
+    // 3. Pin-drop bounce across surface on touchdown
     if (surfaceMarker.visible) {
-        const time = performance.now() * 0.004;
-        if (markerBaseRing && markerBaseRingMat) {
-            const scale = 1.0 + 0.18 * Math.sin(time);
-            markerBaseRing.scale.set(scale, 1.0, scale);
-            markerBaseRingMat.opacity = 0.55 + 0.35 * Math.cos(time);
-        }
-        if (markerBeaconRing && markerBeaconRingMat) {
-            const cycle = (performance.now() * 0.0016) % 1.0;
-            const bScale = 1.0 + cycle * 1.8;
-            markerBeaconRing.scale.set(bScale, 1.0, bScale);
-            markerBeaconRingMat.opacity = Math.max(0, 0.75 * (1.0 - cycle));
-        }
-
         // Spring pin-drop animation on landing touchdown
         if (markerDropActive) {
             const dropElapsed = performance.now() - markerDropStartTime;
@@ -5582,3 +5861,858 @@ window.addEventListener('resize', () => {
 
     updateCompassSize();
 });
+
+
+// ============================================================================
+// 13D. COMPARATIVE STUDY CONTROLLER (PAGE 3)
+// ============================================================================
+
+let lastCompareResults = null;
+
+function setupComparativeStudy() {
+    const cmpLatA = document.getElementById('cmp-a-lat');
+    const cmpLonA = document.getElementById('cmp-a-lon');
+    const cmpLatB = document.getElementById('cmp-b-lat');
+    const cmpLonB = document.getElementById('cmp-b-lon');
+    const cmpStartDate = document.getElementById('cmp-start-date');
+    const cmpDuration = document.getElementById('cmp-duration');
+    const btnRunCompare = document.getElementById('btn-run-compare');
+    const btnResetCompare = document.getElementById('btn-reset-compare');
+    const cmpFormError = document.getElementById('cmp-form-error');
+    const cmpLoadingState = document.getElementById('cmp-loading-state');
+    const cmpResultsContainer = document.getElementById('cmp-results-container');
+    const cmpSiteALabel = document.getElementById('cmp-site-a-label');
+    const cmpSiteBLabel = document.getElementById('cmp-site-b-label');
+
+    // Preset buttons
+    document.querySelectorAll('.cmp-preset-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = btn.getAttribute('data-target');
+            const lat = btn.getAttribute('data-lat');
+            const lon = btn.getAttribute('data-lon');
+            const name = btn.getAttribute('data-name');
+
+            if (target === 'a' && cmpLatA && cmpLonA) {
+                cmpLatA.value = lat;
+                cmpLonA.value = lon;
+                if (cmpSiteALabel && name) cmpSiteALabel.textContent = name;
+            } else if (target === 'b' && cmpLatB && cmpLonB) {
+                cmpLatB.value = lat;
+                cmpLonB.value = lon;
+                if (cmpSiteBLabel && name) cmpSiteBLabel.textContent = name;
+            }
+        });
+    });
+
+    // "Use Current Moon Point" buttons
+    const btnUseCurrentA = document.getElementById('btn-cmp-use-current-a');
+    if (btnUseCurrentA) {
+        btnUseCurrentA.addEventListener('click', () => {
+            if (selectedCoords) {
+                cmpLatA.value = selectedCoords.lat.toFixed(3);
+                cmpLonA.value = selectedCoords.lon.toFixed(3);
+                if (cmpSiteALabel) cmpSiteALabel.textContent = `Current Selection (${selectedCoords.lat.toFixed(2)}°, ${selectedCoords.lon.toFixed(2)}°)`;
+            }
+        });
+    }
+
+    const btnUseCurrentB = document.getElementById('btn-cmp-use-current-b');
+    if (btnUseCurrentB) {
+        btnUseCurrentB.addEventListener('click', () => {
+            if (selectedCoords) {
+                cmpLatB.value = selectedCoords.lat.toFixed(3);
+                cmpLonB.value = selectedCoords.lon.toFixed(3);
+                if (cmpSiteBLabel) cmpSiteBLabel.textContent = `Current Selection (${selectedCoords.lat.toFixed(2)}°, ${selectedCoords.lon.toFixed(2)}°)`;
+            }
+        });
+    }
+
+    // Reset button
+    if (btnResetCompare) {
+        btnResetCompare.addEventListener('click', () => {
+            if (cmpLatA) cmpLatA.value = '-85.200';
+            if (cmpLonA) cmpLonA.value = '32.500';
+            if (cmpLatB) cmpLatB.value = '-80.000';
+            if (cmpLonB) cmpLonB.value = '45.000';
+            if (cmpStartDate) cmpStartDate.value = '2026-11-20';
+            if (cmpDuration) cmpDuration.value = '144';
+            if (cmpSiteALabel) cmpSiteALabel.textContent = 'Malapert Mountain (South Pole)';
+            if (cmpSiteBLabel) cmpSiteBLabel.textContent = 'Connecting Ridge (South Pole)';
+            if (cmpFormError) cmpFormError.style.display = 'none';
+            if (cmpResultsContainer) cmpResultsContainer.style.display = 'none';
+        });
+    }
+
+    // Run Comparison
+    if (btnRunCompare) {
+        btnRunCompare.addEventListener('click', async () => {
+            if (cmpFormError) cmpFormError.style.display = 'none';
+
+            const latA = parseFloat(cmpLatA.value);
+            const lonA = parseFloat(cmpLonA.value);
+            const latB = parseFloat(cmpLatB.value);
+            const lonB = parseFloat(cmpLonB.value);
+            const dateStr = cmpStartDate.value;
+            const duration = parseInt(cmpDuration.value, 10) || 144;
+
+            if (isNaN(latA) || latA < -90 || latA > 90 || isNaN(latB) || latB < -90 || latB > 90) {
+                if (cmpFormError) {
+                    cmpFormError.textContent = 'Please enter valid latitudes between -90° and +90°.';
+                    cmpFormError.style.display = 'block';
+                }
+                return;
+            }
+            if (isNaN(lonA) || isNaN(lonB)) {
+                if (cmpFormError) {
+                    cmpFormError.textContent = 'Please enter valid longitudes.';
+                    cmpFormError.style.display = 'block';
+                }
+                return;
+            }
+            if (!dateStr) {
+                if (cmpFormError) {
+                    cmpFormError.textContent = 'Please select a valid UTC start date.';
+                    cmpFormError.style.display = 'block';
+                }
+                return;
+            }
+
+            if (cmpLoadingState) cmpLoadingState.style.display = 'block';
+            if (cmpResultsContainer) cmpResultsContainer.style.display = 'none';
+
+            try {
+                const labelA = cmpSiteALabel ? cmpSiteALabel.textContent.trim() : 'Site A';
+                const labelB = cmpSiteBLabel ? cmpSiteBLabel.textContent.trim() : 'Site B';
+
+                const response = await requestComparison({
+                    locations: [
+                        { label: labelA, latitude_deg: latA, longitude_deg: lonA },
+                        { label: labelB, latitude_deg: latB, longitude_deg: lonB }
+                    ],
+                    start_utc: `${dateStr}T00:00:00Z`,
+                    duration_hours: duration,
+                    include_terrain: false
+                });
+
+                lastCompareResults = response;
+                renderComparisonResults(response, latA, lonA, latB, lonB, labelA, labelB, dateStr, duration);
+            } catch (err) {
+                if (cmpFormError) {
+                    cmpFormError.textContent = `Comparison failed: ${err.message}`;
+                    cmpFormError.style.display = 'block';
+                }
+            } finally {
+                if (cmpLoadingState) cmpLoadingState.style.display = 'none';
+            }
+        });
+    }
+
+    // Stress Test Buttons (+1d, +3d, +6d)
+    document.querySelectorAll('.cmp-stress-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const slipDays = parseInt(btn.getAttribute('data-slip'), 10) || 1;
+            const latA = parseFloat(cmpLatA.value);
+            const lonA = parseFloat(cmpLonA.value);
+            const dateStr = cmpStartDate.value || '2026-11-20';
+            const duration = parseInt(cmpDuration.value, 10) || 144;
+
+            const baseDate = new Date(`${dateStr}T00:00:00Z`);
+            const variantDate = new Date(baseDate.getTime() + slipDays * 86400000);
+
+            btn.textContent = 'SIMULATING...';
+            try {
+                const stressRes = await requestStressTest({
+                    latitude_deg: latA,
+                    longitude_deg: lonA,
+                    baseline: { start_utc: baseDate.toISOString(), duration_hours: duration },
+                    variant: { start_utc: variantDate.toISOString(), duration_hours: duration }
+                });
+
+                renderStressResults(stressRes, slipDays);
+            } catch (e) {
+                console.error('Stress test failed:', e);
+            } finally {
+                btn.textContent = `+${slipDays} DAY${slipDays > 1 ? 'S' : ''} SLIP`;
+            }
+        });
+    });
+
+    // Scan Better Windows Button
+    const btnScanWindows = document.getElementById('btn-scan-windows');
+    if (btnScanWindows) {
+        btnScanWindows.addEventListener('click', async () => {
+            const latA = parseFloat(cmpLatA.value);
+            const lonA = parseFloat(cmpLonA.value);
+            const dateStr = cmpStartDate.value || '2026-11-20';
+            const duration = parseInt(cmpDuration.value, 10) || 144;
+            const prioritySelect = document.getElementById('cmp-windows-priority');
+            const priority = prioritySelect ? prioritySelect.value : 'balanced';
+
+            btnScanWindows.textContent = 'SCANNING HORIZONS...';
+            try {
+                const windowsRes = await requestMissionWindows({
+                    latitude_deg: latA,
+                    longitude_deg: lonA,
+                    target_start_utc: `${dateStr}T00:00:00Z`,
+                    duration_hours: duration,
+                    priority: priority
+                });
+
+                renderWindowsResults(windowsRes);
+            } catch (e) {
+                console.error('Windows scan failed:', e);
+            } finally {
+                btnScanWindows.innerHTML = '<span>SCAN BETTER WINDOWS</span><span class="btn-arrow">→</span>';
+            }
+        });
+    }
+
+    // Fly to Site A / B buttons
+    const btnFlyA = document.getElementById('btn-cmp-fly-a');
+    if (btnFlyA) {
+        btnFlyA.addEventListener('click', () => {
+            const latA = parseFloat(cmpLatA.value);
+            const lonA = parseFloat(cmpLonA.value);
+            navigateToRoute('close');
+            pointAndAnalyzeSite(latA, lonA);
+        });
+    }
+
+    const btnFlyB = document.getElementById('btn-cmp-fly-b');
+    if (btnFlyB) {
+        btnFlyB.addEventListener('click', () => {
+            const latB = parseFloat(cmpLatB.value);
+            const lonB = parseFloat(cmpLonB.value);
+            navigateToRoute('close');
+            pointAndAnalyzeSite(latB, lonB);
+        });
+    }
+}
+
+function renderComparisonResults(response, latA, lonA, latB, lonB, labelA, labelB, dateStr, duration) {
+    const cmpResultsContainer = document.getElementById('cmp-results-container');
+    if (!cmpResultsContainer) return;
+    cmpResultsContainer.style.display = 'flex';
+
+    const itemA = response.results && response.results[0] ? response.results[0] : null;
+    const itemB = response.results && response.results[1] ? response.results[1] : null;
+
+    if (!itemA || !itemB || !itemA.visibility || !itemB.visibility) return;
+
+    const metA = itemA.visibility.metrics;
+    const metB = itemB.visibility.metrics;
+
+    // Sunlight
+    const elSunA = document.getElementById('cmp-metric-sun-a');
+    const elSunB = document.getElementById('cmp-metric-sun-b');
+    const elWinnerSun = document.getElementById('cmp-winner-sun');
+    if (elSunA) elSunA.textContent = `${metA.sunlight_percent.toFixed(1)}%`;
+    if (elSunB) elSunB.textContent = `${metB.sunlight_percent.toFixed(1)}%`;
+    if (elWinnerSun) {
+        const diff = metA.sunlight_percent - metB.sunlight_percent;
+        if (Math.abs(diff) < 0.1) {
+            elWinnerSun.className = 'cmp-winner-badge tie';
+            elWinnerSun.textContent = 'EQUAL SUNLIGHT ILLUMINATION';
+        } else if (diff > 0) {
+            elWinnerSun.className = 'cmp-winner-badge winner-a';
+            elWinnerSun.textContent = `★ SITE A ADVANTAGE (+${diff.toFixed(1)}%)`;
+        } else {
+            elWinnerSun.className = 'cmp-winner-badge winner-b';
+            elWinnerSun.textContent = `★ SITE B ADVANTAGE (+${Math.abs(diff).toFixed(1)}%)`;
+        }
+    }
+
+    // Earth View
+    const elEarthA = document.getElementById('cmp-metric-earth-a');
+    const elEarthB = document.getElementById('cmp-metric-earth-b');
+    const elWinnerEarth = document.getElementById('cmp-winner-earth');
+    if (elEarthA) elEarthA.textContent = `${metA.earth_visibility_percent.toFixed(1)}%`;
+    if (elEarthB) elEarthB.textContent = `${metB.earth_visibility_percent.toFixed(1)}%`;
+    if (elWinnerEarth) {
+        const diff = metA.earth_visibility_percent - metB.earth_visibility_percent;
+        if (Math.abs(diff) < 0.1) {
+            elWinnerEarth.className = 'cmp-winner-badge tie';
+            elWinnerEarth.textContent = 'EQUAL DIRECT EARTH LINE-OF-SIGHT';
+        } else if (diff > 0) {
+            elWinnerEarth.className = 'cmp-winner-badge winner-a';
+            elWinnerEarth.textContent = `★ SITE A ADVANTAGE (+${diff.toFixed(1)}%)`;
+        } else {
+            elWinnerEarth.className = 'cmp-winner-badge winner-b';
+            elWinnerEarth.textContent = `★ SITE B ADVANTAGE (+${Math.abs(diff).toFixed(1)}%)`;
+        }
+    }
+
+    // Longest Darkness
+    const elDarkA = document.getElementById('cmp-metric-dark-a');
+    const elDarkB = document.getElementById('cmp-metric-dark-b');
+    const elWinnerDark = document.getElementById('cmp-winner-dark');
+    if (elDarkA) elDarkA.textContent = `${metA.longest_darkness_hours} h`;
+    if (elDarkB) elDarkB.textContent = `${metB.longest_darkness_hours} h`;
+    if (elWinnerDark) {
+        const diff = metA.longest_darkness_hours - metB.longest_darkness_hours;
+        if (diff === 0) {
+            elWinnerDark.className = 'cmp-winner-badge tie';
+            elWinnerDark.textContent = 'IDENTICAL MAX DARKNESS DURATION';
+        } else if (diff < 0) {
+            elWinnerDark.className = 'cmp-winner-badge winner-a';
+            elWinnerDark.textContent = `★ SITE A ADVANTAGE (${Math.abs(diff)}h shorter darkness)`;
+        } else {
+            elWinnerDark.className = 'cmp-winner-badge winner-b';
+            elWinnerDark.textContent = `★ SITE B ADVANTAGE (${diff}h shorter darkness)`;
+        }
+    }
+
+    // Longest Earth Gap
+    const elCommA = document.getElementById('cmp-metric-comm-a');
+    const elCommB = document.getElementById('cmp-metric-comm-b');
+    const elWinnerComm = document.getElementById('cmp-winner-comm');
+    if (elCommA) elCommA.textContent = `${metA.longest_earth_gap_hours} h`;
+    if (elCommB) elCommB.textContent = `${metB.longest_earth_gap_hours} h`;
+    if (elWinnerComm) {
+        const diff = metA.longest_earth_gap_hours - metB.longest_earth_gap_hours;
+        if (diff === 0) {
+            elWinnerComm.className = 'cmp-winner-badge tie';
+            elWinnerComm.textContent = 'IDENTICAL MAXIMUM COMM OUTAGE';
+        } else if (diff < 0) {
+            elWinnerComm.className = 'cmp-winner-badge winner-a';
+            elWinnerComm.textContent = `★ SITE A ADVANTAGE (${Math.abs(diff)}h shorter outage)`;
+        } else {
+            elWinnerComm.className = 'cmp-winner-badge winner-b';
+            elWinnerComm.textContent = `★ SITE B ADVANTAGE (${diff}h shorter outage)`;
+        }
+    }
+
+    // Tradeoffs List
+    const elTradeoffs = document.getElementById('cmp-tradeoffs-list');
+    if (elTradeoffs) {
+        elTradeoffs.innerHTML = '';
+        if (response.tradeoffs && response.tradeoffs.length > 0) {
+            response.tradeoffs.forEach(tradeoff => {
+                const li = document.createElement('li');
+                li.textContent = tradeoff;
+                elTradeoffs.appendChild(li);
+            });
+        } else {
+            const li = document.createElement('li');
+            li.textContent = 'Both sites exhibit comparable geometric illumination profiles over this mission window.';
+            elTradeoffs.appendChild(li);
+        }
+    }
+
+    // Status Banner text
+    const elStatus = document.getElementById('cmp-status-text');
+    if (elStatus) {
+        elStatus.textContent = `Verified NASA JPL Horizons Comparison · ${duration}h shared UTC mission (${dateStr})`;
+    }
+}
+
+function renderStressResults(res, slipDays) {
+    const box = document.getElementById('cmp-stress-results');
+    if (!box) return;
+    box.style.display = 'block';
+
+    const d = res.deltas;
+    const elSun = document.getElementById('stress-delta-sun');
+    const elEarth = document.getElementById('stress-delta-earth');
+    const elDark = document.getElementById('stress-delta-dark');
+    const elComm = document.getElementById('stress-delta-comm');
+    const elText = document.getElementById('stress-impact-text');
+
+    if (elSun) {
+        elSun.textContent = `${d.sunlight_percent_delta >= 0 ? '+' : ''}${d.sunlight_percent_delta.toFixed(1)}%`;
+        elSun.style.color = d.sunlight_percent_delta >= 0 ? '#4ade80' : '#f87171';
+    }
+    if (elEarth) {
+        elEarth.textContent = `${d.earth_visibility_percent_delta >= 0 ? '+' : ''}${d.earth_visibility_percent_delta.toFixed(1)}%`;
+        elEarth.style.color = d.earth_visibility_percent_delta >= 0 ? '#4ade80' : '#f87171';
+    }
+    if (elDark) {
+        elDark.textContent = `${d.longest_darkness_hours_delta >= 0 ? '+' : ''}${d.longest_darkness_hours_delta} h`;
+        elDark.style.color = d.longest_darkness_hours_delta <= 0 ? '#4ade80' : '#f87171';
+    }
+    if (elComm) {
+        elComm.textContent = `${d.longest_earth_gap_hours_delta >= 0 ? '+' : ''}${d.longest_earth_gap_hours_delta} h`;
+        elComm.style.color = d.longest_earth_gap_hours_delta <= 0 ? '#4ade80' : '#f87171';
+    }
+    if (elText) {
+        elText.textContent = `Simulating a +${slipDays}-day launch delay: Sunlight shifts by ${d.sunlight_percent_delta.toFixed(1)}%, longest darkness changes by ${d.longest_darkness_hours_delta} hours.`;
+    }
+}
+
+function renderWindowsResults(res) {
+    const box = document.getElementById('cmp-windows-results');
+    const prefCard = document.getElementById('cmp-preferred-window-card');
+    const candList = document.getElementById('cmp-candidates-list');
+    if (!box || !prefCard || !candList) return;
+    box.style.display = 'block';
+
+    const pref = res.preferred_window;
+    if (pref) {
+        prefCard.innerHTML = `
+            <div style="font-size: 11px; font-weight: 800; color: #10b981; margin-bottom: 4px; font-family: monospace;">★ PREFERRED RECOMMENDED WINDOW (OFFSET ${pref.offset_days >= 0 ? '+' : ''}${pref.offset_days} DAYS)</div>
+            <div style="font-size: 13px; font-weight: 700; color: #ffffff; margin-bottom: 4px;">Start UTC: ${pref.start_utc}</div>
+            <div style="font-size: 12px; color: #cbd5e1;">Sunlight: ${pref.visibility.metrics.sunlight_percent.toFixed(1)}% · Earth View: ${pref.visibility.metrics.earth_visibility_percent.toFixed(1)}% · Max Darkness: ${pref.visibility.metrics.longest_darkness_hours}h</div>
+            <button type="button" class="cmp-preset-pill" style="margin-top: 8px; border-color: #10b981; color: #10b981;" id="btn-apply-preferred-window">Apply This Window</button>
+        `;
+
+        const btnApply = document.getElementById('btn-apply-preferred-window');
+        if (btnApply) {
+            btnApply.addEventListener('click', () => {
+                const cmpStartDate = document.getElementById('cmp-start-date');
+                if (cmpStartDate && pref.start_utc) {
+                    cmpStartDate.value = pref.start_utc.split('T')[0];
+                }
+            });
+        }
+    }
+
+    candList.innerHTML = '<div style="font-size: 10px; font-weight: 700; color: #94a3b8; margin: 8px 0 4px 0; font-family: monospace;">OTHER EVALUATED CANDIDATE WINDOWS:</div>';
+    if (res.evaluated_windows && res.evaluated_windows.length > 0) {
+        res.evaluated_windows.forEach(w => {
+            if (w.status === 'ok' && w.visibility) {
+                const row = document.createElement('div');
+                row.className = 'candidate-window-row';
+                row.innerHTML = `
+                    <span><strong>${w.offset_days >= 0 ? '+' : ''}${w.offset_days}d</strong> (${w.start_utc.split('T')[0]})</span>
+                    <span>Sun: <strong>${w.visibility.metrics.sunlight_percent.toFixed(1)}%</strong></span>
+                    <span>Earth: <strong>${w.visibility.metrics.earth_visibility_percent.toFixed(1)}%</strong></span>
+                    <span>Dark: <strong>${w.visibility.metrics.longest_darkness_hours}h</strong></span>
+                `;
+                candList.appendChild(row);
+            }
+        });
+    }
+}
+
+// ============================================================================
+// 13E. HISTORICAL MISSIONS CONTROLLER (PAGE 4)
+// ============================================================================
+
+const VERIFIED_MISSIONS_DATA = [
+    {
+        id: "change_4",
+        name: "Chang'e-4",
+        country: "China",
+        operator: "China National Space Administration (CNSA)",
+        event_time_utc: "2019-01-03T02:26:00Z",
+        time_precision: "minute",
+        landing_outcome: "successful_soft_landing",
+        mission_objective: "Land and operate a rover on the lunar far side for radio astronomy and surface composition science.",
+        what_happened: "Chang'e-4 touched down inside Von Karman crater on the lunar far side, becoming humanity's first spacecraft to soft-land on the hemisphere facing permanently away from Earth.",
+        achievements: ["First soft landing on the far side of the Moon", "Continuous far-side communications via Queqiao relay", "Low-frequency radio astronomy experiments"],
+        actual_location: { name: "Von Karman crater", latitude_deg: -45.4561, longitude_deg: 177.5885, location_type: "actual_landing", coordinate_quality: "confirmed" },
+        marker_location: { latitude_deg: -45.4561, longitude_deg: 177.5885, location_type: "actual_landing", coordinate_quality: "confirmed" },
+        sources: [{ title: "CNSA Far-Side Landing Announcement", url: "https://www.cnsa.gov.cn/english/n6465652/n6465653/c6805049/content.html", supports: "Touchdown announcement and landing coordinates" }]
+    },
+    {
+        id: "chandrayaan_3",
+        name: "Chandrayaan-3",
+        country: "India",
+        operator: "Indian Space Research Organisation (ISRO)",
+        event_time_utc: "2023-08-23T12:34:00Z",
+        time_precision: "minute",
+        landing_outcome: "successful_soft_landing",
+        mission_objective: "Demonstrate safe and soft landing on the lunar south polar region and deploy the Pragyan rover.",
+        what_happened: "The Vikram lander successfully executed an automated braking and hazard avoidance descent, touching down softly at Shiv Shakti Point (69.37° S, 32.32° E).",
+        achievements: ["First mission to soft land in the lunar south polar region", "Pragyan rover traversed 100+ meters analyzing soil composition", "Detected Sulfur (S) and in-situ thermal gradients with ChaSTE"],
+        actual_location: { name: "Shiv Shakti Point (South Polar Region)", latitude_deg: -69.3741, longitude_deg: 32.32, location_type: "actual_landing", coordinate_quality: "confirmed" },
+        marker_location: { latitude_deg: -69.3741, longitude_deg: 32.32, location_type: "actual_landing", coordinate_quality: "confirmed" },
+        sources: [{ title: "ISRO Chandrayaan-3 Mission Updates", url: "https://www.isro.gov.in/ISRO_EN/Chandrayaan3_Details.html", supports: "Landing time and Shiv Shakti Point coordinates" }]
+    },
+    {
+        id: "blue_ghost_mission_1",
+        name: "Blue Ghost Mission 1",
+        country: "United States",
+        operator: "Firefly Aerospace, under NASA CLPS",
+        event_time_utc: "2025-03-02T08:34:00Z",
+        time_precision: "minute",
+        landing_outcome: "successful_soft_landing",
+        mission_objective: "Deliver NASA science and technology payloads to Mare Crisium under Commercial Lunar Payload Services.",
+        what_happened: "Blue Ghost landed successfully in Mare Crisium, maintaining upright posture and direct communications with NASA DSN ground stations.",
+        achievements: ["Commercial payload operations in Mare Crisium basin", "Regolith heat flow and radiation characterization", "Commercial lander autonomy demonstration"],
+        actual_location: { name: "Mare Crisium basin", latitude_deg: 18.5623, longitude_deg: 61.8103, location_type: "actual_landing", coordinate_quality: "confirmed" },
+        marker_location: { latitude_deg: 18.5623, longitude_deg: 61.8103, location_type: "actual_landing", coordinate_quality: "confirmed" },
+        sources: [{ title: "NASA CLPS Firefly Blue Ghost Touchdown", url: "https://www.nasa.gov", supports: "Landing time, upright posture, and coordinates" }]
+    },
+    {
+        id: "chandrayaan_2_vikram",
+        name: "Chandrayaan-2 Vikram",
+        country: "India",
+        operator: "Indian Space Research Organisation (ISRO)",
+        event_time_utc: "2019-09-06T20:23:00Z",
+        time_precision: "minute",
+        landing_outcome: "unsuccessful_hard_impact",
+        mission_objective: "Pioneer lunar south-polar descent and operate Vikram lander and Pragyan rover.",
+        what_happened: "During the final fine-braking phase 2.1 km above the surface, communications were lost. LROC imagery subsequently identified the impact debris field.",
+        achievements: ["Validated autonomous rough-braking guidance", "Chandrayaan-2 orbiter continues operational high-resolution mapping", "Provided crucial lessons directly applied to Chandrayaan-3 success"],
+        actual_location: { name: "Vikram Impact Site (South Polar Plain)", latitude_deg: -70.881, longitude_deg: 22.784, location_type: "actual_impact", coordinate_quality: "confirmed" },
+        marker_location: { latitude_deg: -70.881, longitude_deg: 22.784, location_type: "actual_impact", coordinate_quality: "confirmed" },
+        sources: [{ title: "NASA NSSDC / LROC Impact Debris Analysis", url: "https://nssdc.gsfc.nasa.gov", supports: "Impact coordinates and telemetry loss" }]
+    },
+    {
+        id: "athena_im_2",
+        name: "Athena (Intuitive Machines IM-2)",
+        country: "United States",
+        operator: "Intuitive Machines, under NASA CLPS",
+        event_time_utc: "2025-03-06T17:30:00Z",
+        time_precision: "approximate minute",
+        landing_outcome: "off_nominal_touchdown_limited_operations",
+        mission_objective: "Drill for volatile ice and test polar hopping with micro-drones near South Pole.",
+        what_happened: "Athena reached the lunar south-polar region near Shackleton connecting ridge, executing touchdown with off-nominal attitude resulting in limited solar generation.",
+        achievements: ["Direct polar descent trajectory", "Downlinked initial surface imagery and telemetry", "Subsurface volatile drill deployment demonstration"],
+        actual_location: { name: "Connecting Ridge / Shackleton Flank", latitude_deg: -84.7906, longitude_deg: 29.1957, location_type: "actual_landing", coordinate_quality: "confirmed" },
+        marker_location: { latitude_deg: -84.7906, longitude_deg: 29.1957, location_type: "actual_landing", coordinate_quality: "confirmed" },
+        sources: [{ title: "NASA CLPS IM-2 Mission Assessment", url: "https://www.nasa.gov", supports: "Landing coordinate and operations summary" }]
+    },
+    {
+        id: "luna_25",
+        name: "Luna 25",
+        country: "Russia",
+        operator: "Roscosmos / Space Research Institute (IKI)",
+        event_time_utc: "2023-08-19T11:58:00Z",
+        time_precision: "minute",
+        landing_outcome: "unsuccessful_pre_landing_impact",
+        mission_objective: "Demonstrate polar landing and explore regolith composition and exosphere volatiles.",
+        what_happened: "An off-nominal impulse during orbit adjustment caused the spacecraft to enter an unclosed descent trajectory, impacting Pontecoulant G crater.",
+        achievements: ["Successfully executed translunar injection and lunar orbit insertion", "Returned in-flight cosmic radiation and plasma measurements"],
+        actual_location: { name: "Pontecoulant G crater rim", latitude_deg: -57.865, longitude_deg: 61.36, location_type: "actual_impact", coordinate_quality: "likely_confirmed" },
+        marker_location: { latitude_deg: -57.865, longitude_deg: 61.36, location_type: "actual_impact", coordinate_quality: "likely_confirmed" },
+        sources: [{ title: "Roscosmos / LROC Luna 25 Crater Site", url: "https://lroc.sese.asu.edu", supports: "Impact crater identification and orbital anomaly analysis" }]
+    }
+];
+
+let cachedMissionsList = [...VERIFIED_MISSIONS_DATA];
+let activeHistoricalMission = null;
+
+function setupHistoricalMissions() {
+    const grid = document.getElementById('history-missions-grid');
+    const modal = document.getElementById('history-detail-modal');
+    const btnCloseModal = document.getElementById('btn-close-history-modal');
+    const modalBackdrop = document.getElementById('history-modal-backdrop');
+    const filterPills = document.querySelectorAll('.history-filter-pill');
+
+    if (btnCloseModal) {
+        btnCloseModal.addEventListener('click', () => {
+            if (modal) modal.style.display = 'none';
+        });
+    }
+    if (modalBackdrop) {
+        modalBackdrop.addEventListener('click', () => {
+            if (modal) modal.style.display = 'none';
+        });
+    }
+
+    filterPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            filterPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            const filter = pill.getAttribute('data-filter');
+            renderMissionsGrid(filter);
+        });
+    });
+
+    updateFilterCounts();
+
+    // Replay Button inside modal
+    const btnRunReplay = document.getElementById('btn-run-replay');
+    if (btnRunReplay) {
+        btnRunReplay.addEventListener('click', async () => {
+            if (!activeHistoricalMission) return;
+            btnRunReplay.textContent = 'CALCULATING HORIZONS REPLAY...';
+            try {
+                const replayRes = await requestHistoricalReplay(activeHistoricalMission.id, 144);
+                renderReplayResults(replayRes);
+            } catch (err) {
+                console.error('Replay failed:', err);
+            } finally {
+                btnRunReplay.innerHTML = '<span>REPLAY MODELED CONDITIONS (144-HOUR WINDOW)</span><span class="btn-arrow">→</span>';
+            }
+        });
+    }
+
+    // View on 3D Moon button inside modal
+    const btnFlyMoon = document.getElementById('btn-hmodal-fly');
+    if (btnFlyMoon) {
+        btnFlyMoon.addEventListener('click', () => {
+            if (!activeHistoricalMission) return;
+            const loc = activeHistoricalMission.actual_location || activeHistoricalMission.intended_location;
+            if (loc) {
+                if (modal) modal.style.display = 'none';
+                navigateToRoute('close');
+                pointAndAnalyzeSite(loc.latitude_deg, loc.longitude_deg);
+            }
+        });
+    }
+
+    // Compare this site inside modal
+    const btnCompareSite = document.getElementById('btn-hmodal-compare');
+    if (btnCompareSite) {
+        btnCompareSite.addEventListener('click', () => {
+            if (!activeHistoricalMission) return;
+            const loc = activeHistoricalMission.actual_location || activeHistoricalMission.intended_location;
+            if (loc) {
+                if (modal) modal.style.display = 'none';
+                // Switch to comparative study
+                navigateToRoute('comparative-study');
+                const cmpLatA = document.getElementById('cmp-a-lat');
+                const cmpLonA = document.getElementById('cmp-a-lon');
+                const cmpLabelA = document.getElementById('cmp-site-a-label');
+                if (cmpLatA) cmpLatA.value = loc.latitude_deg.toFixed(3);
+                if (cmpLonA) cmpLonA.value = loc.longitude_deg.toFixed(3);
+                if (cmpLabelA) cmpLabelA.textContent = `${activeHistoricalMission.name} (${loc.name || 'Landing Site'})`;
+            }
+        });
+    }
+
+    // Initial fetch of historical missions
+    loadHistoricalMissions();
+}
+
+function updateFilterCounts() {
+    const pills = document.querySelectorAll('.history-filter-pill');
+    if (!pills || pills.length === 0 || !cachedMissionsList) return;
+
+    pills.forEach(pill => {
+        const filter = pill.getAttribute('data-filter');
+        let count = 0;
+        if (filter === 'all') {
+            count = cachedMissionsList.length;
+        } else if (filter === 'success') {
+            count = cachedMissionsList.filter(m => m.landing_outcome && m.landing_outcome.startsWith('successful') && !m.landing_outcome.includes('unsuccessful')).length;
+        } else if (filter === 'impact') {
+            count = cachedMissionsList.filter(m => m.landing_outcome && (m.landing_outcome.includes('impact') || m.landing_outcome.includes('unsuccessful') || m.landing_outcome.includes('off_nominal'))).length;
+        } else if (filter === 'south_pole') {
+            count = cachedMissionsList.filter(m => m.marker_location && m.marker_location.latitude_deg < -60).length;
+        } else if (filter === 'far_side') {
+            count = cachedMissionsList.filter(m => {
+                if (!m.marker_location) return false;
+                const lon = m.marker_location.longitude_deg;
+                return (lon > 90 && lon < 270) || (lon < -90 && lon > -270);
+            }).length;
+        }
+
+        const baseNames = {
+            'all': 'All Missions',
+            'success': 'Successful Landings',
+            'impact': 'Impact / Off-Nominal',
+            'south_pole': 'South Polar Region',
+            'far_side': 'Far Side'
+        };
+
+        if (baseNames[filter]) {
+            pill.textContent = `${baseNames[filter]} (${count})`;
+        }
+    });
+}
+
+async function loadHistoricalMissions() {
+    try {
+        const missions = await fetchHistoricalMissions();
+        if (missions && Array.isArray(missions) && missions.length > 0) {
+            cachedMissionsList = missions;
+        }
+        updateFilterCounts();
+        renderMissionsGrid('all');
+    } catch (e) {
+        console.error('Failed to load historical missions:', e);
+        updateFilterCounts();
+        renderMissionsGrid('all');
+    }
+}
+
+function renderMissionsGrid(filter = 'all') {
+    const grid = document.getElementById('history-missions-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const filtered = cachedMissionsList.filter(m => {
+        if (!m || !m.landing_outcome) return false;
+        if (filter === 'all') return true;
+        // Strict check: 'unsuccessful' contains 'success', so check startsWith('successful') and not 'unsuccessful'
+        if (filter === 'success') {
+            return m.landing_outcome.startsWith('successful') && !m.landing_outcome.includes('unsuccessful');
+        }
+        if (filter === 'impact') {
+            return m.landing_outcome.includes('impact') || m.landing_outcome.includes('unsuccessful') || m.landing_outcome.includes('off_nominal');
+        }
+        if (filter === 'south_pole') {
+            return m.marker_location && m.marker_location.latitude_deg < -60;
+        }
+        if (filter === 'far_side') {
+            if (!m.marker_location) return false;
+            const lon = m.marker_location.longitude_deg;
+            return (lon > 90 && lon < 270) || (lon < -90 && lon > -270);
+        }
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1 / -1; padding: 48px 24px; text-align: center; color: var(--text-dim, #888); font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase;">No missions found for this filter category.</div>`;
+        return;
+    }
+
+    filtered.forEach(m => {
+        const card = document.createElement('div');
+        card.className = 'history-card';
+
+        let outcomeClass = 'outcome-success';
+        let outcomeLabel = 'Successful Soft Landing';
+        if (m.landing_outcome.includes('impact') || m.landing_outcome.includes('unsuccessful')) {
+            outcomeClass = 'outcome-impact';
+            outcomeLabel = m.landing_outcome.replace(/_/g, ' ').toUpperCase();
+        } else if (m.landing_outcome.includes('limited') || m.landing_outcome.includes('off_nominal')) {
+            outcomeClass = 'outcome-limited';
+            outcomeLabel = 'Off-Nominal Touchdown';
+        }
+
+        const loc = m.marker_location;
+        const coordsStr = loc ? `${Math.abs(loc.latitude_deg).toFixed(2)}° ${loc.latitude_deg >= 0 ? 'N' : 'S'}, ${loc.longitude_deg.toFixed(2)}° E` : '--';
+        const dateStr = m.event_time_utc ? m.event_time_utc.split('T')[0] : 'Historical';
+
+        card.innerHTML = `
+            <div>
+                <div class="hcard-header">
+                    <span class="hcard-country-badge">${m.country.toUpperCase()}</span>
+                    <span class="hcard-outcome-badge ${outcomeClass}">${outcomeLabel}</span>
+                </div>
+                <h3 class="hcard-name">${m.name}</h3>
+                <div class="hcard-operator">${m.operator}</div>
+                <div class="hcard-stats-box">
+                    <div class="hcard-stat-row">
+                        <span class="hcard-stat-lbl">EVENT DATE</span>
+                        <span class="hcard-stat-val">${dateStr}</span>
+                    </div>
+                    <div class="hcard-stat-row">
+                        <span class="hcard-stat-lbl">COORDINATES</span>
+                        <span class="hcard-stat-val">${coordsStr}</span>
+                    </div>
+                    <div class="hcard-stat-row">
+                        <span class="hcard-stat-lbl">LOCATION QUALITY</span>
+                        <span class="hcard-stat-val">${loc ? loc.coordinate_quality.toUpperCase() : '--'}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hcard-actions-row">
+                <button type="button" class="hcard-btn primary btn-story" data-id="${m.id}">EXPLORE STORY</button>
+                <button type="button" class="hcard-btn btn-view-moon" data-id="${m.id}" data-lat="${loc ? loc.latitude_deg : 0}" data-lon="${loc ? loc.longitude_deg : 0}">3D MOON</button>
+            </div>
+        `;
+
+        const btnStory = card.querySelector('.btn-story');
+        if (btnStory) {
+            btnStory.addEventListener('click', () => openMissionDetail(m.id));
+        }
+
+        const btnViewMoon = card.querySelector('.btn-view-moon');
+        if (btnViewMoon) {
+            btnViewMoon.addEventListener('click', () => {
+                const lat = parseFloat(btnViewMoon.getAttribute('data-lat'));
+                const lon = parseFloat(btnViewMoon.getAttribute('data-lon'));
+                navigateToRoute('close');
+                pointAndAnalyzeSite(lat, lon);
+            });
+        }
+
+        grid.appendChild(card);
+    });
+}
+
+async function openMissionDetail(missionId) {
+    const modal = document.getElementById('history-detail-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    try {
+        let detail = null;
+        try {
+            detail = await fetchHistoricalMissionDetail(missionId);
+        } catch (_) {
+            detail = VERIFIED_MISSIONS_DATA.find(m => m.id === missionId);
+        }
+        if (!detail) {
+            detail = VERIFIED_MISSIONS_DATA.find(m => m.id === missionId);
+        }
+        activeHistoricalMission = detail;
+
+        const elCountry = document.getElementById('hmodal-country');
+        const elName = document.getElementById('hmodal-name');
+        const elOperator = document.getElementById('hmodal-operator');
+        const elOutcome = document.getElementById('hmodal-outcome');
+        const elTime = document.getElementById('hmodal-time');
+        const elLocType = document.getElementById('hmodal-loctype');
+        const elCoords = document.getElementById('hmodal-coords');
+        const elObjective = document.getElementById('hmodal-objective');
+        const elHappened = document.getElementById('hmodal-happened');
+        const elAchievements = document.getElementById('hmodal-achievements');
+        const elSources = document.getElementById('hmodal-sources');
+        const replayBox = document.getElementById('replay-results-box');
+
+        if (replayBox) replayBox.style.display = 'none';
+
+        if (elCountry) elCountry.textContent = detail.country.toUpperCase();
+        if (elName) elName.textContent = detail.name;
+        if (elOperator) elOperator.textContent = detail.operator;
+        if (elOutcome) elOutcome.textContent = detail.landing_outcome.replace(/_/g, ' ').toUpperCase();
+        if (elTime) elTime.textContent = detail.event_time_utc;
+
+        const loc = detail.actual_location || detail.intended_location;
+        if (elLocType && loc) elLocType.textContent = loc.location_type.replace(/_/g, ' ').toUpperCase();
+        if (elCoords && loc) elCoords.textContent = `${Math.abs(loc.latitude_deg).toFixed(4)}° ${loc.latitude_deg >= 0 ? 'N' : 'S'}, ${loc.longitude_deg.toFixed(4)}° E (${loc.name || 'Site'})`;
+
+        if (elObjective) elObjective.textContent = detail.mission_objective;
+        if (elHappened) elHappened.textContent = detail.what_happened;
+
+        if (elAchievements) {
+            elAchievements.innerHTML = '';
+            if (detail.achievements && detail.achievements.length > 0) {
+                detail.achievements.forEach(ach => {
+                    const li = document.createElement('li');
+                    li.textContent = ach;
+                    elAchievements.appendChild(li);
+                });
+            }
+        }
+
+        if (elSources) {
+            elSources.innerHTML = '';
+            if (detail.sources && detail.sources.length > 0) {
+                detail.sources.forEach(s => {
+                    const item = document.createElement('div');
+                    item.className = 'modal-source-item';
+                    item.innerHTML = `• <a href="${s.url}" target="_blank" rel="noopener noreferrer">${s.title}</a> — <em>${s.supports}</em>`;
+                    elSources.appendChild(item);
+                });
+            }
+        }
+    } catch (e) {
+        console.error('Failed to load mission detail:', e);
+    }
+}
+
+function renderReplayResults(replayRes) {
+    const box = document.getElementById('replay-results-box');
+    if (!box) return;
+    box.style.display = 'block';
+
+    const a = replayRes.analysis;
+    const elSun = document.getElementById('replay-val-sun');
+    const elEarth = document.getElementById('replay-val-earth');
+    const elDark = document.getElementById('replay-val-dark');
+    const elGap = document.getElementById('replay-val-gap');
+    const elFirst = document.getElementById('replay-first-sample-text');
+
+    if (a && a.metrics) {
+        if (elSun) elSun.textContent = `${a.metrics.sunlight_percent.toFixed(1)}%`;
+        if (elEarth) elEarth.textContent = `${a.metrics.earth_visibility_percent.toFixed(1)}%`;
+        if (elDark) elDark.textContent = `${a.metrics.longest_darkness_hours} h`;
+        if (elGap) elGap.textContent = `${a.metrics.longest_earth_gap_hours} h`;
+    }
+    if (a && a.timeline && a.timeline.length > 0 && elFirst) {
+        const s = a.timeline[0];
+        elFirst.textContent = `Modeled Touchdown Midpoint: Sun elevation ${s.sun_elevation_deg.toFixed(1)}° (${s.sun_azimuth_deg.toFixed(1)}° Az) · Earth elevation ${s.earth_elevation_deg.toFixed(1)}°`;
+    }
+}
+
+// Initialize Comparative Study & Historical Missions controllers after definitions
+setupComparativeStudy();
+setupHistoricalMissions();

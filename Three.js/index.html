@@ -16,12 +16,16 @@
     <div class="left-ui-container">
         <!-- Collapsible Lunar Landing Site Navigation Section (Collapsed by default on load) -->
         <div id="lunar-nav-sidebar" class="lunar-nav-sidebar collapsed">
-            <div class="nav-sidebar-header" id="nav-sidebar-header" role="button" tabindex="0" title="Click to toggle Navigation Menu">
+            <div class="nav-sidebar-header" id="nav-sidebar-header" role="button" tabindex="0"
+                title="Click to toggle Navigation Menu">
                 <div class="nav-sidebar-title-box">
                     <span class="nav-sidebar-main-title">Lunar Landing Site Navigator</span>
                 </div>
-                <button id="btn-toggle-nav-sidebar" class="nav-sidebar-toggle-btn" type="button" aria-label="Toggle Navigation Menu">
-                    <svg class="chevron-icon" id="sidebar-chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <button id="btn-toggle-nav-sidebar" class="nav-sidebar-toggle-btn" type="button"
+                    aria-label="Toggle Navigation Menu">
+                    <svg class="chevron-icon" id="sidebar-chevron" viewBox="0 0 24 24" width="13" height="13"
+                        fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round">
                         <polyline points="6 9 12 15 18 9"></polyline>
                     </svg>
                 </button>
@@ -38,7 +42,8 @@
                         <span class="nav-item-label">Lunar Site Coordinator</span>
                         <span class="nav-item-arrow">→</span>
                     </button>
-                    <button class="nav-menu-item" id="nav-item-comparative" type="button" data-route="comparative-study">
+                    <button class="nav-menu-item" id="nav-item-comparative" type="button"
+                        data-route="comparative-study">
                         <span class="nav-item-num">03</span>
                         <span class="nav-item-label">Comparative Study</span>
                         <span class="nav-item-arrow">→</span>
@@ -57,6 +62,15 @@
             <div class="hud-header">
                 <span class="hud-title">LUNAR COMPASS</span>
                 <div class="hud-header-right">
+                    <button id="btn-hud-reset" class="hud-reset-btn" type="button"
+                        title="Reset site selection and return camera to default view" aria-label="Reset Lunar Compass Site & View">
+                        <svg viewBox="0 0 24 24" width="11" height="11" fill="none"
+                            stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                            <path d="M3 3v5h5"></path>
+                        </svg>
+                        <span>RESET</span>
+                    </button>
                     <button id="btn-collapse-hud" class="hud-collapse-btn" type="button"
                         title="Minimize / Expand Information Panel" aria-label="Minimize or Expand">
                         <svg id="collapse-icon" viewBox="0 0 24 24" width="12" height="12" fill="none"
@@ -77,12 +91,16 @@
                 </div>
                 <!-- Copy Coordinates Action Button -->
                 <div class="coord-copy-row">
-                    <button id="btn-copy-coords" class="hud-copy-btn" type="button" title="Copy coordinates to clipboard" aria-label="Copy Lunar Coordinates">
-                        <svg class="copy-icon default-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <button id="btn-copy-coords" class="hud-copy-btn" type="button"
+                        title="Copy coordinates to clipboard" aria-label="Copy Lunar Coordinates">
+                        <svg class="copy-icon default-icon" viewBox="0 0 24 24" width="12" height="12" fill="none"
+                            stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                         </svg>
-                        <svg class="copy-icon success-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                        <svg class="copy-icon success-icon" viewBox="0 0 24 24" width="12" height="12" fill="none"
+                            stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                            style="display: none;">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
                         <span id="copy-coords-text">COPY COORDINATES</span>
@@ -128,6 +146,14 @@
                     <div class="coord-row">
                         <span class="coord-label">INCIDENCE ANGLE</span>
                         <span class="coord-value" id="hud-val-solar-incidence">--</span>
+                    </div>
+                    <div class="coord-row">
+                        <span class="coord-label">EARTH ELEVATION</span>
+                        <span class="coord-value" id="hud-val-earth-elevation">--</span>
+                    </div>
+                    <div class="coord-row">
+                        <span class="coord-label">DIRECT EARTH LOS</span>
+                        <span class="coord-value" id="hud-val-earth-status">--</span>
                     </div>
                     <div class="coord-row" id="hud-row-terrain-obstruction" style="display: none;">
                         <span class="coord-label">TERRAIN PROFILE</span>
@@ -278,7 +304,8 @@
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                </path>
                 <path d="M2 12h20"></path>
             </svg>
             <span class="mode-btn-label">3D GLOBE</span>
@@ -309,7 +336,8 @@
             <!-- Common Page Top Bar -->
             <div class="page-top-bar">
                 <div class="page-top-left">
-                    <button type="button" id="btn-back-to-moon" class="page-back-btn" title="Return to interactive lunar explorer">
+                    <button type="button" id="btn-back-to-moon" class="page-back-btn"
+                        title="Return to interactive lunar explorer">
                         <span class="back-arrow">←</span>
                         <span>RETURN TO MOON EXPLORER</span>
                     </button>
@@ -320,9 +348,12 @@
                     </div>
                 </div>
                 <div class="page-nav-tabs">
-                    <button type="button" class="page-tab-btn active" data-target-route="plan-mission">Plan Your Mission</button>
-                    <button type="button" class="page-tab-btn" data-target-route="site-navigator">Lunar Site Coordinator</button>
-                    <button type="button" class="page-tab-btn" data-target-route="comparative-study">Comparative Study</button>
+                    <button type="button" class="page-tab-btn active" data-target-route="plan-mission">Plan Your
+                        Mission</button>
+                    <button type="button" class="page-tab-btn" data-target-route="site-navigator">Lunar Site
+                        Coordinator</button>
+                    <button type="button" class="page-tab-btn" data-target-route="comparative-study">Comparative
+                        Study</button>
                     <button type="button" class="page-tab-btn" data-target-route="history">History</button>
                 </div>
             </div>
@@ -335,7 +366,9 @@
                         <div class="form-panel-header">
                             <span class="form-badge">LANDING SITE SPECIFICATION</span>
                             <h2 class="form-title">PLAN YOUR MISSION</h2>
-                            <p class="form-subtitle">Enter proposed lunar coordinates and arrival date to analyze environmental suitability, direct Earth visibility, solar availability, and resource proximity.</p>
+                            <p class="form-subtitle">Enter proposed lunar coordinates and arrival date to analyze
+                                environmental suitability, direct Earth visibility, solar availability, and resource
+                                proximity.</p>
                         </div>
 
                         <form id="mission-plan-form" class="mission-plan-form" onsubmit="return false;">
@@ -347,12 +380,15 @@
                                 </div>
                                 <div class="form-input-group">
                                     <div class="form-input-wrapper">
-                                        <input type="number" id="plan-lat" class="form-input" placeholder="e.g. 69.373" step="any" min="0" max="90" required />
+                                        <input type="number" id="plan-lat" class="form-input" placeholder="e.g. 69.373"
+                                            step="any" min="0" max="90" required />
                                         <span class="form-unit">°</span>
                                     </div>
                                     <div class="hemi-toggle" role="group" aria-label="Latitude Hemisphere">
-                                        <button type="button" class="hemi-btn active" id="btn-plan-hemi-n" data-hemi="N">N (+)</button>
-                                        <button type="button" class="hemi-btn" id="btn-plan-hemi-s" data-hemi="S">S (-)</button>
+                                        <button type="button" class="hemi-btn active" id="btn-plan-hemi-n"
+                                            data-hemi="N">N (+)</button>
+                                        <button type="button" class="hemi-btn" id="btn-plan-hemi-s" data-hemi="S">S
+                                            (-)</button>
                                     </div>
                                 </div>
                             </div>
@@ -365,16 +401,20 @@
                                 </div>
                                 <div class="form-input-group">
                                     <div class="form-input-wrapper">
-                                        <input type="number" id="plan-lon" class="form-input" placeholder="e.g. 32.319" step="any" min="0" max="360" required />
+                                        <input type="number" id="plan-lon" class="form-input" placeholder="e.g. 32.319"
+                                            step="any" min="0" max="360" required />
                                         <span class="form-unit">°</span>
                                     </div>
                                     <div class="hemi-toggle" role="group" aria-label="Longitude Hemisphere">
-                                        <button type="button" class="hemi-btn active" id="btn-plan-hemi-e" data-hemi="E">E (0-360°)</button>
-                                        <button type="button" class="hemi-btn" id="btn-plan-hemi-w" data-hemi="W">W (-180°)</button>
+                                        <button type="button" class="hemi-btn active" id="btn-plan-hemi-e"
+                                            data-hemi="E">E (0-360°)</button>
+                                        <button type="button" class="hemi-btn" id="btn-plan-hemi-w" data-hemi="W">W
+                                            (-180°)</button>
                                     </div>
                                 </div>
                                 <span class="coord-system-notice">
-                                    NASA Mean Earth / Polar Axis (ME) reference frame. East-positive 0°–360° (or -180° to +180° W/E).
+                                    NASA Mean Earth / Polar Axis (ME) reference frame. East-positive 0°–360° (or -180°
+                                    to +180° W/E).
                                 </span>
                             </div>
 
@@ -386,8 +426,10 @@
                                 </div>
                                 <div class="form-input-group">
                                     <div class="form-input-wrapper date-wrapper">
-                                        <span class="calendar-symbol-icon" title="Open Calendar" aria-hidden="true">
-                                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <span class="calendar-symbol-icon" id="plan-calendar-icon" title="Open Calendar"
+                                            aria-hidden="true" style="cursor: pointer;">
+                                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#38bdf8"
+                                                stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                                                 <line x1="16" y1="2" x2="16" y2="6"></line>
                                                 <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -396,25 +438,20 @@
                                         </span>
                                         <input type="date" id="plan-date" class="form-input date-input" required />
                                     </div>
-                                    <button type="button" class="calendar-pick-btn" id="btn-plan-calendar-open" title="Open Calendar Picker">
-                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                                            <circle cx="8" cy="14" r="1.2" fill="#38bdf8"></circle>
-                                            <circle cx="12" cy="14" r="1.2" fill="#38bdf8"></circle>
-                                            <circle cx="16" cy="14" r="1.2" fill="#38bdf8"></circle>
-                                            <circle cx="8" cy="18" r="1.2" fill="#38bdf8"></circle>
-                                            <circle cx="12" cy="18" r="1.2" fill="#38bdf8"></circle>
-                                            <circle cx="16" cy="18" r="1.2" fill="#38bdf8"></circle>
+                                    <button type="button" id="btn-plan-date-today" class="btn-today-prominent"
+                                        title="Set to Today's Date">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+                                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polyline points="12 6 12 12 16 14"></polyline>
                                         </svg>
-                                        <span>CALENDAR</span>
+                                        <span>TODAY</span>
                                     </button>
                                 </div>
                                 <div class="time-epoch-row">
-                                    <span class="epoch-label">Epoch Time: <strong>12:00:00 UTC</strong> (Mid-day Sun transit reference)</span>
-                                    <button type="button" id="btn-plan-date-today" class="form-sub-btn">TODAY</button>
+                                    <span class="epoch-label">Epoch Time: <strong>12:00:00 UTC</strong> (Mid-day Sun
+                                        transit reference)</span>
                                 </div>
                             </div>
 
@@ -424,12 +461,14 @@
                             <!-- Action Buttons with Reset -->
                             <div class="form-actions">
                                 <button type="button" id="btn-analyse-landing-site" class="analyse-submit-btn">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                                        stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                                     </svg>
                                     <span>ANALYSE LANDING SITE</span>
                                 </button>
-                                <button type="button" id="btn-plan-reset" class="plan-reset-btn" title="Reset all input fields and analysis results">
+                                <button type="button" id="btn-plan-reset" class="plan-reset-btn"
+                                    title="Reset all input fields and analysis results">
                                     <span>RESET</span>
                                 </button>
                             </div>
@@ -441,25 +480,37 @@
                         <div class="results-panel-header">
                             <span class="results-badge" id="results-engine-badge">MISSION FEASIBILITY</span>
                             <h3 class="results-title">SITE FEASIBILITY ASSESSMENT</h3>
-                            <span class="results-coords-label" id="results-site-coords">Awaiting coordinates input...</span>
+                            <span class="results-coords-label" id="results-site-coords">Awaiting coordinates
+                                input...</span>
                         </div>
 
                         <!-- Initial Placeholder State (Before Submission) -->
                         <div id="results-idle-state" class="results-state-card idle-state">
                             <div class="state-icon">🛰️</div>
                             <h4 class="state-title">READY TO ANALYSE LANDING SITE</h4>
-                            <p class="state-desc">Specify proposed landing coordinates and target date on the left, then click <strong>Analyse Landing Site</strong> to query the mission planning module.</p>
+                            <p class="state-desc">Specify proposed landing coordinates and target date on the left, then
+                                click <strong>Analyse Landing Site</strong> to query the mission planning module.</p>
                         </div>
 
                         <!-- Loading State -->
                         <div id="results-loading-state" class="results-state-card loading-state" style="display: none;">
                             <div class="spinner"></div>
                             <h4 class="state-title">ANALYSING LANDING SITE</h4>
-                            <p class="state-desc" id="loading-status-text">Computing solar illumination, Earth communication visibility, and water ice proximity...</p>
+                            <p class="state-desc" id="loading-status-text">Computing solar illumination, Earth
+                                communication visibility, and water ice proximity...</p>
                         </div>
 
                         <!-- Populated Results Container -->
                         <div id="results-content-box" class="results-content-box" style="display: none;">
+
+                            <!-- Plain-Language Mission Decision Outlook Banner -->
+                            <div class="outlook-banner" id="plan-outlook-banner">
+                                <div class="outlook-header-row">
+                                    <span class="outlook-badge" id="plan-outlook-badge">EVALUATING SUITABILITY</span>
+                                    <span class="outlook-meta" id="plan-outlook-meta">144H MODELED EPHEMERIS · JPL HORIZONS DE440</span>
+                                </div>
+                                <p class="outlook-statement" id="plan-outlook-statement">Loading comprehensive visibility profile and scientific indicators...</p>
+                            </div>
 
                             <!-- Result Section A: Earth Communication Visibility -->
                             <div class="mission-card" id="card-earth-comm">
@@ -475,7 +526,8 @@
                                         <span class="primary-stat-label">DIRECT LINE-OF-SIGHT</span>
                                         <span class="primary-stat-value" id="val-earth-los">--</span>
                                     </div>
-                                    <p class="card-explanation" id="desc-earth-comm">Evaluating selenocentric Earth position vector and local horizon clearance...</p>
+                                    <p class="card-explanation" id="desc-earth-comm">Evaluating selenocentric Earth
+                                        position vector and local horizon clearance...</p>
                                     <div class="card-details-grid" id="grid-earth-comm">
                                         <div class="grid-cell">
                                             <span class="cell-label">EARTH ELEVATION</span>
@@ -507,7 +559,8 @@
                                         <span class="primary-stat-label">SOLAR STATE ON ARRIVAL</span>
                                         <span class="primary-stat-value" id="val-solar-state">--</span>
                                     </div>
-                                    <p class="card-explanation" id="desc-solar-power">Evaluating Sun altitude and LOLA crater rim obstruction profile...</p>
+                                    <p class="card-explanation" id="desc-solar-power">Evaluating Sun altitude and LOLA
+                                        crater rim obstruction profile...</p>
                                     <div class="card-details-grid" id="grid-solar-power">
                                         <div class="grid-cell">
                                             <span class="cell-label">SOLAR ELEVATION</span>
@@ -539,7 +592,8 @@
                                         <span class="primary-stat-label">NEAREST ICE DEPOSIT</span>
                                         <span class="primary-stat-value" id="val-ice-distance">-- km</span>
                                     </div>
-                                    <p class="card-explanation" id="desc-water-ice">Evaluating proximity to documented LRO LAMP/Mini-RF Permanently Shadowed Regions...</p>
+                                    <p class="card-explanation" id="desc-water-ice">Evaluating proximity to documented
+                                        LRO LAMP/Mini-RF Permanently Shadowed Regions...</p>
                                     <div class="card-details-grid" id="grid-water-ice">
                                         <div class="grid-cell">
                                             <span class="cell-label">EVIDENCE CLASS</span>
@@ -557,6 +611,91 @@
                                 </div>
                             </div>
 
+                            <!-- Result Section D: Regional Terrain Screening (LOLA Altimetry) -->
+                            <div class="mission-card" id="card-terrain">
+                                <div class="card-header">
+                                    <div class="card-header-left">
+                                        <span class="card-num">D</span>
+                                        <span class="card-title">REGIONAL TERRAIN SCREENING (LOLA ALTIMETRY)</span>
+                                    </div>
+                                    <span class="card-status-badge" id="badge-terrain">SCREENING</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="card-primary-stat">
+                                        <span class="primary-stat-label">SAMPLED ELEVATION</span>
+                                        <span class="primary-stat-value" id="val-terrain-elevation">-- m</span>
+                                    </div>
+                                    <p class="card-explanation" id="desc-terrain">Sampling LOLA Digital Elevation Model and regional slope parameters...</p>
+                                    <div class="card-details-grid" id="grid-terrain">
+                                        <div class="grid-cell">
+                                            <span class="cell-label">MEAN REGIONAL SLOPE</span>
+                                            <span class="cell-value" id="val-terrain-mean-slope">--°</span>
+                                        </div>
+                                        <div class="grid-cell">
+                                            <span class="cell-label">MAX REGIONAL SLOPE</span>
+                                            <span class="cell-value" id="val-terrain-max-slope">--°</span>
+                                        </div>
+                                        <div class="grid-cell">
+                                            <span class="cell-label">ELEVATION RANGE</span>
+                                            <span class="cell-value" id="val-terrain-range">-- m</span>
+                                        </div>
+                                        <div class="grid-cell">
+                                            <span class="cell-label">RASTER COVERAGE</span>
+                                            <span class="cell-value" id="val-terrain-coverage">--% (1km radius)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Result Section E: 144-Hour Mission Environmental Timeline -->
+                            <div class="mission-card" id="card-timeline">
+                                <div class="card-header">
+                                    <div class="card-header-left">
+                                        <span class="card-num">E</span>
+                                        <span class="card-title">144-HOUR ENVIRONMENTAL TIMELINE (6 DAYS)</span>
+                                    </div>
+                                    <span class="card-status-badge status-good">HOURLY MIDPOINT SAMPLES</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="timeline-legend-row">
+                                        <span class="timeline-legend-item"><span class="legend-swatch sun"></span> Sunlit (&gt;0° Elev)</span>
+                                        <span class="timeline-legend-item"><span class="legend-swatch earth"></span> Direct Earth View (&gt;0° Elev)</span>
+                                        <span class="timeline-legend-item"><span class="legend-swatch dark"></span> Occulted / Night</span>
+                                    </div>
+                                    <div id="plan-timeline-track" class="plan-timeline-track">
+                                        <!-- Populated with 6 days of hourly blocks -->
+                                    </div>
+                                    <div id="plan-timeline-inspector" class="plan-timeline-inspector">
+                                        <span id="plan-timeline-inspector-text">Hover or click any hourly block above to inspect local Sun & Earth angles.</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Improve This Plan Action Strip -->
+                            <div class="plan-actions-card">
+                                <div class="plan-actions-header">
+                                    <span class="plan-actions-badge">IMPROVE THIS PLAN</span>
+                                    <h4 class="plan-actions-title">Scientific Optimization & Stress Testing</h4>
+                                    <p class="plan-actions-subtitle">Query NASA ephemeris engines directly to test alternate mission windows or simulated launch slips.</p>
+                                </div>
+                                <div class="plan-actions-btn-row">
+                                    <button type="button" id="btn-plan-opt-windows" class="plan-opt-btn" title="Discover alternative dates with higher solar illumination">
+                                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                        <span>OPTIMIZE ARRIVAL WINDOW</span>
+                                    </button>
+                                    <button type="button" id="btn-plan-opt-stress" class="plan-opt-btn" title="Simulate a +1 to +3 day launch delay scenario">
+                                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                                        <span>STRESS TEST LAUNCH SLIP</span>
+                                    </button>
+                                    <button type="button" id="btn-plan-opt-compare" class="plan-opt-btn" title="Compare this location side-by-side with another candidate">
+                                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18" rx="1"></rect><rect x="14" y="3" width="7" height="18" rx="1"></rect></svg>
+                                        <span>COMPARE IN MULTI-SITE</span>
+                                    </button>
+                                </div>
+                                <!-- Inline results container for window optimizer & stress test -->
+                                <div id="plan-inline-tools-results" class="plan-inline-tools-results" style="display: none;"></div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -572,7 +711,9 @@
                         </div>
                         <h2 class="site-nav-title">Lunar Site Coordinator & Landing Navigator</h2>
                         <p class="site-nav-subtitle">
-                            Enter any target latitude and longitude to pinpoint the location on the 3D Moon, retrieve documented mission & crater data, and compute authentic NASA/JPL ephemeris solar illumination analysis.
+                            Enter any target latitude and longitude to pinpoint the location on the 3D Moon, retrieve
+                            documented mission & crater data, and compute authentic NASA/JPL ephemeris solar
+                            illumination analysis.
                         </p>
                     </div>
 
@@ -593,12 +734,17 @@
                                     </div>
                                     <div class="nav-form-input-group">
                                         <div class="nav-form-input-wrapper">
-                                            <input type="text" id="site-nav-lat" class="site-form-input" placeholder="e.g. 69.373 or 0.674" autocomplete="off" spellcheck="false" />
+                                            <input type="text" id="site-nav-lat" class="site-form-input"
+                                                placeholder="e.g. 69.373 or 0.674" autocomplete="off"
+                                                spellcheck="false" />
                                             <span class="nav-form-unit">°</span>
                                         </div>
-                                        <div class="hemi-toggle" id="site-lat-hemi-toggle" role="group" aria-label="North / South Hemisphere">
-                                            <button type="button" class="hemi-btn active" data-hemi="N" id="site-btn-hemi-n">N (+)</button>
-                                            <button type="button" class="hemi-btn" data-hemi="S" id="site-btn-hemi-s">S (-)</button>
+                                        <div class="hemi-toggle" id="site-lat-hemi-toggle" role="group"
+                                            aria-label="North / South Hemisphere">
+                                            <button type="button" class="hemi-btn active" data-hemi="N"
+                                                id="site-btn-hemi-n">N (+)</button>
+                                            <button type="button" class="hemi-btn" data-hemi="S" id="site-btn-hemi-s">S
+                                                (-)</button>
                                         </div>
                                     </div>
                                 </div>
@@ -611,16 +757,22 @@
                                     </div>
                                     <div class="nav-form-input-group">
                                         <div class="nav-form-input-wrapper">
-                                            <input type="text" id="site-nav-lon" class="site-form-input" placeholder="e.g. 32.319 or 23.473" autocomplete="off" spellcheck="false" />
+                                            <input type="text" id="site-nav-lon" class="site-form-input"
+                                                placeholder="e.g. 32.319 or 23.473" autocomplete="off"
+                                                spellcheck="false" />
                                             <span class="nav-form-unit">°</span>
                                         </div>
-                                        <div class="hemi-toggle" id="site-lon-hemi-toggle" role="group" aria-label="East / West Hemisphere">
-                                            <button type="button" class="hemi-btn active" data-hemi="E" id="site-btn-hemi-e">E (East +)</button>
-                                            <button type="button" class="hemi-btn" data-hemi="W" id="site-btn-hemi-w">W (West)</button>
+                                        <div class="hemi-toggle" id="site-lon-hemi-toggle" role="group"
+                                            aria-label="East / West Hemisphere">
+                                            <button type="button" class="hemi-btn active" data-hemi="E"
+                                                id="site-btn-hemi-e">E (East +)</button>
+                                            <button type="button" class="hemi-btn" data-hemi="W" id="site-btn-hemi-w">W
+                                                (West)</button>
                                         </div>
                                     </div>
                                     <span class="coord-convention-note">
-                                        NASA Mean Earth / Polar Axis (ME) frame. Coordinates default to East-positive 0°–360° or signed -180° to +180°.
+                                        NASA Mean Earth / Polar Axis (ME) frame. Coordinates default to East-positive
+                                        0°–360° or signed -180° to +180°.
                                     </span>
                                 </div>
 
@@ -633,7 +785,9 @@
                                     <div class="nav-form-input-group">
                                         <div class="nav-form-input-wrapper date-wrapper">
                                             <span class="calendar-symbol-icon" title="Open Calendar" aria-hidden="true">
-                                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                                                    stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round"
+                                                    stroke-linejoin="round">
                                                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                                                     <line x1="16" y1="2" x2="16" y2="6"></line>
                                                     <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -642,8 +796,10 @@
                                             </span>
                                             <input type="date" id="site-nav-date" class="site-form-input date-input" />
                                         </div>
-                                        <button type="button" class="calendar-pick-btn" id="btn-site-calendar-open" title="Open Calendar Picker">
-                                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <button type="button" class="calendar-pick-btn" id="btn-site-calendar-open"
+                                            title="Open Calendar Picker">
+                                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#38bdf8"
+                                                stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                                                 <line x1="16" y1="2" x2="16" y2="6"></line>
                                                 <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -659,7 +815,8 @@
                                         </button>
                                     </div>
                                     <div class="site-epoch-row">
-                                        <span class="site-epoch-text">Ephemeris Epoch: <strong>12:00:00 UTC</strong></span>
+                                        <span class="site-epoch-text">Ephemeris Epoch: <strong>12:00:00
+                                                UTC</strong></span>
                                         <button type="button" id="site-btn-today" class="site-today-btn">TODAY</button>
                                     </div>
                                 </div>
@@ -670,7 +827,9 @@
                                 <!-- Primary Action Button -->
                                 <div class="site-action-row">
                                     <button type="button" id="btn-site-nav-submit" class="site-nav-submit-btn">
-                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                                            stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
+                                            stroke-linejoin="round">
                                             <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
                                         </svg>
                                         <span>POINT ON MOON & RUN ANALYSIS →</span>
@@ -688,10 +847,12 @@
                                 <span class="site-card-title">QUICK LUNAR PRESETS</span>
                                 <span class="site-card-tag">VERIFIED SITES</span>
                             </div>
-                            <p class="presets-intro">Select a historic Apollo landing site, international robotic probe, or prominent IAU lunar crater to pre-populate coordinates:</p>
+                            <p class="presets-intro">Select a historic Apollo landing site, international robotic probe,
+                                or prominent IAU lunar crater to pre-populate coordinates:</p>
 
                             <div class="site-presets-grid" id="site-presets-grid">
-                                <button type="button" class="preset-card" data-lat="0.674" data-hemi-lat="N" data-lon="23.473" data-hemi-lon="E" data-name="Apollo 11 (Mare Tranquillitatis)">
+                                <button type="button" class="preset-card" data-lat="0.674" data-hemi-lat="N"
+                                    data-lon="23.473" data-hemi-lon="E" data-name="Apollo 11 (Mare Tranquillitatis)">
                                     <div class="preset-top">
                                         <span class="preset-name">Apollo 11</span>
                                         <span class="preset-badge nasa">NASA</span>
@@ -700,7 +861,8 @@
                                     <span class="preset-coords">0.674° N, 23.473° E</span>
                                 </button>
 
-                                <button type="button" class="preset-card" data-lat="69.373" data-hemi-lat="S" data-lon="32.319" data-hemi-lon="E" data-name="Chandrayaan-3 (Shiv Shakti)">
+                                <button type="button" class="preset-card" data-lat="69.373" data-hemi-lat="S"
+                                    data-lon="32.319" data-hemi-lon="E" data-name="Chandrayaan-3 (Shiv Shakti)">
                                     <div class="preset-top">
                                         <span class="preset-name">Chandrayaan-3</span>
                                         <span class="preset-badge isro">ISRO</span>
@@ -709,7 +871,8 @@
                                     <span class="preset-coords">69.373° S, 32.319° E</span>
                                 </button>
 
-                                <button type="button" class="preset-card" data-lat="45.444" data-hemi-lat="S" data-lon="177.588" data-hemi-lon="E" data-name="Chang'e 4 (Von Kármán)">
+                                <button type="button" class="preset-card" data-lat="45.444" data-hemi-lat="S"
+                                    data-lon="177.588" data-hemi-lon="E" data-name="Chang'e 4 (Von Kármán)">
                                     <div class="preset-top">
                                         <span class="preset-name">Chang'e 4</span>
                                         <span class="preset-badge cnsa">CNSA</span>
@@ -718,7 +881,8 @@
                                     <span class="preset-coords">45.444° S, 177.588° E</span>
                                 </button>
 
-                                <button type="button" class="preset-card" data-lat="26.132" data-hemi-lat="N" data-lon="3.634" data-hemi-lon="E" data-name="Apollo 15 (Hadley Rille)">
+                                <button type="button" class="preset-card" data-lat="26.132" data-hemi-lat="N"
+                                    data-lon="3.634" data-hemi-lon="E" data-name="Apollo 15 (Hadley Rille)">
                                     <div class="preset-top">
                                         <span class="preset-name">Apollo 15</span>
                                         <span class="preset-badge nasa">NASA</span>
@@ -727,7 +891,8 @@
                                     <span class="preset-coords">26.132° N, 3.634° E</span>
                                 </button>
 
-                                <button type="button" class="preset-card" data-lat="89.9" data-hemi-lat="S" data-lon="0.0" data-hemi-lon="E" data-name="Shackleton Crater">
+                                <button type="button" class="preset-card" data-lat="89.9" data-hemi-lat="S"
+                                    data-lon="0.0" data-hemi-lon="E" data-name="Shackleton Crater">
                                     <div class="preset-top">
                                         <span class="preset-name">Shackleton Rim</span>
                                         <span class="preset-badge polar">POLAR</span>
@@ -736,7 +901,8 @@
                                     <span class="preset-coords">89.900° S, 0.000° E</span>
                                 </button>
 
-                                <button type="button" class="preset-card" data-lat="43.31" data-hemi-lat="S" data-lon="11.36" data-hemi-lon="W" data-name="Tycho Crater">
+                                <button type="button" class="preset-card" data-lat="43.31" data-hemi-lat="S"
+                                    data-lon="11.36" data-hemi-lon="W" data-name="Tycho Crater">
                                     <div class="preset-top">
                                         <span class="preset-name">Tycho Crater</span>
                                         <span class="preset-badge crater">IAU</span>
@@ -745,7 +911,8 @@
                                     <span class="preset-coords">43.310° S, 11.360° W</span>
                                 </button>
 
-                                <button type="button" class="preset-card" data-lat="9.62" data-hemi-lat="N" data-lon="20.08" data-hemi-lon="W" data-name="Copernicus Crater">
+                                <button type="button" class="preset-card" data-lat="9.62" data-hemi-lat="N"
+                                    data-lon="20.08" data-hemi-lon="W" data-name="Copernicus Crater">
                                     <div class="preset-top">
                                         <span class="preset-name">Copernicus</span>
                                         <span class="preset-badge crater">IAU</span>
@@ -754,7 +921,8 @@
                                     <span class="preset-coords">9.620° N, 20.080° W</span>
                                 </button>
 
-                                <button type="button" class="preset-card" data-lat="32.8" data-hemi-lat="N" data-lon="15.6" data-hemi-lon="W" data-name="Mare Imbrium">
+                                <button type="button" class="preset-card" data-lat="32.8" data-hemi-lat="N"
+                                    data-lon="15.6" data-hemi-lon="W" data-name="Mare Imbrium">
                                     <div class="preset-top">
                                         <span class="preset-name">Mare Imbrium</span>
                                         <span class="preset-badge mare">MARE</span>
@@ -768,23 +936,470 @@
                 </div>
             </div>
 
-            <!-- Page 3: Comparative Study (Yet to Work) -->
+            <!-- Page 3: Comparative Study (Connected to Backend) -->
             <div id="view-comparative-study" class="page-view-content">
-                <div class="yet-to-work-card">
-                    <div class="ytw-badge">MODULE PENDING</div>
-                    <h2 class="ytw-heading">COMPARATIVE STUDY</h2>
-                    <div class="ytw-notice">YET TO WORK</div>
-                    <p class="ytw-desc">This module is currently in specification and will be integrated in an upcoming release.</p>
+                <div class="site-nav-container compare-page-container">
+                    <div class="site-nav-header">
+                        <div class="site-nav-badge-row">
+                            <span class="site-nav-badge">MULTI-SITE SCIENTIFIC EVALUATION</span>
+                            <span class="site-nav-subbadge">SHARED UTC WINDOW · HORIZONS DE440</span>
+                        </div>
+                        <h2 class="site-nav-title">Lunar Site Comparative Study & Optimization</h2>
+                        <p class="site-nav-subtitle">
+                            Evaluate two candidate lunar landing locations over an identical UTC observation window,
+                            analyze environmental tradeoffs, simulate launch delays with stress tests, and scan for
+                            optimal illumination dates.
+                        </p>
+                    </div>
+
+                    <!-- Comparison Input Grid: Site A, Site B, and Shared Mission Window -->
+                    <div class="compare-input-grid">
+                        <!-- Site A Card -->
+                        <div class="site-nav-card compare-site-card" id="cmp-card-a">
+                            <div class="cmp-card-tag tag-a">SITE A (PRIMARY)</div>
+                            <h3 class="cmp-card-heading" id="cmp-site-a-label">Malapert Mountain (South Pole)</h3>
+                            <div class="cmp-coords-row">
+                                <div class="cmp-input-group">
+                                    <label for="cmp-a-lat">LATITUDE (°)</label>
+                                    <input type="number" id="cmp-a-lat" class="cmp-number-input" step="0.001" min="-90"
+                                        max="90" value="-85.200">
+                                </div>
+                                <div class="cmp-input-group">
+                                    <label for="cmp-a-lon">LONGITUDE (° E)</label>
+                                    <input type="number" id="cmp-a-lon" class="cmp-number-input" step="0.001" min="-180"
+                                        max="360" value="32.500">
+                                </div>
+                            </div>
+                            <div class="cmp-presets-label">QUICK TARGET PRESETS</div>
+                            <div class="cmp-presets-row">
+                                <button type="button" class="cmp-preset-pill" data-target="a" data-name="Malapert Mtn"
+                                    data-lat="-85.2" data-lon="32.5">Malapert Mtn</button>
+                                <button type="button" class="cmp-preset-pill" data-target="a" data-name="Shackleton Rim"
+                                    data-lat="-89.9" data-lon="0.0">Shackleton Rim</button>
+                                <button type="button" class="cmp-preset-pill" data-target="a" data-name="Apollo 11"
+                                    data-lat="0.674" data-lon="23.473">Apollo 11</button>
+                                <button type="button" class="cmp-preset-pill current-site-btn"
+                                    id="btn-cmp-use-current-a">Use Current Moon Point</button>
+                            </div>
+                        </div>
+
+                        <!-- Site B Card -->
+                        <div class="site-nav-card compare-site-card" id="cmp-card-b">
+                            <div class="cmp-card-tag tag-b">SITE B (CANDIDATE)</div>
+                            <h3 class="cmp-card-heading" id="cmp-site-b-label">Connecting Ridge (South Pole)</h3>
+                            <div class="cmp-coords-row">
+                                <div class="cmp-input-group">
+                                    <label for="cmp-b-lat">LATITUDE (°)</label>
+                                    <input type="number" id="cmp-b-lat" class="cmp-number-input" step="0.001" min="-90"
+                                        max="90" value="-80.000">
+                                </div>
+                                <div class="cmp-input-group">
+                                    <label for="cmp-b-lon">LONGITUDE (° E)</label>
+                                    <input type="number" id="cmp-b-lon" class="cmp-number-input" step="0.001" min="-180"
+                                        max="360" value="45.000">
+                                </div>
+                            </div>
+                            <div class="cmp-presets-label">QUICK TARGET PRESETS</div>
+                            <div class="cmp-presets-row">
+                                <button type="button" class="cmp-preset-pill" data-target="b"
+                                    data-name="Connecting Ridge" data-lat="-80.0" data-lon="45.0">Connecting
+                                    Ridge</button>
+                                <button type="button" class="cmp-preset-pill" data-target="b"
+                                    data-name="de Gerlache Rim" data-lat="-87.5" data-lon="301.0">de Gerlache
+                                    Rim</button>
+                                <button type="button" class="cmp-preset-pill" data-target="b" data-name="Chandrayaan-3"
+                                    data-lat="-69.37" data-lon="32.35">Chandrayaan-3</button>
+                                <button type="button" class="cmp-preset-pill current-site-btn"
+                                    id="btn-cmp-use-current-b">Use Current Moon Point</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shared Mission Window Strip -->
+                    <div class="site-nav-card compare-window-card">
+                        <div class="cmp-window-flex">
+                            <div class="cmp-window-col">
+                                <label for="cmp-start-date" class="cmp-field-label">SHARED UTC START DATE</label>
+                                <input type="date" id="cmp-start-date" class="cmp-date-input" value="2026-11-20">
+                            </div>
+                            <div class="cmp-window-col">
+                                <label for="cmp-duration" class="cmp-field-label">MISSION DURATION</label>
+                                <select id="cmp-duration" class="cmp-select-input">
+                                    <option value="72">3 Earth Days (72 Hours)</option>
+                                    <option value="144" selected>6 Earth Days (144 Hours) · NASA Standard</option>
+                                    <option value="240">10 Earth Days (240 Hours)</option>
+                                    <option value="360">15 Earth Days (360 Hours)</option>
+                                </select>
+                            </div>
+                            <div class="cmp-window-actions">
+                                <button type="button" id="btn-run-compare" class="site-nav-submit-btn cmp-submit-btn">
+                                    <span>RUN COMPARATIVE STUDY</span>
+                                    <span class="btn-arrow">→</span>
+                                </button>
+                                <button type="button" id="btn-reset-compare" class="site-nav-reset-btn cmp-reset-btn"
+                                    title="Reset Inputs to Defaults">
+                                    RESET
+                                </button>
+                            </div>
+                        </div>
+                        <div id="cmp-form-error" class="form-error-banner" style="display: none;"></div>
+                    </div>
+
+                    <!-- Loading State Indicator -->
+                    <div id="cmp-loading-state" class="cmp-loading-box" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-title">QUERYING NASA JPL HORIZONS EPHEMERIS</div>
+                        <p class="loading-subtext" id="cmp-loading-subtext">Evaluating Sun & Earth geometric vectors for
+                            Site A and Site B across 144 hourly midpoint samples...</p>
+                    </div>
+
+                    <!-- Comparison Results Container -->
+                    <div id="cmp-results-container" class="cmp-results-container" style="display: none;">
+                        <!-- Results Status Banner -->
+                        <div class="cmp-status-banner">
+                            <span class="cmp-status-dot"></span>
+                            <span class="cmp-status-text" id="cmp-status-text">Verified NASA Horizons Comparison · 144
+                                Hourly Midpoints</span>
+                            <span class="cmp-provenance-badge" id="cmp-provenance-badge">JPL HORIZONS DE440</span>
+                        </div>
+
+                        <!-- Side-by-Side Comparison Grid -->
+                        <div class="cmp-metrics-grid">
+                            <!-- Sunlight Availability Card -->
+                            <div class="cmp-metric-box">
+                                <div class="cmp-metric-header">
+                                    <span class="cmp-metric-title">SUNLIGHT AVAILABILITY (%)</span>
+                                    <span class="cmp-metric-sub">Geometric Sun > 0° Horizon</span>
+                                </div>
+                                <div class="cmp-metric-values">
+                                    <div class="cmp-val-col col-a">
+                                        <span class="cmp-val-label">SITE A</span>
+                                        <span class="cmp-val-num" id="cmp-metric-sun-a">--%</span>
+                                    </div>
+                                    <div class="cmp-val-divider">VS</div>
+                                    <div class="cmp-val-col col-b">
+                                        <span class="cmp-val-label">SITE B</span>
+                                        <span class="cmp-val-num" id="cmp-metric-sun-b">--%</span>
+                                    </div>
+                                </div>
+                                <div class="cmp-winner-badge" id="cmp-winner-sun">--</div>
+                            </div>
+
+                            <!-- Direct Earth View Card -->
+                            <div class="cmp-metric-box">
+                                <div class="cmp-metric-header">
+                                    <span class="cmp-metric-title">DIRECT EARTH VIEW (%)</span>
+                                    <span class="cmp-metric-sub">Line-of-Sight Earth > 0°</span>
+                                </div>
+                                <div class="cmp-metric-values">
+                                    <div class="cmp-val-col col-a">
+                                        <span class="cmp-val-label">SITE A</span>
+                                        <span class="cmp-val-num" id="cmp-metric-earth-a">--%</span>
+                                    </div>
+                                    <div class="cmp-val-divider">VS</div>
+                                    <div class="cmp-val-col col-b">
+                                        <span class="cmp-val-label">SITE B</span>
+                                        <span class="cmp-val-num" id="cmp-metric-earth-b">--%</span>
+                                    </div>
+                                </div>
+                                <div class="cmp-winner-badge" id="cmp-winner-earth">--</div>
+                            </div>
+
+                            <!-- Longest Darkness Card -->
+                            <div class="cmp-metric-box">
+                                <div class="cmp-metric-header">
+                                    <span class="cmp-metric-title">LONGEST DARKNESS (HOURS)</span>
+                                    <span class="cmp-metric-sub">Max Consecutive Shadow</span>
+                                </div>
+                                <div class="cmp-metric-values">
+                                    <div class="cmp-val-col col-a">
+                                        <span class="cmp-val-label">SITE A</span>
+                                        <span class="cmp-val-num" id="cmp-metric-dark-a">-- h</span>
+                                    </div>
+                                    <div class="cmp-val-divider">VS</div>
+                                    <div class="cmp-val-col col-b">
+                                        <span class="cmp-val-label">SITE B</span>
+                                        <span class="cmp-val-num" id="cmp-metric-dark-b">-- h</span>
+                                    </div>
+                                </div>
+                                <div class="cmp-winner-badge" id="cmp-winner-dark">--</div>
+                            </div>
+
+                            <!-- Longest Earth Comm Gap Card -->
+                            <div class="cmp-metric-box">
+                                <div class="cmp-metric-header">
+                                    <span class="cmp-metric-title">LONGEST EARTH GAP (HOURS)</span>
+                                    <span class="cmp-metric-sub">Max Communication Outage</span>
+                                </div>
+                                <div class="cmp-metric-values">
+                                    <div class="cmp-val-col col-a">
+                                        <span class="cmp-val-label">SITE A</span>
+                                        <span class="cmp-val-num" id="cmp-metric-comm-a">-- h</span>
+                                    </div>
+                                    <div class="cmp-val-divider">VS</div>
+                                    <div class="cmp-val-col col-b">
+                                        <span class="cmp-val-label">SITE B</span>
+                                        <span class="cmp-val-num" id="cmp-metric-comm-b">-- h</span>
+                                    </div>
+                                </div>
+                                <div class="cmp-winner-badge" id="cmp-winner-comm">--</div>
+                            </div>
+                        </div>
+
+                        <!-- Tradeoff & Decision Summary Insights -->
+                        <div class="cmp-tradeoff-panel">
+                            <div class="cmp-tradeoff-header">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#38bdf8"
+                                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                                <span class="cmp-tradeoff-title">SCIENTIFIC TRADEOFF ANALYSIS</span>
+                            </div>
+                            <ul id="cmp-tradeoffs-list" class="cmp-tradeoffs-list">
+                                <li>Running analysis...</li>
+                            </ul>
+                            <div class="cmp-actions-row">
+                                <button type="button" id="btn-cmp-fly-a" class="cmp-action-btn">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <span>FLY TO SITE A ON 3D MOON</span>
+                                </button>
+                                <button type="button" id="btn-cmp-fly-b" class="cmp-action-btn">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <span>FLY TO SITE B ON 3D MOON</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mission Stress-Test Box: Launch Slip Simulator -->
+                        <div class="cmp-tool-box">
+                            <div class="cmp-tool-header">
+                                <span class="cmp-tool-badge">MISSION STRESS TEST</span>
+                                <h3 class="cmp-tool-title">Launch Delay Sensitivity Simulator</h3>
+                                <p class="cmp-tool-desc">Test how conditions change at Site A if launch or touchdown
+                                    slips by several days.</p>
+                            </div>
+                            <div class="cmp-stress-controls">
+                                <span class="cmp-stress-label">SIMULATE LAUNCH SLIP:</span>
+                                <button type="button" class="cmp-stress-btn" data-slip="1">+1 DAY SLIP</button>
+                                <button type="button" class="cmp-stress-btn" data-slip="3">+3 DAYS SLIP</button>
+                                <button type="button" class="cmp-stress-btn" data-slip="6">+6 DAYS SLIP</button>
+                            </div>
+                            <div id="cmp-stress-results" class="cmp-stress-results" style="display: none;">
+                                <div class="cmp-stress-delta-row">
+                                    <div class="stress-delta-item">
+                                        <span class="delta-label">SUNLIGHT Δ</span>
+                                        <span id="stress-delta-sun" class="delta-val">--%</span>
+                                    </div>
+                                    <div class="stress-delta-item">
+                                        <span class="delta-label">EARTH VIEW Δ</span>
+                                        <span id="stress-delta-earth" class="delta-val">--%</span>
+                                    </div>
+                                    <div class="stress-delta-item">
+                                        <span class="delta-label">MAX DARKNESS Δ</span>
+                                        <span id="stress-delta-dark" class="delta-val">-- h</span>
+                                    </div>
+                                    <div class="stress-delta-item">
+                                        <span class="delta-label">MAX COMM GAP Δ</span>
+                                        <span id="stress-delta-comm" class="delta-val">-- h</span>
+                                    </div>
+                                </div>
+                                <div id="stress-impact-text" class="stress-impact-text">--</div>
+                            </div>
+                        </div>
+
+                        <!-- Better Mission Windows Optimizer -->
+                        <div class="cmp-tool-box">
+                            <div class="cmp-tool-header">
+                                <span class="cmp-tool-badge">MISSION WINDOWS</span>
+                                <h3 class="cmp-tool-title">Candidate Date Illumination Optimizer</h3>
+                                <p class="cmp-tool-desc">Scan alternative departure dates across a ±7 day range to
+                                    discover optimal lighting conditions for Site A.</p>
+                            </div>
+                            <div class="cmp-windows-controls">
+                                <div class="cmp-priority-select-wrap">
+                                    <label for="cmp-windows-priority">OPTIMIZATION PRIORITY:</label>
+                                    <select id="cmp-windows-priority" class="cmp-select-input small">
+                                        <option value="balanced" selected>Balanced (Sunlight & Earth Comm)</option>
+                                        <option value="max_sunlight">Maximize Solar Illumination</option>
+                                        <option value="min_earth_gap">Minimize Earth Comm Outage</option>
+                                    </select>
+                                </div>
+                                <button type="button" id="btn-scan-windows" class="cmp-action-btn scan-btn">
+                                    <span>SCAN BETTER WINDOWS</span>
+                                    <span class="btn-arrow">→</span>
+                                </button>
+                            </div>
+                            <div id="cmp-windows-results" class="cmp-windows-results" style="display: none;">
+                                <div class="windows-preferred-card" id="cmp-preferred-window-card">
+                                    <!-- Populated via API -->
+                                </div>
+                                <div class="windows-candidates-list" id="cmp-candidates-list">
+                                    <!-- Populated via API -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Page 4: History (Yet to Work) -->
+            <!-- Page 4: History (Connected to Backend) -->
             <div id="view-history" class="page-view-content">
-                <div class="yet-to-work-card">
-                    <div class="ytw-badge">MODULE PENDING</div>
-                    <h2 class="ytw-heading">HISTORY</h2>
-                    <div class="ytw-notice">YET TO WORK</div>
-                    <p class="ytw-desc">This module is currently in specification and will be integrated in an upcoming release.</p>
+                <div class="site-nav-container history-page-container">
+                    <div class="site-nav-header">
+                        <div class="site-nav-badge-row">
+                            <span class="site-nav-badge">VERIFIED LUNAR MISSIONS</span>
+                            <span class="site-nav-subbadge">NASA / ISRO / CNSA / JAXA OFFICIAL ARCHIVES</span>
+                        </div>
+                        <h2 class="site-nav-title">Historical Lunar Missions & Environmental Replay</h2>
+                        <p class="site-nav-subtitle">
+                            Explore verified spacecraft missions that attempted or achieved lunar landings. Examine
+                            documented landing and impact coordinates on the 3D Moon, replay modeled Sun & Earth
+                            visibility conditions at touchdown, and compare historical sites against your candidate
+                            targets.
+                        </p>
+                    </div>
+
+                    <!-- Filter Bar -->
+                    <div class="history-filter-bar">
+                        <button type="button" class="history-filter-pill active" data-filter="all">All Missions
+                            (6)</button>
+                        <button type="button" class="history-filter-pill" data-filter="success">Successful Landings
+                            (3)</button>
+                        <button type="button" class="history-filter-pill" data-filter="impact">Impact / Off-Nominal
+                            (3)</button>
+                        <button type="button" class="history-filter-pill" data-filter="south_pole">South Polar Region
+                            (3)</button>
+                        <button type="button" class="history-filter-pill" data-filter="far_side">Far Side (1)</button>
+                    </div>
+
+                    <!-- Mission Cards Grid -->
+                    <div id="history-missions-grid" class="history-missions-grid">
+                        <!-- Dynamically filled from GET /api/missions -->
+                    </div>
+
+                    <!-- Mission Detail & Replay Drawer/Modal -->
+                    <div id="history-detail-modal" class="history-detail-modal" style="display: none;">
+                        <div class="history-modal-backdrop" id="history-modal-backdrop"></div>
+                        <div class="history-modal-content">
+                            <div class="history-modal-header">
+                                <div class="modal-title-wrap">
+                                    <span class="modal-country-badge" id="hmodal-country">COUNTRY</span>
+                                    <h3 class="modal-title" id="hmodal-name">Mission Name</h3>
+                                    <span class="modal-operator" id="hmodal-operator">Operator Agency</span>
+                                </div>
+                                <button type="button" class="modal-close-btn" id="btn-close-history-modal"
+                                    title="Close">✕</button>
+                            </div>
+                            <div class="history-modal-body">
+                                <!-- Status & Timestamp Strip -->
+                                <div class="modal-strip">
+                                    <div class="modal-strip-item">
+                                        <span class="strip-label">OUTCOME</span>
+                                        <span class="strip-value" id="hmodal-outcome">Successful</span>
+                                    </div>
+                                    <div class="modal-strip-item">
+                                        <span class="strip-label">LANDING TIME (UTC)</span>
+                                        <span class="strip-value" id="hmodal-time">--</span>
+                                    </div>
+                                    <div class="modal-strip-item">
+                                        <span class="strip-label">LOCATION TYPE</span>
+                                        <span class="strip-value" id="hmodal-loctype">Actual Landing</span>
+                                    </div>
+                                    <div class="modal-strip-item">
+                                        <span class="strip-label">COORDINATES</span>
+                                        <span class="strip-value" id="hmodal-coords">--</span>
+                                    </div>
+                                </div>
+
+                                <!-- Narrative & Goals -->
+                                <div class="modal-section">
+                                    <h4 class="modal-sec-heading">MISSION OBJECTIVE</h4>
+                                    <p class="modal-sec-text" id="hmodal-objective">--</p>
+                                </div>
+
+                                <div class="modal-section">
+                                    <h4 class="modal-sec-heading">WHAT HAPPENED & KEY ACHIEVEMENTS</h4>
+                                    <p class="modal-sec-text" id="hmodal-happened">--</p>
+                                    <ul class="modal-achievements-list" id="hmodal-achievements"></ul>
+                                </div>
+
+                                <!-- Modeled Environmental Replay Section -->
+                                <div class="modal-replay-box">
+                                    <div class="replay-box-header">
+                                        <span class="replay-badge">MODELED REPLAY</span>
+                                        <h4 class="replay-title">Environmental Conditions at Touchdown</h4>
+                                        <p class="replay-desc">Modeled Sun and Earth geometric visibility calculated by
+                                            JPL Horizons for this historical event coordinate and time.</p>
+                                    </div>
+                                    <button type="button" id="btn-run-replay" class="cmp-action-btn replay-btn">
+                                        <span>REPLAY MODELED CONDITIONS (144-HOUR WINDOW)</span>
+                                        <span class="btn-arrow">→</span>
+                                    </button>
+                                    <div id="replay-results-box" class="replay-results-box" style="display: none;">
+                                        <div class="replay-metrics-row">
+                                            <div class="replay-stat">
+                                                <span class="stat-lbl">SUNLIGHT AVAILABILITY</span>
+                                                <span class="stat-num" id="replay-val-sun">--%</span>
+                                            </div>
+                                            <div class="replay-stat">
+                                                <span class="stat-lbl">DIRECT EARTH VIEW</span>
+                                                <span class="stat-num" id="replay-val-earth">--%</span>
+                                            </div>
+                                            <div class="replay-stat">
+                                                <span class="stat-lbl">LONGEST DARKNESS</span>
+                                                <span class="stat-num" id="replay-val-dark">-- h</span>
+                                            </div>
+                                            <div class="replay-stat">
+                                                <span class="stat-lbl">LONGEST COMM GAP</span>
+                                                <span class="stat-num" id="replay-val-gap">-- h</span>
+                                            </div>
+                                        </div>
+                                        <div class="replay-first-sample" id="replay-first-sample-text">
+                                            Touchdown Midpoint: Sun elevation --°, Earth elevation --°
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Official Citations & Sources -->
+                                <div class="modal-section">
+                                    <h4 class="modal-sec-heading">OFFICIAL SOURCES & CITATIONS</h4>
+                                    <div class="modal-sources-list" id="hmodal-sources"></div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="modal-actions-row">
+                                    <button type="button" id="btn-hmodal-fly" class="site-nav-submit-btn">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76">
+                                            </polygon>
+                                        </svg>
+                                        <span>VIEW THIS SITE ON 3D MOON</span>
+                                    </button>
+                                    <button type="button" id="btn-hmodal-compare"
+                                        class="cmp-action-btn compare-site-btn">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <rect x="3" y="3" width="7" height="18" rx="1"></rect>
+                                            <rect x="14" y="3" width="7" height="18" rx="1"></rect>
+                                        </svg>
+                                        <span>COMPARE THIS SITE (AS SITE A)</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

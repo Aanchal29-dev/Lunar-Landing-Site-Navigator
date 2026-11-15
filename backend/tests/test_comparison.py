@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from app.main import create_app
 from app.models import AnalysisRequest, AnalysisResponse, Location, Metrics, ModelMetadata, TimelineEntry
 from app.services.horizons import HorizonsError
+from app.comparison_service import _score_window, _summarize_tradeoffs
 
 
 async def fake_analyze_visibility(request: AnalysisRequest, _client) -> AnalysisResponse:
@@ -173,3 +174,56 @@ def test_compare_accepts_a_documented_zero_to_360_historical_longitude(mock_visi
     assert response.status_code == 200
     assert response.json()["results"][0]["longitude_deg"] == -137.501985
     assert mock_visibility.call_args_list[0].args[0].longitude_deg == -137.501985
+
+
+def _compared_item(label: str, sunlight: float, earth_gap: int):
+    request = AnalysisRequest(
+        latitude_deg=0.0, longitude_deg=0.0, start_utc="2027-01-15T00:00:00Z", duration_hours=1
+    )
+    # The helper creates a valid typed response, then gives the test exact metric values.
+    return {
+        "label": label,
+        "latitude_deg": 0.0,
+        "longitude_deg": 0.0,
+        "status": "ok",
+        "visibility": AnalysisResponse(
+            location=Location(latitude_deg=0.0, longitude_deg=0.0),
+            start_utc=request.start_utc,
+            end_utc=request.start_utc + timedelta(hours=1),
+            duration_hours=1,
+            metrics=Metrics(
+                sunlight_percent=sunlight,
+                earth_visibility_percent=50.0,
+                longest_darkness_hours=0,
+                longest_earth_gap_hours=earth_gap,
+            ),
+            timeline=[TimelineEntry(
+                interval_start_utc=request.start_utc, interval_end_utc=request.start_utc + timedelta(hours=1),
+                sample_utc=request.start_utc + timedelta(minutes=30), sun_azimuth_deg=0.0,
+                sun_elevation_deg=1.0, earth_azimuth_deg=0.0, earth_elevation_deg=1.0,
+                sun_visible=True, earth_visible=True,
+            )],
+            model=ModelMetadata(lunar_reference_frame="MOON_ME", lunar_radii_km=(1737.4, 1737.4, 1737.4)),
+        ),
+        "terrain_available": False,
+    }
+
+
+def test_tradeoffs_keep_duplicate_labels_distinct_and_do_not_invent_a_tie_tradeoff():
+    from app.comparison_models import ComparedLocationItem
+
+    duplicate_labels = [ComparedLocationItem(**_compared_item("Site", 80.0, 8)), ComparedLocationItem(**_compared_item("Site", 60.0, 2))]
+    notes = _summarize_tradeoffs(duplicate_labels)
+    assert any("Site (site 1)" in note for note in notes)
+    assert any("Site (site 2)" in note for note in notes)
+
+    tied_sunlight = [ComparedLocationItem(**_compared_item("A", 80.0, 8)), ComparedLocationItem(**_compared_item("B", 80.0, 2))]
+    notes = _summarize_tradeoffs(tied_sunlight)
+    assert len(notes) == 1
+    assert "Earth-view gap" in notes[0]
+
+
+def test_window_selection_uses_unrounded_scores():
+    first = Metrics(sunlight_percent=50.004, earth_visibility_percent=0, longest_darkness_hours=0, longest_earth_gap_hours=0)
+    second = Metrics(sunlight_percent=50.003, earth_visibility_percent=0, longest_darkness_hours=0, longest_earth_gap_hours=0)
+    assert _score_window(first, 1, "max_sunlight") > _score_window(second, 1, "max_sunlight")
