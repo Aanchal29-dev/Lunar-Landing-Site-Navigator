@@ -33,7 +33,7 @@ describe("ExplorePage analysis workflow", () => {
     expect(screen.queryByRole("heading", { name: "Sun and Earth visibility" })).toBeNull();
     fireEvent.change(screen.getByLabelText("Duration (hours)"), { target: { value: "1" } });
     fireEvent.click(screen.getByRole("button", { name: "Save mission window" }));
-    fireEvent.click(screen.getByRole("button", { name: "Select test site" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Select test site" }));
     fireEvent.click(screen.getByRole("button", { name: "Analyze Sun and Earth visibility" }));
 
     expect(await screen.findByRole("heading", { name: "Sun and Earth visibility" })).not.toBeNull();
