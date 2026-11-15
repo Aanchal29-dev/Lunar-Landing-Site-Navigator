@@ -54,6 +54,14 @@ During development, `vite.config.ts` proxies `/api` and `/health` to
 deliberately configured local backend. Production must route the same paths
 through its reverse proxy or explicitly configured API origin.
 
+The application root uses a narrow error boundary. An unexpected rendering
+failure shows a recovery link instead of a blank document and does not expose
+exception contents, selected coordinates, or scientific values. The boundary
+does not turn API or calculation failures into success: those remain explicit
+screen-level error states. The WebGL globe is imported only when the Explore
+route renders; its `three` dependency is intentionally an asynchronous bundle
+so it does not delay the initial navigation shell.
+
 ## Scientific result policy
 
 No frontend fallback may present a local approximation as NASA-derived data.
@@ -78,3 +86,12 @@ cd backend
 
 Then update the typed frontend boundary and its tests in the same pull request.
 `backend/tests/test_openapi_contract.py` rejects stale snapshots.
+
+## Release verification
+
+From the repository root, `npm run verify` runs the frontend type check, unit
+tests and production build. From `backend/`, run
+`python -B -m pytest -q -p no:cacheprovider` with its virtual environment.
+The offline suite is the release baseline. The NASA live suite remains opt-in:
+it needs network access plus the configured real application contact, and it
+must never be replaced with generated or fallback scientific data.
