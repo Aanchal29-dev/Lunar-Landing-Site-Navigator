@@ -16,6 +16,14 @@ import { toVisibilityLongitude, assertAnalysisResponse } from './contracts.js';
 export { toVisibilityLongitude } from './contracts.js';
 
 const API_TIMEOUT_MS = 300_000;
+// Empty means same-origin for local Vite proxying. On Vercel, set this at build
+// time to the Render API origin, for example https://lunar-compass-api.onrender.com.
+const API_BASE_URL = (import.meta.env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
+function apiUrl(endpoint) {
+    if (!endpoint.startsWith('/')) throw new Error('API endpoints must begin with /.');
+    return `${API_BASE_URL}${endpoint}`;
+}
 
 // A single request through the configured same-origin proxy. Never retry POSTs
 // against the visitor's localhost or replace an API error with a second request.
@@ -27,7 +35,7 @@ export async function apiFetch(endpoint, options = {}, timeoutMs = API_TIMEOUT_M
     if (signal?.aborted) controller.abort();
     const timeout = setTimeout(abort, timeoutMs);
     try {
-        const response = await fetch(endpoint, {
+        const response = await fetch(apiUrl(endpoint), {
             ...options,
             headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...options.headers },
             signal: controller.signal,

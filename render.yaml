@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: lunar-compass-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: LUNAR_COMPASS_CONTACT
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-20b
+      - key: LUNAR_COMPASS_TERRAIN_DATA_DIR
+        value: /opt/render/project/src/backend/local_data/lola/site01

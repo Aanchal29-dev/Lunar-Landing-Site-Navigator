@@ -1,0 +1,6 @@
+{
+  "framework": "vite",
+  "installCommand": "npm ci --prefix Three.js",
+  "buildCommand": "npm run build",
+  "outputDirectory": "Three.js/dist"
+}
